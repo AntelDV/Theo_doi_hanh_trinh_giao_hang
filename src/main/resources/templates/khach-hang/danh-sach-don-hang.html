@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout :: head(pageTitle='Đơn hàng Của tôi')}"></head>
+
+<body>
+    <div class="app-wrapper">
+        <nav th:replace="~{layout :: sidebar}"></nav>
+        <div class="main-content">
+            <header th:replace="~{layout :: topbar}"></header>
+            <main class="page-content">
+                <h1 class="page-header">Đơn hàng Của tôi</h1>
+
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3"> <h6 class="m-0 font-weight-bold text-primary">Danh sách Đơn hàng</h6> </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Mã VĐ</th>
+                                        <th>Người nhận</th>
+                                        <th>Địa chỉ giao</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(donHangList)}">
+                                        <td colspan="6" class="text-center">Bạn chưa có đơn hàng nào.</td>
+                                    </tr>
+                                    <tr th:each="dh : ${donHangList}">
+                                        <td th:text="${dh.maVanDon}">DH12345</td>
+                                        <td th:text="${dh.tenNguoiNhan}">Trần Thị B</td>
+                                        <td th:text="${dh.diaChiGiaoHang}">123 Đường C...</td>
+                                        <td>
+                                            <span th:if="${dh.getTrangThaiHienTai() != null}" 
+                                                  th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
+                                                  class="badge" 
+                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thành công') ? 'badge-success' : 
+                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') or #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'hủy') ? 'badge-danger' : 
+                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ') ? 'badge-warning' : 'badge-info'}">
+                                            </span>
+                                        </td>
+                                        <td th:text="${#dates.format(dh.ngayTao, 'dd/MM/yyyy')}">20/10/2025</td>
+                                        <td class="table-actions">
+                                            <a th:href="@{'/khach-hang/chi-tiet-don-hang/' + ${dh.maVanDon}}" class="text-primary" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

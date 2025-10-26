@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout :: head(pageTitle='Dashboard Shipper')}"></head>
+
+<body>
+    <div class="app-wrapper">
+        <nav th:replace="~{layout :: sidebar}"></nav>
+        <div class="main-content">
+            <header th:replace="~{layout :: topbar}"></header>
+            <main class="page-content">
+                <h1 class="page-header">Dashboard Shipper</h1>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Đơn hàng cần lấy hôm nay</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">5</div> </div>
+                                    <div class="col-auto"> <i class="fas fa-dolly fa-2x text-gray-300"></i> </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="col-md-6 mb-4">
+                        <div class="card border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Đơn hàng cần giao hôm nay</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">12</div> </div>
+                                    <div class="col-auto"> <i class="fas fa-truck fa-2x text-gray-300"></i> </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Đơn hàng cần xử lý gấp</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>Chưa có đơn hàng nào cần xử lý gấp.</p>
+                        </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

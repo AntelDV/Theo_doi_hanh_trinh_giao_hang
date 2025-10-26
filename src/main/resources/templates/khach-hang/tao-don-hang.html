@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout :: head(pageTitle='Tạo Đơn hàng Mới')}"></head>
+
+<body>
+    <div class="app-wrapper">
+        <nav th:replace="~{layout :: sidebar}"></nav>
+        <div class="main-content">
+            <header th:replace="~{layout :: topbar}"></header>
+            <main class="page-content">
+                <h1 class="page-header">Tạo Đơn hàng Mới</h1>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <form th:action="@{/khach-hang/tao-don-hang}" th:object="${donHang}" method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3"> <h6 class="m-0 font-weight-bold text-primary">Thông tin Lấy hàng</h6> </div>
+                                <div class="card-body">
+                                     <div class="form-group">
+                                        <label for="diaChiLayHang" class="form-label">Chọn địa chỉ lấy hàng: (*)</label>
+                                        <select id="diaChiLayHang" name="idDiaChiLayHang" class="form-control" required>
+                                            <option value="">-- Chọn từ sổ địa chỉ --</option>
+                                            <option th:each="dc : ${diaChiList}" 
+                                                    th:value="${dc.idDiaChi}" 
+                                                    th:text="${dc.getFullAddress()}"></option>
+                                        </select>
+                                        <div class="mt-2"><a th:href="@{/khach-hang/so-dia-chi}">Quản lý (hoặc thêm) sổ địa chỉ</a></div>
+                                    </div>
+                                    <hr>
+                                    <div class="form-group">
+                                         <label for="ghiChuKhachHang" class="form-label">Ghi chú cho Shipper:</label>
+                                        <textarea id="ghiChuKhachHang" th:field="*{ghiChuKhachHang}" class="form-control" rows="3" placeholder="Ví dụ: Hàng dễ vỡ, Gọi trước khi đến..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3"> <h6 class="m-0 font-weight-bold text-primary">Thông tin Giao hàng</h6> </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="tenNguoiNhan" class="form-label">Tên người nhận: (*)</label>
+                                        <input type="text" id="tenNguoiNhan" th:field="*{tenNguoiNhan}" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                         <label for="sdtNguoiNhan" class="form-label">Số điện thoại người nhận: (*)</label>
+                                        <input type="tel" id="sdtNguoiNhan" th:field="*{sdtNguoiNhan}" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="diaChiGiaoHang" class="form-label">Địa chỉ giao hàng chi tiết: (*)</label>
+                                        <textarea id="diaChiGiaoHang" th:field="*{diaChiGiaoHang}" class="form-control" rows="4" placeholder="Nhập số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..." required></textarea>
+                                    </div>
+                                     <div class="form-group">
+                                         <label for="tienThuHo" class="form-label">Tiền thu hộ (COD - nếu có):</label>
+                                        <input type="number" id="tienThuHo" th:field="*{thanhToan.tongTienCod}" class="form-control" value="0">
+                                         <small class="form-text">Nhập 0 nếu không thu hộ.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg"> <i class="fas fa-check-circle"></i> Xác nhận Tạo đơn</button>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
