@@ -46,12 +46,13 @@
                                             <span th:if="${dh.getTrangThaiHienTai() != null}" 
                                                   th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
                                                   class="badge" 
-                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') ? 'badge-danger' : 'badge-info'}">
+                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') ? 'badge-danger' : 
+                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ lấy') ? 'badge-warning' : 'badge-info'}">
                                             </span>
                                         </td>
                                         <td class="table-actions">
                                             <button class="btn btn-sm btn-primary" 
-                                                    th:onclick="|openCapNhatModal(${dh.idDonHang}, '${dh.maVanDon}')|">
+                                                    th:onclick="|openCapNhatModal(${dh.idDonHang}, '${dh.maVanDon}', ${dh.thanhToan != null ? dh.thanhToan.tongTienCod : 0})|">
                                                 <i class="fas fa-edit"></i> Cập nhật
                                             </button>
                                         </td>
@@ -78,13 +79,24 @@
                          <input type="hidden" name="idDonHang" id="idDonHangCapNhat">
                         <div class="form-group">
                             <label for="selectTrangThai" class="form-label">Chọn Trạng thái Mới:</label>
-                            <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" required>
+                            <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" required onchange="toggleCodSection(this.value)">
                                  <option value="">-- Chọn trạng thái --</option>
                                 <option th:each="tt : ${trangThaiList}"
                                         th:value="${tt.idTrangThai}"
                                         th:text="${tt.tenTrangThai}"></option>
                             </select>
                         </div>
+                        
+                        <div class="form-group" id="codSection" style="display:none; background: #fdfaea; padding: 10px; border-radius: 5px;">
+                            <p class="font-weight-bold">Số tiền thu hộ (COD): <span id="soTienCod" class="text-danger"></span></p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="daThanhToanCod" name="daThanhToanCod" value="true">
+                                <label class="form-check-label" for="daThanhToanCod">
+                                    Xác nhận ĐÃ THU TIỀN này
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                              <label for="ghiChuShipper" class="form-label">Ghi chú:</label>
                             <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" placeholder="Bắt buộc nếu giao thất bại..."></textarea>
@@ -101,12 +113,44 @@
 
     <script th:src="@{/js/main.js}"></script>
     <script>
-        function openCapNhatModal(idDonHang, maVanDon) {
+        // Cập nhật hàm JS để nhận tiền COD
+        function openCapNhatModal(idDonHang, maVanDon, tienCod) {
             document.getElementById('idDonHangCapNhat').value = idDonHang;
             document.getElementById('maVanDonCapNhat').innerText = maVanDon;
             document.getElementById('selectTrangThai').value = '';
             document.getElementById('ghiChuShipper').value = '';
+            
+            // Xử lý logic COD
+            const codSection = document.getElementById('codSection');
+            const soTienCodSpan = document.getElementById('soTienCod');
+            const daThanhToanCodCheckbox = document.getElementById('daThanhToanCod');
+            
+            if (tienCod > 0) {
+                // Chỉ hiển thị mục COD nếu trạng thái "Giao thành công" (ID 5) được chọn
+                soTienCodSpan.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tienCod);
+                daThanhToanCodCheckbox.checked = false;
+                // Ẩn ban đầu, chỉ hiện khi chọn đúng trạng thái
+                codSection.style.display = 'none'; 
+            } else {
+                codSection.style.display = 'none'; // Ẩn nếu không có COD
+            }
+            
             openModal('capNhatTrangThaiModal');
+        }
+
+        // Hàm JS mới để ẩn/hiện mục COD
+        function toggleCodSection(selectedTrangThaiId) {
+            const codSection = document.getElementById('codSection');
+            const soTienCodSpan = document.getElementById('soTienCod');
+            
+            // Chỉ hiển thị mục COD nếu:
+            // 1. Trạng thái được chọn là "Giao thành công" (ID 5)
+            // 2. Số tiền COD có giá trị (kiểm tra text trong span)
+            if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0đ') {
+                codSection.style.display = 'block';
+            } else {
+                codSection.style.display = 'none';
+            }
         }
     </script>
 </body>

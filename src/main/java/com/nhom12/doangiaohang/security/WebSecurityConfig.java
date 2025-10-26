@@ -29,10 +29,13 @@ public class WebSecurityConfig {
                     "/css/**", 
                     "/js/**", 
                     "/register", 
-                    "/register-admin", // === THÊM DÒNG NÀY ===
+                    "/register-admin", 
                     "/forgot-password",
                     "/reset-password",
-                    "/login"
+                    "/login",
+                    // Thêm các đường dẫn tra cứu công khai
+                    "/tra-cuu",
+                    "/tra-cuu/don-hang" 
                 ).permitAll()
                 
                 .requestMatchers("/quan-ly/**").hasRole("QUANLY")

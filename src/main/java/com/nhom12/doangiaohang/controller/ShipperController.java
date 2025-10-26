@@ -42,15 +42,19 @@ public class ShipperController {
     public String capNhatTrangThai(@RequestParam("idDonHang") Integer idDonHang,
                                    @RequestParam("idTrangThaiMoi") Integer idTrangThaiMoi,
                                    @RequestParam(value = "ghiChu", required = false) String ghiChu,
+                                   // Thêm 2 tham số mới
+                                   @RequestParam(value = "daThanhToanCod", defaultValue = "false") boolean daThanhToanCod,
                                    Authentication authentication,
                                    RedirectAttributes redirectAttributes) {
         try {
-            donHangService.capNhatTrangThai(idDonHang, idTrangThaiMoi, ghiChu, authentication);
+            // Truyền tham số mới vào service
+            donHangService.capNhatTrangThai(idDonHang, idTrangThaiMoi, ghiChu, daThanhToanCod, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật: " + e.getMessage());
         } catch (Exception e) {
              redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
+             e.printStackTrace(); // Giúp debug
         }
         return "redirect:/shipper/don-hang";
     }

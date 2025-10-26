@@ -2,7 +2,6 @@ package com.nhom12.doangiaohang.controller;
 
 import com.nhom12.doangiaohang.model.DiaChi;
 import com.nhom12.doangiaohang.model.DonHang;
-import com.nhom12.doangiaohang.model.KhachHang;
 import com.nhom12.doangiaohang.model.ThanhToan;
 import com.nhom12.doangiaohang.service.DiaChiService;
 import com.nhom12.doangiaohang.service.DonHangService;
@@ -24,11 +23,13 @@ public class KhachHangController {
     @Autowired private DonHangService donHangService;
     @Autowired private DiaChiService diaChiService;
 
+    // Trang chủ khách hàng
     @GetMapping("/dashboard")
     public String dashboard() {
         return "khach-hang/dashboard";
     }
 
+    // Luồng Tạo đơn hàng - GET
     @GetMapping("/tao-don-hang")
     public String taoDonHangForm(Authentication authentication, Model model) {
         try {
@@ -44,6 +45,7 @@ public class KhachHangController {
         }
     }
 
+    // Luồng Tạo đơn hàng - POST
     @PostMapping("/tao-don-hang")
     public String processTaoDonHang(@ModelAttribute("donHang") DonHang donHang, 
                                    @RequestParam("idDiaChiLayHang") Integer idDiaChiLayHang,
@@ -51,7 +53,14 @@ public class KhachHangController {
                                    RedirectAttributes redirectAttributes,
                                    Model model) {
         try {
-            donHang.getThanhToan().setDonHang(donHang); 
+            if (donHang.getThanhToan() != null) {
+                donHang.getThanhToan().setDonHang(donHang); 
+            } else {
+                ThanhToan tt = new ThanhToan();
+                tt.setDonHang(donHang);
+                donHang.setThanhToan(tt);
+            }
+             
             DonHang donHangMoi = donHangService.taoDonHangMoi(donHang, idDiaChiLayHang, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo đơn hàng thành công! Mã vận đơn: " + donHangMoi.getMaVanDon());
             return "redirect:/khach-hang/danh-sach-don-hang";
@@ -63,9 +72,15 @@ public class KhachHangController {
             List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);
             model.addAttribute("diaChiList", diaChiList);
             return "khach-hang/tao-don-hang";
+        } catch (Exception e) { 
+             model.addAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra khi tạo đơn hàng.");
+             List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);
+             model.addAttribute("diaChiList", diaChiList);
+             return "khach-hang/tao-don-hang";
         }
     }
-
+    
+    // Luồng Xem danh sách đơn hàng
     @GetMapping("/danh-sach-don-hang")
     public String danhSachDonHang(Authentication authentication, Model model) {
         List<DonHang> donHangList = donHangService.getDonHangCuaKhachHangHienTai(authentication);
@@ -73,6 +88,7 @@ public class KhachHangController {
         return "khach-hang/danh-sach-don-hang";
     }
 
+    // Luồng Xem chi tiết đơn hàng
     @GetMapping("/chi-tiet-don-hang/{maVanDon}")
     public String chiTietDonHang(@PathVariable("maVanDon") String maVanDon, Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
          try {
@@ -85,30 +101,34 @@ public class KhachHangController {
          }
     }
     
-    // === CÁC HÀM SỬA LỖI CHO SỔ ĐỊA CHỈ ===
+    // === CÁC HÀM XỬ LÝ SỔ ĐỊA CHỈ ===
     
+    // Hiển thị trang Sổ địa chỉ
     @GetMapping("/so-dia-chi")
     public String soDiaChi(Authentication authentication, Model model) {
          List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);
          model.addAttribute("diaChiList", diaChiList);
          
-         // Chuẩn bị form để thêm địa chỉ mới
          if (!model.containsAttribute("diaChiMoi")) {
              model.addAttribute("diaChiMoi", new DiaChi());
+         }
+          if (!model.containsAttribute("diaChiSua")) {
+             model.addAttribute("diaChiSua", new DiaChi());
          }
          
         return "khach-hang/so-dia-chi";
     }
     
+    // Thêm địa chỉ mới - POST
     @PostMapping("/so-dia-chi/them")
     public String processThemDiaChi(@Valid @ModelAttribute("diaChiMoi") DiaChi diaChiMoi,
                                      BindingResult bindingResult,
                                      Authentication authentication,
                                      RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            // Nếu lỗi, gửi lại form và lỗi
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.diaChiMoi", bindingResult);
             redirectAttributes.addFlashAttribute("diaChiMoi", diaChiMoi);
+            redirectAttributes.addFlashAttribute("showThemModal", true); 
             return "redirect:/khach-hang/so-dia-chi";
         }
         
@@ -116,7 +136,80 @@ public class KhachHangController {
             diaChiService.themDiaChiMoi(diaChiMoi, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm địa chỉ mới thành công!");
         } catch (Exception e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm địa chỉ: " + e.getMessage());
+        }
+        return "redirect:/khach-hang/so-dia-chi";
+    }
+    
+    // Lấy thông tin địa chỉ để sửa - GET
+    @GetMapping("/so-dia-chi/sua/{id}")
+    public String showSuaDiaChiForm(@PathVariable("id") Integer idDiaChi,
+                                     Authentication authentication,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            DiaChi diaChi = diaChiService.findByIdAndCheckOwnership(idDiaChi, authentication);
+            redirectAttributes.addFlashAttribute("diaChiSua", diaChi);
+            redirectAttributes.addFlashAttribute("showSuaModal", true); 
+        } catch (IllegalArgumentException | SecurityException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/khach-hang/so-dia-chi";
+    }
+    
+    // Xử lý Cập nhật địa chỉ - POST
+    @PostMapping("/so-dia-chi/sua")
+    public String processSuaDiaChi(@Valid @ModelAttribute("diaChiSua") DiaChi diaChiSua,
+                                    BindingResult bindingResult,
+                                    Authentication authentication,
+                                    RedirectAttributes redirectAttributes) {
+         if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.diaChiSua", bindingResult);
+            redirectAttributes.addFlashAttribute("diaChiSua", diaChiSua);
+            redirectAttributes.addFlashAttribute("showSuaModal", true); 
+            return "redirect:/khach-hang/so-dia-chi";
+        }
+        try {
+            diaChiService.capNhatDiaChi(diaChiSua, authentication);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật địa chỉ thành công!");
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật: " + e.getMessage());
+             // Giữ lại form lỗi để hiển thị lại
+             redirectAttributes.addFlashAttribute("diaChiSua", diaChiSua);
+             redirectAttributes.addFlashAttribute("showSuaModal", true);
+        } catch (Exception e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
+        }
+         return "redirect:/khach-hang/so-dia-chi";
+    }
+    
+    // Xử lý Xóa địa chỉ - POST
+    @PostMapping("/so-dia-chi/xoa/{id}")
+    public String processXoaDiaChi(@PathVariable("id") Integer idDiaChi,
+                                    Authentication authentication,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            diaChiService.xoaDiaChi(idDiaChi, authentication);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa địa chỉ thành công!");
+        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa: " + e.getMessage());
+        } catch (Exception e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra khi xóa.");
+        }
+        return "redirect:/khach-hang/so-dia-chi";
+    }
+    
+    // Xử lý Đặt làm mặc định - POST
+    @PostMapping("/so-dia-chi/mac-dinh/{id}")
+    public String processDatMacDinh(@PathVariable("id") Integer idDiaChi,
+                                     Authentication authentication,
+                                     RedirectAttributes redirectAttributes) {
+         try {
+            diaChiService.datLamMacDinh(idDiaChi, authentication);
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt làm địa chỉ mặc định thành công!");
+        } catch (IllegalArgumentException | SecurityException e) {
              redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
         }
         return "redirect:/khach-hang/so-dia-chi";
     }

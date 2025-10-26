@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional; 
 import java.util.UUID;
 
 @Service
@@ -19,13 +20,11 @@ public class DonHangService {
     @Autowired private TrangThaiDonHangRepository trangThaiDonHangRepository;
     @Autowired private NhanVienRepository nhanVienRepository;
     @Autowired private DiaChiRepository diaChiRepository;
-    @Autowired private CustomUserHelper userHelper; // Dùng file tiện ích
+    @Autowired private ThanhToanRepository thanhToanRepository; 
+    @Autowired private CustomUserHelper userHelper; 
     
-    // (Các Service/Repository khác)
-    // @Autowired private NhatKyVanHanhService nhatKyService; 
-
-    // LUỒNG 1: KHÁCH HÀNG TẠO ĐƠN
-    @Transactional // Đảm bảo tất cả cùng thành công hoặc thất bại
+    // LUỒNG 1: TẠO ĐƠN HÀNG
+    @Transactional 
     public DonHang taoDonHangMoi(DonHang donHang, Integer idDiaChiLayHang, Authentication authentication) {
         
         // 1. Lấy thông tin người gửi (khách hàng đang đăng nhập)
@@ -46,12 +45,10 @@ public class DonHangService {
         donHang.setMaVanDon("DH" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         donHang.setNgayTao(new Date());
 
-        // 5. Thiết lập liên kết hai chiều cho ThanhToan (Rất quan trọng)
-        // Dữ liệu ThanhToan (COD) đã được gán vào donHang từ form
+        // 5. Thiết lập liên kết hai chiều cho ThanhToan 
         if (donHang.getThanhToan() != null) {
             donHang.getThanhToan().setDonHang(donHang); 
         } else {
-            // Nếu không có thông tin thanh toán, tạo một bản ghi mặc định
             ThanhToan thanhToanMacDinh = new ThanhToan();
             thanhToanMacDinh.setDonHang(donHang);
             donHang.setThanhToan(thanhToanMacDinh);
@@ -68,19 +65,16 @@ public class DonHangService {
         hanhTrinhDauTien.setDonHang(savedDonHang);
         hanhTrinhDauTien.setTrangThai(trangThaiBanDau);
         hanhTrinhDauTien.setThoiGianCapNhat(new Date());
-        // ID_NHAN_VIEN_THUC_HIEN là NULL vì đây là do khách tạo
         hanhTrinhDonHangRepository.save(hanhTrinhDauTien);
 
         return savedDonHang;
     }
     
-    // (Các phương thức khác giữ nguyên như cũ)
-    
     public List<DonHang> getDonHangCuaKhachHangHienTai(Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
         return donHangRepository.findByKhachHangGui_IdOrderByIdDonHangDesc(kh.getId());
     }
-
+    
     public DonHang getChiTietDonHangCuaKhachHang(String maVanDon, Authentication authentication) {
         DonHang donHang = donHangRepository.findByMaVanDon(maVanDon)
                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
@@ -89,6 +83,11 @@ public class DonHangService {
              throw new SecurityException("Bạn không có quyền xem đơn hàng này.");
         }
         return donHang;
+    }
+    
+    public DonHang getDonHangByMaVanDon(String maVanDon) {
+        return donHangRepository.findByMaVanDon(maVanDon)
+               .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
     }
 
     public List<DonHang> getAllDonHangForQuanLy() {
@@ -109,23 +108,29 @@ public class DonHangService {
         }
 
         TrangThaiDonHang trangThaiHienTai = donHang.getTrangThaiHienTai();
-        if (trangThaiHienTai == null || trangThaiHienTai.getIdTrangThai() != 1) { 
-             throw new IllegalStateException("Chỉ có thể phân công đơn hàng đang ở trạng thái 'Chờ lấy hàng'.");
+        if (trangThaiHienTai == null || (trangThaiHienTai.getIdTrangThai() != 1 && trangThaiHienTai.getIdTrangThai() != 7)) { 
+             throw new IllegalStateException("Chỉ có thể phân công đơn hàng đang ở trạng thái 'Chờ lấy hàng' hoặc 'Chờ xử lý lại'.");
+        }
+
+        TrangThaiDonHang trangThaiMoi;
+        if (trangThaiHienTai.getIdTrangThai() == 7) {
+            trangThaiMoi = trangThaiDonHangRepository.findById(4) // ID 4 = "Đang giao hàng"
+                    .orElseThrow(() -> new RuntimeException("Lỗi CSDL: Không tìm thấy trạng thái ID=4."));
+        } else {
+            trangThaiMoi = trangThaiHienTai; // Giữ nguyên trạng thái "Chờ lấy hàng" (1)
         }
 
         HanhTrinhDonHang hanhTrinhPhanCong = new HanhTrinhDonHang();
         hanhTrinhPhanCong.setDonHang(donHang);
         hanhTrinhPhanCong.setNhanVienThucHien(shipper); 
-        hanhTrinhPhanCong.setTrangThai(trangThaiHienTai); 
+        hanhTrinhPhanCong.setTrangThai(trangThaiMoi); 
         hanhTrinhPhanCong.setGhiChuNhanVien("Quản lý [" + quanLy.getMaNV() + "] đã phân công cho shipper [" + shipper.getMaNV() + "]");
         hanhTrinhPhanCong.setThoiGianCapNhat(new Date());
         hanhTrinhDonHangRepository.save(hanhTrinhPhanCong);
-
-        // nhatKyService.logAction(quanLy.getTaiKhoan(), "Phân công đơn hàng", ...);
     }
 
     @Transactional
-    public void capNhatTrangThai(Integer idDonHang, Integer idTrangThaiMoi, String ghiChu, Authentication authentication) {
+    public void capNhatTrangThai(Integer idDonHang, Integer idTrangThaiMoi, String ghiChu, boolean daThanhToanCod, Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication); 
         
         DonHang donHang = donHangRepository.findById(idDonHang)
@@ -142,7 +147,26 @@ public class DonHangService {
         if (ttHienTaiId == 1 && idTrangThaiMoi != 2) { 
              throw new IllegalStateException("Thao tác không hợp lệ: Cần cập nhật thành 'Đã lấy hàng'.");
         }
-        // Thêm các quy tắc khác...
+        // (Thêm các quy tắc khác...)
+
+        if (idTrangThaiMoi == 5) { // 5 = Giao thành công
+            
+            // Dùng repository để truy vấn trực tiếp
+            Optional<ThanhToan> ttOpt = thanhToanRepository.findByDonHang_IdDonHang(donHang.getIdDonHang());
+            
+            if (ttOpt.isPresent() && ttOpt.get().getTongTienCod() > 0) {
+                ThanhToan tt = ttOpt.get(); // Lấy đối tượng ThanhToan
+                if (!daThanhToanCod) {
+                    throw new IllegalStateException("Bạn phải xác nhận đã thu tiền COD để hoàn tất đơn hàng này.");
+                }
+                tt.setDaThanhToanCod(true);
+                thanhToanRepository.save(tt); 
+            }
+        }
+        
+        if (idTrangThaiMoi == 6 && (ghiChu == null || ghiChu.trim().isEmpty())) { // 6 = Giao thất bại
+            throw new IllegalStateException("Bạn phải nhập Ghi chú (lý do) khi báo giao hàng thất bại.");
+        }
 
         HanhTrinhDonHang hanhTrinhMoi = new HanhTrinhDonHang();
         hanhTrinhMoi.setDonHang(donHang);
@@ -150,10 +174,48 @@ public class DonHangService {
         hanhTrinhMoi.setTrangThai(trangThaiMoi);
         hanhTrinhMoi.setGhiChuNhanVien(ghiChu);
         hanhTrinhMoi.setThoiGianCapNhat(new Date());
-
         hanhTrinhDonHangRepository.save(hanhTrinhMoi);
         
-        // nhatKyService.logAction(shipper.getTaiKhoan(), "Cập nhật trạng thái đơn hàng", ...);
+        if (idTrangThaiMoi == 6) {
+            TrangThaiDonHang trangThaiChoXuLy = trangThaiDonHangRepository.findById(7) // ID 7
+                    .orElseThrow(() -> new RuntimeException("Lỗi CSDL: Không tìm thấy trạng thái ID=7."));
+            
+            HanhTrinhDonHang hanhTrinhChoXuLy = new HanhTrinhDonHang();
+            hanhTrinhChoXuLy.setDonHang(donHang);
+            hanhTrinhChoXuLy.setNhanVienThucHien(null); // Quay về cho Quản lý
+            hanhTrinhChoXuLy.setTrangThai(trangThaiChoXuLy);
+            hanhTrinhChoXuLy.setGhiChuNhanVien("Hệ thống tự động chuyển về chờ xử lý.");
+            hanhTrinhChoXuLy.setThoiGianCapNhat(new Date(System.currentTimeMillis() + 1000)); // +1 giây
+            hanhTrinhDonHangRepository.save(hanhTrinhChoXuLy);
+        }
+    }
+    
+    @Transactional
+    public void hoanKhoDonHang(Integer idDonHang, Authentication authentication) {
+        NhanVien quanLy = userHelper.getNhanVienHienTai(authentication);
+        DonHang donHang = donHangRepository.findById(idDonHang)
+                .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại."));
+        
+        TrangThaiDonHang ttHienTai = donHang.getTrangThaiHienTai();
+        if (ttHienTai == null || ttHienTai.getIdTrangThai() != 7) { // 7 = Chờ xử lý lại
+             throw new IllegalStateException("Chỉ có thể hoàn kho đơn hàng ở trạng thái 'Chờ xử lý lại'.");
+        }
+
+        TrangThaiDonHang ttHoanKho = trangThaiDonHangRepository.findById(8) // 8 = Đang hoàn kho
+                 .orElseThrow(() -> new RuntimeException("Lỗi CSDL: Không tìm thấy trạng thái ID=8."));
+
+        NhanVien shipperDaGiao = donHang.getShipperHienTai();
+        if (shipperDaGiao == null) {
+            throw new IllegalStateException("Không tìm thấy shipper đã giao đơn này để thực hiện hoàn kho.");
+        }
+
+        HanhTrinhDonHang hanhTrinhMoi = new HanhTrinhDonHang();
+        hanhTrinhMoi.setDonHang(donHang);
+        hanhTrinhMoi.setNhanVienThucHien(shipperDaGiao); 
+        hanhTrinhMoi.setTrangThai(ttHoanKho);
+        hanhTrinhMoi.setGhiChuNhanVien("Quản lý [" + quanLy.getMaNV() + "] đã duyệt hoàn kho.");
+        hanhTrinhMoi.setThoiGianCapNhat(new Date());
+        hanhTrinhDonHangRepository.save(hanhTrinhMoi);
     }
 
     public List<DonHang> getDonHangCuaShipperHienTai(Authentication authentication) {

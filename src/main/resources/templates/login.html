@@ -20,7 +20,6 @@
                 Tên đăng nhập hoặc mật khẩu không chính xác.
             </div>
             
-            <!-- ==== FORM ĐĂNG NHẬP ==== -->
             <form class="auth-form" th:action="@{/login}" method="post">
                 <div class="form-group">
                     <input type="text" id="username" name="username" class="form-control" placeholder="Tên đăng nhập" required>
@@ -34,6 +33,9 @@
             <div class="auth-link">
                 <span>Chưa có tài khoản? </span>
                 <a th:href="@{/register}">Đăng ký ngay</a>
+            </div>
+            <div class="auth-link" style="margin-top: 10px;">
+                <a th:href="@{/tra-cuu}">Tra cứu đơn hàng (Không cần tài khoản)</a>
             </div>
         </div>
     </div>

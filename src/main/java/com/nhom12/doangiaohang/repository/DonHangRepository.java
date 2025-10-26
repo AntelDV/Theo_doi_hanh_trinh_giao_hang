@@ -23,11 +23,11 @@ public interface DonHangRepository extends JpaRepository<DonHang, Integer> {
 
     // Lấy các đơn hàng đang chờ xử lý của một Shipper cụ thể
     // Query này tìm các đơn hàng mà bản ghi hành trình mới nhất có ID_NHAN_VIEN_THUC_HIEN là shipper đó
-    // và trạng thái đó nằm trong danh sách "cần xử lý" (đã lấy, đang giao, giao thất bại, đang hoàn kho)
+    // và trạng thái đó nằm trong danh sách "cần xử lý"
     @Query("SELECT dh FROM DonHang dh JOIN dh.hanhTrinh ht " +
            "WHERE ht.nhanVienThucHien.id = :shipperId " +
            "AND ht.thoiGianCapNhat = (SELECT MAX(ht2.thoiGianCapNhat) FROM HanhTrinhDonHang ht2 WHERE ht2.donHang = dh) " +
-           "AND ht.trangThai.idTrangThai IN (2, 4, 6, 8) " + // 2=Đã lấy, 4=Đang giao, 6=Thất bại, 8=Đang hoàn
+           "AND ht.trangThai.idTrangThai IN (1, 2, 4, 6, 8) " + // SỬA Ở ĐÂY: Thêm 1 (Chờ lấy hàng)
            "ORDER BY dh.idDonHang DESC")
     List<DonHang> findDonHangDangXuLyCuaShipper(@Param("shipperId") Integer shipperId);
 }

@@ -1,7 +1,7 @@
 package com.nhom12.doangiaohang.service;
 
 import com.nhom12.doangiaohang.dto.DangKyForm;
-import com.nhom12.doangiaohang.dto.NhanVienDangKyForm; // Sẽ tạo ở file sau
+import com.nhom12.doangiaohang.dto.NhanVienDangKyForm; 
 import com.nhom12.doangiaohang.model.KhachHang;
 import com.nhom12.doangiaohang.model.NhanVien;
 import com.nhom12.doangiaohang.model.TaiKhoan;
@@ -30,8 +30,7 @@ public class TaiKhoanService {
     @Autowired private VaiTroRepository vaiTroRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     
-    // @Autowired private EmailService emailService; // Tạm đóng
-
+    // Đăng ký khách hàng
     @Transactional
     public void dangKyKhachHang(DangKyForm form) {
         
@@ -64,7 +63,7 @@ public class TaiKhoanService {
         khachHangRepository.save(khachHang);
     }
     
-    // === THÊM PHƯƠNG THỨC MỚI ĐỂ TẠO NHÂN VIÊN ===
+    // Đăng ký nhân viên
     @Transactional
     public void dangKyNhanVien(NhanVienDangKyForm form) {
         if (taiKhoanRepository.findByTenDangNhap(form.getTenDangNhap()).isPresent()) {
@@ -85,10 +84,9 @@ public class TaiKhoanService {
         taiKhoan.setMatKhau(passwordEncoder.encode(form.getMatKhau()));
         taiKhoan.setTrangThai(true); 
 
-        // Lấy vai trò Quản lý (1) hoặc Shipper (2)
         VaiTro vaiTroNhanVien = vaiTroRepository.findById(form.getIdVaiTro())
                 .orElseThrow(() -> new RuntimeException("Lỗi: Vai trò không hợp lệ."));
-        if (vaiTroNhanVien.getIdVaiTro() == 3) { // Không cho phép tạo Khách hàng bằng form này
+        if (vaiTroNhanVien.getIdVaiTro() == 3) { 
             throw new IllegalArgumentException("Vai trò không hợp lệ.");
         }
         taiKhoan.setVaiTro(vaiTroNhanVien);
@@ -104,8 +102,28 @@ public class TaiKhoanService {
         nhanVienRepository.save(nhanVien);
     }
     
+    // Khóa tài khoản
+    @Transactional
+    public void khoaTaiKhoan(Integer idTaiKhoan) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findById(idTaiKhoan)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản để khóa."));
+        
+        // TODO: Thêm logic kiểm tra (VD: không khóa admin cuối cùng)
+        
+        taiKhoan.setTrangThai(false); 
+        taiKhoanRepository.save(taiKhoan);
+    }
+
+    // Mở khóa tài khoản
+    @Transactional
+    public void moKhoaTaiKhoan(Integer idTaiKhoan) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findById(idTaiKhoan)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản để mở khóa."));
+        taiKhoan.setTrangThai(true); 
+        taiKhoanRepository.save(taiKhoan);
+    }
     
-    // === CÁC HÀM QUÊN MẬT KHẨU (Tạm thời không dùng nhưng vẫn giữ) ===
+    // Xử lý quên mật khẩu
     public void processForgotPassword(String email) {
         
         TaiKhoan taiKhoan = null;
@@ -132,6 +150,7 @@ public class TaiKhoanService {
         // emailService.sendPasswordResetEmail(email, token); // Tạm đóng
     }
     
+    // Xác thực token đổi mật khẩu
     public TaiKhoan validatePasswordResetToken(String token) {
         TaiKhoan taiKhoan = taiKhoanRepository.findByMaDatLaiMk(token)
             .orElseThrow(() -> new IllegalArgumentException("Token không hợp lệ."));
@@ -142,6 +161,7 @@ public class TaiKhoanService {
         return taiKhoan;
     }
 
+    // Đổi mật khẩu người dùng
     public void changeUserPassword(TaiKhoan taiKhoan, String newPassword) {
         taiKhoan.setMatKhau(passwordEncoder.encode(newPassword));
         taiKhoan.setMaDatLaiMk(null);
