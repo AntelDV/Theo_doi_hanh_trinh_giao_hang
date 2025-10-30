@@ -1,7 +1,6 @@
 package com.nhom12.doangiaohang.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -41,6 +40,7 @@ public class DonHang {
     @Column(name = "DIA_CHI_GIAO_HANG", nullable = false, length = 500)
     private String diaChiGiaoHang;
 
+    // Hoàn nguyên về String, bỏ @Lob và các trường @Transient
     @Column(name = "GHI_CHU_KHACH_HANG", length = 500)
     private String ghiChuKhachHang;
 
@@ -67,7 +67,7 @@ public class DonHang {
     public NhanVien getShipperHienTai() {
          if (hanhTrinh != null) {
             for (HanhTrinhDonHang ht : hanhTrinh) {
-                if (ht.getNhanVienThucHien() != null && ht.getTrangThai() != null && List.of(2, 3, 4, 6, 8).contains(ht.getTrangThai().getIdTrangThai())) {
+                if (ht.getNhanVienThucHien() != null && ht.getTrangThai() != null && List.of(2, 3, 4, 6, 8, 1).contains(ht.getTrangThai().getIdTrangThai())) { // Thêm 1
                     return ht.getNhanVienThucHien();
                 }
             }

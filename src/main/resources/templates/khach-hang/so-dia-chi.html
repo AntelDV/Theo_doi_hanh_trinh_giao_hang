@@ -59,7 +59,47 @@
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
-                <div th:replace="~{ :: addressForm(formAction=@{/khach-hang/so-dia-chi/them}, formObject=${diaChiMoi}, modalId='themDiaChiModal', modalTitle='Thêm Địa chỉ Mới', submitButton='Lưu Địa chỉ')}"></div>
+                <form th:action="@{/khach-hang/so-dia-chi/them}" th:object="${diaChiMoi}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Thêm Địa chỉ Mới</h5>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div th:if="${#fields.hasErrors('diaChiMoi.*')}" class="alert alert-danger">
+                            Vui lòng kiểm tra lại các trường thông tin.
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dcSoNhaDuongThem" class="form-label">Số nhà, Đường: (*)</label>
+                            <input type="text" id="dcSoNhaDuongThem" class="form-control" th:field="*{soNhaDuong}">
+                            <span th:if="${#fields.hasErrors('soNhaDuong')}" th:errors="*{soNhaDuong}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dcPhuongXaThem" class="form-label">Phường / Xã:</label>
+                            <input type="text" id="dcPhuongXaThem" class="form-control" th:field="*{phuongXa}">
+                        </div>
+                        <div class="form-group">
+                            <label for="dcQuanHuyenThem" class="form-label">Quận / Huyện: (*)</label>
+                            <input type="text" id="dcQuanHuyenThem" class="form-control" th:field="*{quanHuyen}">
+                             <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dcTinhTpThem" class="form-label">Tỉnh / Thành phố: (*)</label>
+                            <input type="text" id="dcTinhTpThem" class="form-control" th:field="*{tinhTp}">
+                             <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
+                        </div>
+                         <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="dcMacDinhThem" th:field="*{laMacDinh}">
+                            <label class="form-check-label" for="dcMacDinhThem">
+                                Đặt làm địa chỉ mặc định
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Lưu Địa chỉ</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -68,77 +108,63 @@
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
-                 <div th:replace="~{ :: addressForm(formAction=@{/khach-hang/so-dia-chi/sua}, formObject=${diaChiSua}, modalId='suaDiaChiModal', modalTitle='Sửa Địa chỉ', submitButton='Lưu Thay đổi')}"></div>
+                <form th:action="@{/khach-hang/so-dia-chi/sua}" th:object="${diaChiSua}" method="post" novalidate>
+                     <input type="hidden" th:field="*{idDiaChi}"/>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Sửa Địa chỉ</h5>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div th:if="${#fields.hasErrors('diaChiSua.*')}" class="alert alert-danger">
+                             Vui lòng kiểm tra lại các trường thông tin.
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dcSoNhaDuongSua" class="form-label">Số nhà, Đường: (*)</label>
+                            <input type="text" id="dcSoNhaDuongSua" class="form-control" th:field="*{soNhaDuong}">
+                            <span th:if="${#fields.hasErrors('soNhaDuong')}" th:errors="*{soNhaDuong}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dcPhuongXaSua" class="form-label">Phường / Xã:</label>
+                            <input type="text" id="dcPhuongXaSua" class="form-control" th:field="*{phuongXa}">
+                        </div>
+                        <div class="form-group">
+                            <label for="dcQuanHuyenSua" class="form-label">Quận / Huyện: (*)</label>
+                            <input type="text" id="dcQuanHuyenSua" class="form-control" th:field="*{quanHuyen}">
+                             <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="dcTinhTpSua" class="form-label">Tỉnh / Thành phố: (*)</label>
+                            <input type="text" id="dcTinhTpSua" class="form-control" th:field="*{tinhTp}">
+                             <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
+                        </div>
+                         <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="dcMacDinhSua" th:field="*{laMacDinh}">
+                            <label class="form-check-label" for="dcMacDinhSua">
+                                Đặt làm địa chỉ mặc định
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Lưu Thay đổi</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-
-    <div th:fragment="addressForm(formAction, formObject, modalId, modalTitle, submitButton)">
-        <form th:action="${formAction}" th:object="${formObject}" method="post" novalidate>
-            <input th:if="${formObject.idDiaChi}" type="hidden" th:field="*{idDiaChi}"/>
-             
-            <div class="modal-header">
-                <h5 class="modal-title" th:text="${modalTitle}"></h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div th:if="${#fields.hasErrors('${formObject.*}') and #fields.hasGlobalErrors()}" class="alert alert-danger">
-                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
-                </div>
-                 <div th:if="${#fields.hasErrors('${formObject.*}') and !#fields.hasGlobalErrors() and (#object != null and #object.containsKey('org.springframework.validation.BindingResult.' + #strings.substringAfter(#object['__commandName__'], '.')))}" 
-                     class="alert alert-danger" role="alert">
-                    Vui lòng kiểm tra lại các trường thông tin.
-                </div>
-
-                <div class="form-group">
-                    <label th:for="${#ids.next('soNhaDuong')}" class="form-label">Số nhà, Đường: (*)</label>
-                    <input type="text" th:id="${#ids.prev('soNhaDuong')}" class="form-control" th:field="*{soNhaDuong}">
-                    <span th:if="${#fields.hasErrors('soNhaDuong')}" th:errors="*{soNhaDuong}" class="form-error"></span>
-                </div>
-                <div class="form-group">
-                    <label th:for="${#ids.next('phuongXa')}" class="form-label">Phường / Xã:</label>
-                    <input type="text" th:id="${#ids.prev('phuongXa')}" class="form-control" th:field="*{phuongXa}">
-                </div>
-                <div class="form-group">
-                    <label th:for="${#ids.next('quanHuyen')}" class="form-label">Quận / Huyện: (*)</label>
-                    <input type="text" th:id="${#ids.prev('quanHuyen')}" class="form-control" th:field="*{quanHuyen}">
-                     <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
-                </div>
-                <div class="form-group">
-                    <label th:for="${#ids.next('tinhTp')}" class="form-label">Tỉnh / Thành phố: (*)</label>
-                    <input type="text" th:id="${#ids.prev('tinhTp')}" class="form-control" th:field="*{tinhTp}">
-                     <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
-                </div>
-                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" th:id="${#ids.next('laMacDinh')}" th:field="*{laMacDinh}">
-                    <label class="form-check-label" th:for="${#ids.prev('laMacDinh')}">
-                        Đặt làm địa chỉ mặc định
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                <button type="submit" class="btn btn-primary" th:text="${submitButton}"></button>
-            </div>
-        </form>
     </div>
 
     <script th:src="@{/js/main.js}"></script>
     <script th:inline="javascript">
         /*<![CDATA[*/
-            // Kiểm tra xem có cần mở modal Thêm sau khi redirect không
+            // Sửa logic JS: Chỉ kiểm tra cờ (flag) từ RedirectAttribute
             var showThemModal = /*[[${showThemModal}]]*/ false;
-             // Kiểm tra xem có lỗi validation cho form Thêm không
-            var themFormErrors = /*[[${#fields.hasErrors('diaChiMoi.*')}]]*/ false;
-            if (showThemModal || themFormErrors) {
+            if (showThemModal) {
                 openModal('themDiaChiModal');
             }
             
-            // Kiểm tra xem có cần mở modal Sửa sau khi redirect không
              var showSuaModal = /*[[${showSuaModal}]]*/ false;
-             // Kiểm tra xem có lỗi validation cho form Sửa không
-             var suaFormErrors = /*[[${#fields.hasErrors('diaChiSua.*')}]]*/ false;
-             if (showSuaModal || suaFormErrors) {
+             if (showSuaModal) {
                  openModal('suaDiaChiModal');
              }
         /*]]>*/

@@ -10,10 +10,12 @@ import com.nhom12.doangiaohang.repository.KhachHangRepository;
 import com.nhom12.doangiaohang.repository.NhanVienRepository;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
 import com.nhom12.doangiaohang.repository.VaiTroRepository;
+// import com.nhom12.doangiaohang.utils.EncryptionUtil; // Gỡ bỏ import
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication; 
 
 import java.util.Date;
 import java.time.Instant;
@@ -29,8 +31,11 @@ public class TaiKhoanService {
     @Autowired private NhanVienRepository nhanVienRepository;
     @Autowired private VaiTroRepository vaiTroRepository;
     @Autowired private PasswordEncoder passwordEncoder;
-    
-    // Đăng ký khách hàng
+    // @Autowired private EncryptionUtil encryptionUtil; // Gỡ bỏ Autowired
+
+    /**
+     * Xử lý đăng ký tài khoản khách hàng mới (lưu plaintext).
+     */
     @Transactional
     public void dangKyKhachHang(DangKyForm form) {
         
@@ -49,27 +54,29 @@ public class TaiKhoanService {
         taiKhoan.setMatKhau(passwordEncoder.encode(form.getMatKhau()));
         taiKhoan.setTrangThai(true); 
 
-        VaiTro vaiTroKhachHang = vaiTroRepository.findById(3) // ID 3 = Khách hàng
+        VaiTro vaiTroKhachHang = vaiTroRepository.findById(3) 
                 .orElseThrow(() -> new RuntimeException("Lỗi CSDL: Không tìm thấy Vai trò ID 3."));
         taiKhoan.setVaiTro(vaiTroKhachHang);
         TaiKhoan savedTaiKhoan = taiKhoanRepository.save(taiKhoan);
 
         KhachHang khachHang = new KhachHang();
         khachHang.setTaiKhoan(savedTaiKhoan);
-        khachHang.setHoTen(form.getHoTen());
-        khachHang.setEmail(form.getEmail());
-        khachHang.setSoDienThoai(form.getSoDienThoai());
+        khachHang.setHoTen(form.getHoTen()); 
+        khachHang.setEmail(form.getEmail()); 
+        khachHang.setSoDienThoai(form.getSoDienThoai()); 
         khachHang.setNgayTao(new Date());
         khachHangRepository.save(khachHang);
     }
     
-    // Đăng ký nhân viên
+    /**
+     * Xử lý đăng ký tài khoản nhân viên mới (lưu plaintext).
+     */
     @Transactional
     public void dangKyNhanVien(NhanVienDangKyForm form) {
         if (taiKhoanRepository.findByTenDangNhap(form.getTenDangNhap()).isPresent()) {
             throw new IllegalArgumentException("Tên đăng nhập đã tồn tại.");
         }
-        if (nhanVienRepository.existsByEmail(form.getEmail())) {
+         if (nhanVienRepository.existsByEmail(form.getEmail())) {
             throw new IllegalArgumentException("Email này đã được sử dụng.");
         }
         if (nhanVienRepository.existsBySoDienThoai(form.getSoDienThoai())) {
@@ -96,25 +103,62 @@ public class TaiKhoanService {
         nhanVien.setTaiKhoan(savedTaiKhoan);
         nhanVien.setMaNV(form.getMaNV());
         nhanVien.setHoTen(form.getHoTen());
-        nhanVien.setEmail(form.getEmail());
-        nhanVien.setSoDienThoai(form.getSoDienThoai());
+        nhanVien.setEmail(form.getEmail()); 
+        nhanVien.setSoDienThoai(form.getSoDienThoai()); 
         nhanVien.setNgayVaoLam(new Date());
         nhanVienRepository.save(nhanVien);
     }
     
-    // Khóa tài khoản
+    /**
+     * Lấy thông tin KhachHang (dữ liệu thô).
+     */
+    public KhachHang getDecryptedKhachHang(Integer id) {
+         return khachHangRepository.findById(id).orElse(null);
+    }
+    
+     /**
+      * Lấy thông tin NhanVien (dữ liệu thô).
+      */
+     public NhanVien getDecryptedNhanVien(Integer id) {
+         return nhanVienRepository.findById(id).orElse(null);
+     }
+
+     /**
+      * Lấy thông tin KhachHang của người dùng đang đăng nhập (dữ liệu thô).
+      */
+     public KhachHang getDecryptedKhachHangHienTai(Authentication authentication) {
+         if (authentication == null || !authentication.isAuthenticated()) {
+             throw new IllegalStateException("Người dùng chưa được xác thực.");
+         }
+         return khachHangRepository.findByTaiKhoan_TenDangNhap(authentication.getName())
+             .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng cho tài khoản: " + authentication.getName()));
+     }
+     
+      /**
+       * Lấy thông tin NhanVien của người dùng đang đăng nhập (dữ liệu thô).
+       */
+      public NhanVien getDecryptedNhanVienHienTai(Authentication authentication) {
+          if (authentication == null || !authentication.isAuthenticated()) {
+             throw new IllegalStateException("Người dùng chưa được xác thực.");
+         }
+         return nhanVienRepository.findByTaiKhoan_TenDangNhap(authentication.getName())
+              .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên cho tài khoản: " + authentication.getName()));
+      }
+    
+    /**
+     * Khóa tài khoản người dùng.
+     */
     @Transactional
     public void khoaTaiKhoan(Integer idTaiKhoan) {
         TaiKhoan taiKhoan = taiKhoanRepository.findById(idTaiKhoan)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản để khóa."));
-        
-        // TODO: Thêm logic kiểm tra (VD: không khóa admin cuối cùng)
-        
         taiKhoan.setTrangThai(false); 
         taiKhoanRepository.save(taiKhoan);
     }
 
-    // Mở khóa tài khoản
+    /**
+     * Mở khóa tài khoản người dùng.
+     */
     @Transactional
     public void moKhoaTaiKhoan(Integer idTaiKhoan) {
         TaiKhoan taiKhoan = taiKhoanRepository.findById(idTaiKhoan)
@@ -123,11 +167,11 @@ public class TaiKhoanService {
         taiKhoanRepository.save(taiKhoan);
     }
     
-    // Xử lý quên mật khẩu
+    /**
+     * Xử lý yêu cầu quên mật khẩu.
+     */
     public void processForgotPassword(String email) {
-        
         TaiKhoan taiKhoan = null;
-        
         Optional<KhachHang> khachHangOpt = khachHangRepository.findByEmail(email);
         if (khachHangOpt.isPresent()) {
             taiKhoan = khachHangOpt.get().getTaiKhoan();
@@ -144,13 +188,12 @@ public class TaiKhoanService {
         taiKhoan.setMaDatLaiMk(token);
         Instant expiryInstant = Instant.now().plus(15, ChronoUnit.MINUTES);
         taiKhoan.setThoiHanMa(Date.from(expiryInstant));
-        
         taiKhoanRepository.save(taiKhoan);
-
-        // emailService.sendPasswordResetEmail(email, token); // Tạm đóng
     }
     
-    // Xác thực token đổi mật khẩu
+    /**
+     * Xác thực token đặt lại mật khẩu.
+     */
     public TaiKhoan validatePasswordResetToken(String token) {
         TaiKhoan taiKhoan = taiKhoanRepository.findByMaDatLaiMk(token)
             .orElseThrow(() -> new IllegalArgumentException("Token không hợp lệ."));
@@ -161,7 +204,9 @@ public class TaiKhoanService {
         return taiKhoan;
     }
 
-    // Đổi mật khẩu người dùng
+    /**
+     * Thay đổi mật khẩu người dùng sau khi xác thực token.
+     */
     public void changeUserPassword(TaiKhoan taiKhoan, String newPassword) {
         taiKhoan.setMatKhau(passwordEncoder.encode(newPassword));
         taiKhoan.setMaDatLaiMk(null);

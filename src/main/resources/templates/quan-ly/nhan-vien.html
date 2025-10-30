@@ -54,11 +54,11 @@
                                                   th:action="@{/quan-ly/nhan-vien/khoa/{id}(id=${nv.id})}" 
                                                   method="post" style="display: inline-block;">
                                                 <button type="submit" class="btn btn-sm btn-warning" title="Khóa tài khoản" 
-                                                        th:onclick="'return confirm(\'Bạn có chắc muốn khóa tài khoản nhân viên ' + ${nv.maNV} + '?\');'">
+                                                        th:onclick="|return confirm('Bạn có chắc muốn khóa tài khoản nhân viên ${nv.maNV}?');|">
                                                     <i class="fas fa-lock"></i>
                                                 </button>
                                             </form>
-                                            <form th:if="${nv.taiKhoan != null and !nv.taiKhoan.trangThai}" 
+                                             <form th:if="${nv.taiKhoan != null and !nv.taiKhoan.trangThai}" 
                                                    th:action="@{/quan-ly/nhan-vien/mo-khoa/{id}(id=${nv.id})}" 
                                                    method="post" style="display: inline-block;">
                                                 <button type="submit" class="btn btn-sm btn-success" title="Mở khóa tài khoản"><i class="fas fa-unlock"></i></button>
@@ -80,81 +80,70 @@
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
-                 <div th:replace="~{ :: employeeForm(formAction=@{/quan-ly/nhan-vien/them}, formObject=${nhanVienForm}, modalId='taoNhanVienModal', modalTitle='Tạo Tài khoản Nhân viên Mới', submitButton='Tạo tài khoản')}"></div>
+                 <form th:action="@{/quan-ly/nhan-vien/them}" th:object="${nhanVienForm}" method="post" novalidate>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Tạo Tài khoản Nhân viên Mới</h5>
+                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                         <div th:if="${#fields.hasErrors('nhanVienForm.*')}" class="alert alert-danger">
+                             Vui lòng kiểm tra lại thông tin.
+                         </div>
+                        
+                        <div class="form-group">
+                            <label for="nvMaNV" class="form-label">Mã Nhân viên: (*)</label>
+                            <input type="text" id="nvMaNV" class="form-control" th:field="*{maNV}">
+                             <span th:if="${#fields.hasErrors('maNV')}" th:errors="*{maNV}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="nvHoTen" class="form-label">Họ Tên: (*)</label>
+                            <input type="text" id="nvHoTen" class="form-control" th:field="*{hoTen}">
+                            <span th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}" class="form-error"></span>
+                        </div>
+                         <div class="form-group">
+                            <label for="nvEmail" class="form-label">Email: (*)</label>
+                            <input type="email" id="nvEmail" class="form-control" th:field="*{email}">
+                            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="form-error"></span>
+                        </div>
+                         <div class="form-group">
+                            <label for="nvSdt" class="form-label">Số Điện thoại: (*)</label>
+                            <input type="tel" id="nvSdt" class="form-control" th:field="*{soDienThoai}">
+                            <span th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="nvTenDangNhap" class="form-label">Tên Đăng nhập: (*)</label>
+                            <input type="text" id="nvTenDangNhap" class="form-control" th:field="*{tenDangNhap}">
+                             <span th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="nvMatKhau" class="form-label">Mật khẩu: (*)</label>
+                            <input type="password" id="nvMatKhau" class="form-control" th:field="*{matKhau}">
+                            <span th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}" class="form-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="nvVaiTro" class="form-label">Vai trò: (*)</label>
+                            <select id="nvVaiTro" class="form-control" th:field="*{idVaiTro}">
+                                <option value="1">Quản lý</option>
+                                <option value="2">Shipper</option>
+                            </select>
+                            <span th:if="${#fields.hasErrors('idVaiTro')}" th:errors="*{idVaiTro}" class="form-error"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
     
-    <div th:fragment="employeeForm(formAction, formObject, modalId, modalTitle, submitButton)">
-          <form th:action="${formAction}" th:object="${formObject}" method="post" novalidate>
-              <input th:if="${formObject.maNV != null}" type="hidden" th:field="*{maNV}"/> 
-               
-              <div class="modal-header">
-                  <h5 class="modal-title" th:text="${modalTitle}"></h5>
-                  <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
-              </div>
-              <div class="modal-body">
-                   <div th:if="${#fields.hasErrors('${formObject.*}') and #fields.hasGlobalErrors()}" class="alert alert-danger">
-                       <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
-                   </div>
-                   <div th:if="${#fields.hasErrors('${formObject.*}') and !#fields.hasGlobalErrors() and (#object != null and #object.containsKey('org.springframework.validation.BindingResult.' + #strings.substringAfter(#object['__commandName__'], '.')))}" 
-                         class="alert alert-danger" role="alert">
-                        Vui lòng kiểm tra lại các trường thông tin.
-                    </div>
-                  
-                  <div class="form-group">
-                      <label th:for="${#ids.next('maNV')}" class="form-label">Mã Nhân viên: (*)</label>
-                      <input type="text" th:id="${#ids.prev('maNV')}" class="form-control" th:field="*{maNV}">
-                       <span th:if="${#fields.hasErrors('maNV')}" th:errors="*{maNV}" class="form-error"></span>
-                  </div>
-                  <div class="form-group">
-                      <label th:for="${#ids.next('hoTen')}" class="form-label">Họ Tên: (*)</label>
-                      <input type="text" th:id="${#ids.prev('hoTen')}" class="form-control" th:field="*{hoTen}">
-                      <span th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}" class="form-error"></span>
-                  </div>
-                   <div class="form-group">
-                      <label th:for="${#ids.next('email')}" class="form-label">Email: (*)</label>
-                      <input type="email" th:id="${#ids.prev('email')}" class="form-control" th:field="*{email}">
-                      <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="form-error"></span>
-                  </div>
-                   <div class="form-group">
-                      <label th:for="${#ids.next('soDienThoai')}" class="form-label">Số Điện thoại: (*)</label>
-                      <input type="tel" th:id="${#ids.prev('soDienThoai')}" class="form-control" th:field="*{soDienThoai}">
-                      <span th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}" class="form-error"></span>
-                  </div>
-                  <div class="form-group">
-                      <label th:for="${#ids.next('tenDangNhap')}" class="form-label">Tên Đăng nhập: (*)</label>
-                      <input type="text" th:id="${#ids.prev('tenDangNhap')}" class="form-control" th:field="*{tenDangNhap}">
-                       <span th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}" class="form-error"></span>
-                  </div>
-                  <div class="form-group">
-                      <label th:for="${#ids.next('matKhau')}" class="form-label">Mật khẩu: (*)</label>
-                      <input type="password" th:id="${#ids.prev('matKhau')}" class="form-control" th:field="*{matKhau}">
-                      <span th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}" class="form-error"></span>
-                  </div>
-                  <div class="form-group">
-                      <label th:for="${#ids.next('idVaiTro')}" class="form-label">Vai trò: (*)</label>
-                      <select th:id="${#ids.prev('idVaiTro')}" class="form-control" th:field="*{idVaiTro}">
-                          <option value="1">Quản lý</option>
-                          <option value="2">Shipper</option>
-                      </select>
-                      <span th:if="${#fields.hasErrors('idVaiTro')}" th:errors="*{idVaiTro}" class="form-error"></span>
-                  </div>
-              </div>
-              <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                  <button type="submit" class="btn btn-primary" th:text="${submitButton}"></button>
-              </div>
-          </form>
-     </div>
-
     <script th:src="@{/js/main.js}"></script>
      <script th:inline="javascript">
         /*<![CDATA[*/
+            // Sửa logic JS: Chỉ kiểm tra cờ (flag) từ RedirectAttribute
             var showThemModalNV = /*[[${showThemModalNV}]]*/ false;
-            // Kiểm tra lỗi của formObject trong fragment (dùng tên 'nhanVienForm')
-            var themNVFormErrors = /*[[${#fields.hasErrors('nhanVienForm.*')}]]*/ false; 
-            if (showThemModalNV || themNVFormErrors) {
+            if (showThemModalNV) {
                 openModal('taoNhanVienModal');
             }
         /*]]>*/
