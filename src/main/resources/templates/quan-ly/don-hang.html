@@ -40,10 +40,10 @@
                                         <td colspan="7" class="text-center">Không có đơn hàng nào.</td>
                                     </tr>
                                     <tr th:each="dh : ${donHangList}">
-                                        <td th:text="${dh.maVanDon}">DH12345</td>
-                                        <td th:text="${dh.khachHangGui.hoTen}">Nguyễn Văn A</td>
-                                        <td th:text="${dh.tenNguoiNhan}">Trần Thị B</td>
-                                        <td th:text="${dh.getShipperHienTai() != null ? dh.getShipperHienTai().getHoTen() : 'Chưa phân công'}">...</td>
+                                        <td th:text="${dh.maVanDon}"></td>
+                                        <td th:text="${dh.khachHangGui.hoTen}"></td>
+                                        <td th:text="${dh.tenNguoiNhan}"></td>
+                                        <td th:text="${dh.getShipperHienTai() != null ? dh.getShipperHienTai().getHoTen() : 'Chưa phân công'}"></td>
                                         <td>
                                             <span th:if="${dh.getTrangThaiHienTai() != null}" 
                                                   th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
@@ -53,17 +53,18 @@
                                                                    #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ lấy') ? 'badge-warning' : 'badge-info'}">
                                             </span>
                                         </td>
-                                        <td th:text="${#dates.format(dh.ngayTao, 'dd/MM/yyyy')}">20/10/2025</td>
+                                        <td th:text="${#dates.format(dh.ngayTao, 'dd/MM/yyyy')}"></td>
                                         <td class="table-actions">
+                                            
                                             <button th:if="${dh.getTrangThaiHienTai() != null && dh.getTrangThaiHienTai().idTrangThai == 1}" 
                                                     class="btn btn-sm btn-info" title="Phân công"
-                                                    th:onclick="|openPhanCongModal(${dh.idDonHang}, '${dh.maVanDon}')|">
+                                                    th:onclick="openPhanCongModal([[${dh.idDonHang}]], [[${dh.maVanDon}]])">
                                                 <i class="fas fa-user-plus"></i>
                                             </button>
                                             
                                             <div th:if="${dh.getTrangThaiHienTai() != null && dh.getTrangThaiHienTai().idTrangThai == 7}">
                                                 <button class="btn btn-sm btn-success" title="Giao lại"
-                                                        th:onclick="|openPhanCongModal(${dh.idDonHang}, '${dh.maVanDon}')|">
+                                                        th:onclick="openPhanCongModal([[${dh.idDonHang}]], [[${dh.maVanDon}]])">
                                                     <i class="fas fa-redo"></i>
                                                 </button>
                                                 <form th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display: inline-block;">

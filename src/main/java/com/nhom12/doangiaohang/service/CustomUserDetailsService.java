@@ -1,64 +1,75 @@
 package com.nhom12.doangiaohang.service;
 
+import com.nhom12.doangiaohang.model.KhachHang;
+import com.nhom12.doangiaohang.model.NhanVien;
 import com.nhom12.doangiaohang.model.TaiKhoan;
+import com.nhom12.doangiaohang.repository.KhachHangRepository;
+import com.nhom12.doangiaohang.repository.NhanVienRepository;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
+import com.nhom12.doangiaohang.utils.EncryptionUtil; // KÍCH HOẠT IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+import org.springframework.security.authentication.AnonymousAuthenticationToken; 
 
-import java.util.HashSet;
-import java.util.Set;
-
-@Service
-public class CustomUserDetailsService implements UserDetailsService {
+@Component
+public class CustomUserDetailsService {
 
     @Autowired
     private TaiKhoanRepository taiKhoanRepository;
+    @Autowired 
+    private KhachHangRepository khachHangRepository; 
+    @Autowired 
+    private NhanVienRepository nhanVienRepository; 
+    @Autowired 
+    private EncryptionUtil encryptionUtil; // KÍCH HOẠT AUTOWIRED
 
-    @Override
-    @Transactional(readOnly = true) // Đảm bảo việc đọc dữ liệu nhất quán
-    public UserDetails loadUserByUsername(String tenDangNhap) throws UsernameNotFoundException {
-        
-        // 1. Tìm tài khoản trong CSDL
-        TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với tên đăng nhập: " + tenDangNhap));
-
-        // 2. Kiểm tra tài khoản có bị khóa hay không
-        if (!taiKhoan.isTrangThai()) {
-            throw new UsernameNotFoundException("Tài khoản này đã bị khóa.");
+    /**
+     * Lấy đối tượng TaiKhoan của người dùng đang đăng nhập.
+     */
+    public TaiKhoan getTaiKhoanHienTai(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+             return null;
         }
+        String username = authentication.getName();
+        return taiKhoanRepository.findByTenDangNhap(username).orElse(null); 
+    }
 
-        // 3. Lấy thông tin vai trò
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        String vaiTro = taiKhoan.getVaiTro().getTenVaiTro();
-        
-        // Quan trọng: Spring Security yêu cầu tên vai trò phải có tiền tố "ROLE_"
-        // CSDL của chúng ta là "Quản lý", "Shipper", "Khách hàng"
-        // Chúng ta sẽ tự động thêm tiền tố
-        String roleName;
-        if (vaiTro.equals("Quản lý")) {
-            roleName = "ROLE_QUANLY";
-        } else if (vaiTro.equals("Shipper")) {
-            roleName = "ROLE_SHIPPER";
-        } else if (vaiTro.equals("Khách hàng")) {
-            roleName = "ROLE_KHACHHANG";
-        } else {
-            roleName = "ROLE_USER"; // Vai trò mặc định nếu có lỗi
+    /**
+     * Lấy đối tượng KhachHang (đã giải mã) của người dùng đang đăng nhập.
+     */
+    public KhachHang getKhachHangHienTai(Authentication authentication) {
+        TaiKhoan taiKhoan = getTaiKhoanHienTai(authentication);
+        if (taiKhoan == null) {
+             throw new IllegalStateException("Người dùng chưa được xác thực.");
         }
+        KhachHang kh = khachHangRepository.findByTaiKhoan_Id(taiKhoan.getId())
+             .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng cho tài khoản: " + taiKhoan.getTenDangNhap()));
         
-        authorities.add(new SimpleGrantedAuthority(roleName));
+        // KÍCH HOẠT GIẢI MÃ
+        kh.setHoTen(encryptionUtil.decrypt(kh.getHoTen()));
+        kh.setEmail(encryptionUtil.decrypt(kh.getEmail()));
+        kh.setSoDienThoai(encryptionUtil.decrypt(kh.getSoDienThoai()));
+        
+        return kh;
+    }
 
-        // 4. Tạo đối tượng UserDetails mà Spring Security có thể hiểu
-        return new User(
-            taiKhoan.getTenDangNhap(),
-            taiKhoan.getMatKhau(),
-            authorities // Danh sách các quyền
-        );
+    /**
+     * Lấy đối tượng NhanVien (đã giải mã) của người dùng đang đăng nhập.
+     */
+    public NhanVien getNhanVienHienTai(Authentication authentication) {
+        TaiKhoan taiKhoan = getTaiKhoanHienTai(authentication);
+         if (taiKhoan == null) {
+             throw new IllegalStateException("Người dùng chưa được xác thực.");
+        }
+        NhanVien nv = nhanVienRepository.findByTaiKhoan_Id(taiKhoan.getId())
+              .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên cho tài khoản: " + taiKhoan.getTenDangNhap()));
+              
+        // KÍCH HOẠT GIẢI MÃ
+        nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
+        nv.setEmail(encryptionUtil.decrypt(nv.getEmail()));
+        nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));
+        
+        return nv;
     }
 }

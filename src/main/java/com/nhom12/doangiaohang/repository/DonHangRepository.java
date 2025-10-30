@@ -12,22 +12,33 @@ import java.util.Optional;
 @Repository
 public interface DonHangRepository extends JpaRepository<DonHang, Integer> {
     
-    // Tìm đơn hàng bằng Mã vận đơn
+    /**
+     * Tìm đơn hàng bằng Mã vận đơn (dùng cho tra cứu).
+     */
     Optional<DonHang> findByMaVanDon(String maVanDon);
 
-    // Lấy tất cả đơn hàng của một Khách hàng (sắp xếp mới nhất trước)
+    /**
+     * Lấy tất cả đơn hàng của một Khách hàng (sắp xếp mới nhất trước).
+     */
     List<DonHang> findByKhachHangGui_IdOrderByIdDonHangDesc(Integer idKhachHang);
 
-    // Lấy tất cả đơn hàng (cho Quản lý)
+    /**
+     * Lấy tất cả đơn hàng (cho Quản lý).
+     */
     List<DonHang> findAllByOrderByIdDonHangDesc();
 
-    // Lấy các đơn hàng đang chờ xử lý của một Shipper cụ thể
-    // Query này tìm các đơn hàng mà bản ghi hành trình mới nhất có ID_NHAN_VIEN_THUC_HIEN là shipper đó
-    // và trạng thái đó nằm trong danh sách "cần xử lý"
+    /**
+     * Lấy các đơn hàng đang chờ xử lý của một Shipper cụ thể.
+     * Query này tìm các đơn hàng mà bản ghi hành trình mới nhất 
+     * có ID_NHAN_VIEN_THUC_HIEN là shipper đó
+     * và trạng thái đó nằm trong danh sách "cần xử lý".
+     */
+    // SỬA TỐI ƯU: Bỏ trạng thái 6 (Giao thất bại), vì logic service sẽ
+    // tự động chuyển sang 7 (Chờ xử lý) và gỡ gán shipper.
     @Query("SELECT dh FROM DonHang dh JOIN dh.hanhTrinh ht " +
            "WHERE ht.nhanVienThucHien.id = :shipperId " +
            "AND ht.thoiGianCapNhat = (SELECT MAX(ht2.thoiGianCapNhat) FROM HanhTrinhDonHang ht2 WHERE ht2.donHang = dh) " +
-           "AND ht.trangThai.idTrangThai IN (1, 2, 4, 6, 8) " + // SỬA Ở ĐÂY: Thêm 1 (Chờ lấy hàng)
+           "AND ht.trangThai.idTrangThai IN (1, 2, 4, 8) " + // 1:Chờ lấy, 2:Đã lấy, 4:Đang giao, 8:Đang hoàn kho
            "ORDER BY dh.idDonHang DESC")
     List<DonHang> findDonHangDangXuLyCuaShipper(@Param("shipperId") Integer shipperId);
 }

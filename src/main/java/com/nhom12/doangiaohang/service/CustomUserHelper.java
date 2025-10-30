@@ -6,12 +6,15 @@ import com.nhom12.doangiaohang.model.TaiKhoan;
 import com.nhom12.doangiaohang.repository.KhachHangRepository;
 import com.nhom12.doangiaohang.repository.NhanVienRepository;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
-// import com.nhom12.doangiaohang.utils.EncryptionUtil; // Gỡ bỏ import
+import com.nhom12.doangiaohang.utils.EncryptionUtil; // SỬA LỖI: KÍCH HOẠT IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.security.authentication.AnonymousAuthenticationToken; 
 
+/**
+ * Lớp tiện ích giúp lấy thông tin (đã giải mã) của người dùng đang đăng nhập.
+ */
 @Component
 public class CustomUserHelper {
 
@@ -21,8 +24,8 @@ public class CustomUserHelper {
     private KhachHangRepository khachHangRepository; 
     @Autowired 
     private NhanVienRepository nhanVienRepository; 
-    // @Autowired 
-    // private EncryptionUtil encryptionUtil; // Gỡ bỏ Autowired
+    @Autowired 
+    private EncryptionUtil encryptionUtil; // SỬA LỖI: KÍCH HOẠT AUTOWIRED
 
     /**
      * Lấy đối tượng TaiKhoan của người dùng đang đăng nhập.
@@ -36,7 +39,7 @@ public class CustomUserHelper {
     }
 
     /**
-     * Lấy đối tượng KhachHang của người dùng đang đăng nhập (dữ liệu thô).
+     * Lấy đối tượng KhachHang (đã giải mã PII) của người dùng đang đăng nhập.
      */
     public KhachHang getKhachHangHienTai(Authentication authentication) {
         TaiKhoan taiKhoan = getTaiKhoanHienTai(authentication);
@@ -46,12 +49,16 @@ public class CustomUserHelper {
         KhachHang kh = khachHangRepository.findByTaiKhoan_Id(taiKhoan.getId())
              .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng cho tài khoản: " + taiKhoan.getTenDangNhap()));
         
-        // Không giải mã
+        // KÍCH HOẠT GIẢI MÃ PII (Mức Ứng dụng)
+        kh.setHoTen(encryptionUtil.decrypt(kh.getHoTen()));
+        kh.setEmail(encryptionUtil.decrypt(kh.getEmail()));
+        kh.setSoDienThoai(encryptionUtil.decrypt(kh.getSoDienThoai()));
+        
         return kh;
     }
 
     /**
-     * Lấy đối tượng NhanVien của người dùng đang đăng nhập (dữ liệu thô).
+     * Lấy đối tượng NhanVien (đã giải mã PII) của người dùng đang đăng nhập.
      */
     public NhanVien getNhanVienHienTai(Authentication authentication) {
         TaiKhoan taiKhoan = getTaiKhoanHienTai(authentication);
@@ -61,7 +68,11 @@ public class CustomUserHelper {
         NhanVien nv = nhanVienRepository.findByTaiKhoan_Id(taiKhoan.getId())
               .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên cho tài khoản: " + taiKhoan.getTenDangNhap()));
               
-        // Không giải mã
+        // KÍCH HOẠT GIẢI MÃ PII (Mức Ứng dụng)
+        nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
+        nv.setEmail(encryptionUtil.decrypt(nv.getEmail()));
+        nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));
+        
         return nv;
     }
 }

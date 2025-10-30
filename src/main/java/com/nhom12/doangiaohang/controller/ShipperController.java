@@ -20,17 +20,25 @@ public class ShipperController {
     @Autowired private DonHangService donHangService;
     @Autowired private TrangThaiDonHangRepository trangThaiDonHangRepository; 
 
+    /**
+     * Hiển thị trang chủ (dashboard) của Shipper.
+     */
     @GetMapping("/dashboard")
     public String dashboard() {
         return "shipper/dashboard";
     }
 
+    /**
+     * Hiển thị danh sách đơn hàng được gán cho Shipper hiện tại.
+     */
     @GetMapping("/don-hang")
     public String donHangCanXuLy(Authentication authentication, Model model) {
         List<DonHang> donHangList = donHangService.getDonHangCuaShipperHienTai(authentication);
-        // Lấy các trạng thái mà shipper được phép cập nhật
+        
+        // SỬA LỖI LOGIC: Thêm trạng thái 9 (Đã hoàn kho)
+        // Shipper cần quyền này để hoàn tất quy trình "Hoàn kho" (từ trạng thái 8 -> 9)
         List<TrangThaiDonHang> trangThaiList = trangThaiDonHangRepository.findAllById(
-                List.of(2, 4, 5, 6) // 2:Đã lấy, 4:Đang giao, 5:Thành công, 6:Thất bại
+                List.of(2, 4, 5, 6, 9) // 2:Đã lấy, 4:Đang giao, 5:Thành công, 6:Thất bại, 9:Đã hoàn kho
         );
 
         model.addAttribute("donHangList", donHangList);
@@ -38,16 +46,17 @@ public class ShipperController {
         return "shipper/don-hang";
     }
 
+    /**
+     * Xử lý việc Shipper cập nhật trạng thái đơn hàng (lấy hàng, giao hàng, thất bại, hoàn kho).
+     */
     @PostMapping("/don-hang/cap-nhat")
     public String capNhatTrangThai(@RequestParam("idDonHang") Integer idDonHang,
                                    @RequestParam("idTrangThaiMoi") Integer idTrangThaiMoi,
                                    @RequestParam(value = "ghiChu", required = false) String ghiChu,
-                                   // Thêm 2 tham số mới
                                    @RequestParam(value = "daThanhToanCod", defaultValue = "false") boolean daThanhToanCod,
                                    Authentication authentication,
                                    RedirectAttributes redirectAttributes) {
         try {
-            // Truyền tham số mới vào service
             donHangService.capNhatTrangThai(idDonHang, idTrangThaiMoi, ghiChu, daThanhToanCod, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {

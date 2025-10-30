@@ -24,7 +24,7 @@ body {
     background-color: var(--light-bg);
     color: var(--dark-text);
     margin: 0;
-    font-size: 0.95rem; /* Slightly smaller base font */
+    font-size: 0.95rem;
     line-height: 1.6;
 }
 
@@ -52,7 +52,7 @@ a:hover { color: #2e59d9; }
     z-index: 1000;
 }
 .sidebar-brand {
-    font-size: 1.4rem; /* Adjusted size */
+    font-size: 1.4rem;
     font-weight: 700;
     text-align: center;
     padding: 1.2rem 0;
@@ -66,13 +66,13 @@ a:hover { color: #2e59d9; }
 
 .sidebar-menu { list-style: none; padding: 0; margin: 1.5rem 0 0 0; }
 .sidebar-menu li a {
-    display: flex; /* Use flex for alignment */
+    display: flex;
     align-items: center;
-    padding: 14px 25px; /* Adjusted padding */
-    color: rgba(255, 255, 255, 0.7); /* Slightly dimmer */
+    padding: 14px 25px;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: all 0.2s ease;
-    border-left: 4px solid transparent; /* Wider indicator */
+    border-left: 4px solid transparent;
     font-size: 0.9rem;
 }
 .sidebar-menu li a:hover, .sidebar-menu li.active a {
@@ -84,7 +84,7 @@ a:hover { color: #2e59d9; }
     margin-right: 12px;
     width: 20px;
     text-align: center;
-    font-size: 1.1em; /* Make icons slightly larger */
+    font-size: 1.1em;
 }
 
 .main-content {
@@ -92,22 +92,22 @@ a:hover { color: #2e59d9; }
     width: calc(100% - var(--sidebar-width));
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Ensure footer stays down */
+    min-height: 100vh;
 }
 .topbar {
     background-color: var(--white);
-    padding: 0 2rem; /* Adjusted padding */
+    padding: 0 2rem;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    height: 70px; /* Fixed height */
-    position: sticky; /* Make topbar sticky */
+    height: 70px;
+    position: sticky;
     top: 0;
     z-index: 999;
 }
 .user-info { position: relative; }
-.user-info .username-trigger { /* The clickable element */
+.user-info .username-trigger {
     display: flex;
     align-items: center;
     padding: 10px;
@@ -122,7 +122,7 @@ a:hover { color: #2e59d9; }
     position: absolute;
     right: 0;
     top: 100%;
-    margin-top: 5px; /* Reduced margin */
+    margin-top: 5px;
     background-color: var(--white);
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -134,7 +134,7 @@ a:hover { color: #2e59d9; }
 }
 .user-info .dropdown-menu.show { display: block; }
 .dropdown-menu a, .dropdown-menu button {
-    display: flex; /* Align icon and text */
+    display: flex;
     align-items: center;
     width: 100%;
     padding: 10px 20px;
@@ -144,7 +144,7 @@ a:hover { color: #2e59d9; }
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 0.9rem; /* Adjusted size */
+    font-size: 0.9rem;
     font-family: 'Be Vietnam Pro', sans-serif;
 }
 .dropdown-menu a:hover, .dropdown-menu button:hover { background-color: var(--light-bg); }
@@ -152,7 +152,7 @@ a:hover { color: #2e59d9; }
 
 .page-content { padding: 2.5rem; flex-grow: 1; }
 .page-header {
-    font-size: 1.8rem; /* Adjusted size */
+    font-size: 1.8rem;
     font-weight: 600;
     margin-bottom: 2rem;
     color: var(--dark-text);
@@ -218,7 +218,7 @@ a:hover { color: #2e59d9; }
     padding: 0.9rem 1rem;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
 }
 .table thead th {
     background-color: var(--light-bg);
@@ -229,19 +229,19 @@ a:hover { color: #2e59d9; }
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-.table tbody tr:hover { background-color: #f1f3f9; } /* Subtle hover */
+.table tbody tr:hover { background-color: #f1f3f9; }
 .table-actions a, .table-actions button {
-    margin-right: 8px; /* Slightly reduced margin */
+    margin-right: 8px;
     color: var(--secondary-color);
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px 4px; /* Small padding for easier clicking */
-    font-size: 1.1em; /* Make icons slightly larger */
+    padding: 2px 4px;
+    font-size: 1.1em;
     transition: color 0.2s ease;
 }
 .table-actions a:hover, .table-actions button:hover { color: var(--primary-color); }
-.table-actions .text-danger:hover { color: #c82333; } /* Darker red on hover */
+.table-actions .text-danger:hover { color: #c82333; }
 .table .badge {
     padding: 0.3em 0.6em;
     font-size: 0.75em;
@@ -292,27 +292,31 @@ textarea.form-control { min-height: 100px; }
     width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1040;
-    display: none; /* Hidden by default */
+    display: none; /* Ẩn mặc định */
 }
 .modal {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     z-index: 1050;
-    display: none; /* Hidden by default */
+    display: none; /* SỬA LỖI: Ẩn mặc định (xóa 'display: flex') */
     overflow: hidden;
     outline: 0;
-    display: flex;
+}
+/* SỬA LỖI: Chỉ 'flex' khi modal có class 'show' */
+.modal.show { 
+    display: flex; 
     align-items: center;
     justify-content: center;
+} 
+.modal.show .modal-backdrop { 
+    display: block; /* Hiện backdrop khi modal show */
 }
-.modal.show { display: flex; } /* Show modal */
-.modal.show .modal-backdrop { display: block; } /* Show backdrop */
 
 .modal-dialog {
     position: relative;
     width: auto;
-    max-width: 500px; /* Default size */
+    max-width: 500px;
     margin: 1.75rem auto;
 }
 .modal-content {
@@ -338,7 +342,7 @@ textarea.form-control { min-height: 100px; }
     border-top-right-radius: calc(0.75rem - 1px);
 }
 .modal-title { margin-bottom: 0; line-height: 1.5; font-size: 1.25rem; font-weight: 500; }
-.btn-close { /* Simple X button */
+.btn-close {
     background: transparent;
     border: 0;
     font-size: 1.5rem;
