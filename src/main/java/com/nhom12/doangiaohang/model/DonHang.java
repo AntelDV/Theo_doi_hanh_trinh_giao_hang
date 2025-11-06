@@ -45,7 +45,6 @@ public class DonHang {
     private String diaChiGiaoHang;
 
     // =================================================================
-    // KẾT HỢP 2 MỨC MÃ HÓA (ỨNG DỤNG & CSDL)
     
     /**
      * CỘT ĐỂ VIẾT (WRITE):
@@ -60,17 +59,20 @@ public class DonHang {
      * TRƯỜNG ĐỂ ĐỌC (READ):
      * Trường này KHÔNG phải là cột, nó là một CÔNG THỨC (@Formula).
      * Khi SELECT, Hibernate sẽ tự động chạy hàm CSDL để GIẢI MÃ.
-     * UTL_RAW.CAST_TO_VARCHAR2 là để chuyển RAW (đã giải mã) về String.
-     * Trường này là READ-ONLY.
      */
     @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(GHI_CHU_KHACH_HANG))")
+    
+    // === SỬA LỖI TẠI ĐÂY ===
+    // Thêm @Transient để báo cho JPA bỏ qua trường này khi INSERT/UPDATE,
+    // giải quyết xung đột Ánh xạ Trùng lặp (DuplicateMappingException)
+    // và lỗi Rollback Giao dịch.
+    @Transient
     private String ghiChuKhachHang; 
 
     /**
      * HÀM HỖ TRỢ VIẾT (WRITE HELPER):
-     * Vì trường 'ghiChuKhachHang' ở trên là READ-ONLY,
-     * chúng ta dùng hàm này (từ Controller/Service) để set giá trị
-     * cho trường 'ghiChuKhachHangRaw' (trường sẽ được ghi).
+     * Dùng để set giá trị cho trường 'ghiChuKhachHangRaw'.
+     * (Hàm này đã chính xác)
      */
     public void setGhiChuKhachHangPlainText(String plainText) {
         if (plainText != null && !plainText.isEmpty()) {
@@ -79,8 +81,6 @@ public class DonHang {
             this.ghiChuKhachHangRaw = null;
         }
     }
-
-    // Xóa bỏ các hàm @PostLoad và @PrePersist vì chúng ta đã dùng @Formula
     
     // =================================================================
 

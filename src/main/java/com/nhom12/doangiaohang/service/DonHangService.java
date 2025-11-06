@@ -2,8 +2,8 @@ package com.nhom12.doangiaohang.service;
 
 import com.nhom12.doangiaohang.model.*;
 import com.nhom12.doangiaohang.repository.*;
-// Gỡ bỏ import không cần thiết cho ghi chú, nhưng VẪN GIỮ cho PII
-// import com.nhom12.doangiaohang.utils.EncryptionUtil; 
+// === THÊM IMPORT NÀY ===
+import com.nhom12.doangiaohang.utils.EncryptionUtil; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional; 
 import java.util.UUID;
-import java.util.stream.Collectors; 
+// import java.util.stream.Collectors; // Gỡ bỏ import không dùng
 
 @Service
 public class DonHangService {
@@ -25,15 +25,38 @@ public class DonHangService {
     @Autowired private DiaChiRepository diaChiRepository;
     @Autowired private ThanhToanRepository thanhToanRepository; 
     @Autowired private CustomUserHelper userHelper; 
-    // @Autowired private EncryptionUtil encryptionUtil; // Không cần cho file này nữa
     @Autowired private TaiKhoanService taiKhoanService; 
     @Autowired private NhatKyVanHanhService nhatKyVanHanhService; 
 
+    // === THÊM ENCRYPTION UTIL ===
+    @Autowired 
+    private EncryptionUtil encryptionUtil;
+
     /**
-     * (SỬA LỖI 3 - KẾT HỢP)
+     * === THÊM HÀM MỚI ===
+     * Hàm tiện ích nội bộ để GIẢI MÃ PII của một đơn hàng.
+     * @param donHang Đơn hàng với dữ liệu PII đang bị mã hóa.
+     */
+    private void decryptDonHangPII(DonHang donHang) {
+        if (donHang != null) {
+            try {
+                donHang.setTenNguoiNhan(encryptionUtil.decrypt(donHang.getTenNguoiNhan()));
+                donHang.setSdtNguoiNhan(encryptionUtil.decrypt(donHang.getSdtNguoiNhan()));
+                donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(donHang.getDiaChiGiaoHang()));
+            } catch (Exception e) {
+                // Ghi log lỗi nếu có vấn đề giải mã
+                System.err.println("Lỗi giải mã PII cho DonHang " + donHang.getMaVanDon() + ": " + e.getMessage());
+                // Set giá trị mặc định để tránh crash giao diện
+                donHang.setTenNguoiNhan("[Lỗi giải mã]");
+                donHang.setSdtNguoiNhan("[Lỗi giải mã]");
+                donHang.setDiaChiGiaoHang("[Lỗi giải mã]");
+            }
+        }
+    }
+
+    /**
      * Tạo đơn hàng mới.
-     * Gỡ bỏ mã hóa 'ghiChuKhachHang' ở mức ứng dụng.
-     * Thay vào đó, gọi hàm setGhiChuKhachHangPlainText để CSDL tự mã hóa.
+     * === CẬP NHẬT: MÃ HÓA PII (Tên, SĐT, Địa chỉ) TRƯỚC KHI LƯU ===
      */
     @Transactional 
     public DonHang taoDonHangMoi(DonHang donHang, Integer idDiaChiLayHang, Authentication authentication) {
@@ -52,10 +75,14 @@ public class DonHangService {
         donHang.setMaVanDon("DH" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         donHang.setNgayTao(new Date());
 
-        // (SỬA LỖI 3 - KẾT HỢP)
-        // Lấy String từ Form (donHang.getGhiChuKhachHang()) 
-        // và set nó vào trường RAW (plaintext) để Trigger CSDL mã hóa.
+        // Kích hoạt Trigger CSDL mã hóa Ghi chú
         donHang.setGhiChuKhachHangPlainText(donHang.getGhiChuKhachHang());
+
+        // === THÊM MỚI: MÃ HÓA ĐỐI XỨNG (AES) CHO PII CỦA NGƯỜI NHẬN ===
+        donHang.setTenNguoiNhan(encryptionUtil.encrypt(donHang.getTenNguoiNhan()));
+        donHang.setSdtNguoiNhan(encryptionUtil.encrypt(donHang.getSdtNguoiNhan()));
+        donHang.setDiaChiGiaoHang(encryptionUtil.encrypt(donHang.getDiaChiGiaoHang()));
+        // ==========================================================
 
         if (donHang.getThanhToan() != null) {
             donHang.getThanhToan().setDonHang(donHang); 
@@ -80,21 +107,28 @@ public class DonHangService {
         if(tk != null) {
              nhatKyVanHanhService.logAction(tk, "Tạo đơn hàng", "DON_HANG", savedDonHang.getIdDonHang(), "Khách hàng tạo đơn hàng mới: " + savedDonHang.getMaVanDon());
         }
-
+        
+        // Giải mã PII trước khi trả về (để hiển thị thông báo thành công)
+        decryptDonHangPII(savedDonHang);
         return savedDonHang;
     }
     
     /**
-     * (SỬA LỖI 3 - KẾT HỢP)
-     * Gỡ bỏ toàn bộ logic giải mã ở đây.
-     * @Formula trong DonHang.java sẽ tự động giải mã khi SELECT.
+     * === CẬP NHẬT: GIẢI MÃ PII KHI ĐỌC RA ===
      */
     public List<DonHang> getDonHangCuaKhachHangHienTai(Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication); 
         List<DonHang> list = donHangRepository.findByKhachHangGui_IdOrderByIdDonHangDesc(kh.getId());
+        
+        // Giải mã PII cho từng đơn hàng
+        list.forEach(this::decryptDonHangPII); 
+        
         return list; 
     }
     
+    /**
+     * === CẬP NHẬT: GIẢI MÃ PII KHI ĐỌC RA ===
+     */
     public DonHang getChiTietDonHangCuaKhachHang(String maVanDon, Authentication authentication) {
         DonHang donHang = donHangRepository.findByMaVanDon(maVanDon)
                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
@@ -102,28 +136,54 @@ public class DonHangService {
         if (!donHang.getKhachHangGui().getId().equals(kh.getId())) {
              throw new SecurityException("Bạn không có quyền xem đơn hàng này.");
         }
+        
+        // Giải mã PII
+        decryptDonHangPII(donHang); 
+        
         return donHang; 
     }
     
+    /**
+     * === CẬP NHẬT: GIẢI MÃ PII KHI ĐỌC RA ===
+     * Dùng cho trang tra cứu CÔNG KHAI và cả nội bộ
+     */
     public DonHang getDonHangByMaVanDon(String maVanDon) {
         DonHang donHang = donHangRepository.findByMaVanDon(maVanDon)
                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
+        
+        // Giải mã PII
+        decryptDonHangPII(donHang); 
+        
         return donHang; 
     }
 
+    /**
+     * === CẬP NHẬT: GIẢI MÃ PII KHI ĐỌC RA ===
+     */
     public List<DonHang> getAllDonHangForQuanLy() {
        List<DonHang> list = donHangRepository.findAllByOrderByIdDonHangDesc();
+       
+       // Giải mã PII cho từng đơn hàng
+       list.forEach(this::decryptDonHangPII);
+       
        return list;
     }
     
+    /**
+     * === CẬP NHẬT: GIẢI MÃ PII KHI ĐỌC RA ===
+     */
     public List<DonHang> getDonHangCuaShipperHienTai(Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication); 
         List<DonHang> list = donHangRepository.findDonHangDangXuLyCuaShipper(shipper.getId());
+        
+        // Giải mã PII cho từng đơn hàng
+        list.forEach(this::decryptDonHangPII);
+        
         return list;
     }
     
     // =================================================================
-    // CÁC HÀM BÊN DƯỚI ĐÃ CHẠY ĐÚNG LOGIC, GIỮ NGUYÊN
+    // CÁC HÀM BÊN DƯỚI (LOGIC NGHIỆP VỤ) ĐÃ CHẠY ĐÚNG, GIỮ NGUYÊN
     // =================================================================
 
     @Transactional

@@ -79,11 +79,25 @@
                         <p><strong>Mã vận đơn:</strong> <span th:text="${donHang.maVanDon}"></span></p>
                         <p><strong>Ngày tạo:</strong> <span th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></span></p>
                         <hr>
-                        <p><strong>Người gửi:</strong> <span th:text="${donHang.khachHangGui.hoTen}"></span></p>
                         <p><strong>Từ:</strong> <span th:text="${donHang.diaChiLayHang.quanHuyen} + ', ' + ${donHang.diaChiLayHang.tinhTp}"></span></p>
                         <hr>
-                        <p><strong>Người nhận:</strong> <span th:text="${donHang.tenNguoiNhan}"></span></p>
-                        <p><strong>Đến:</strong> <span th:text="${donHang.diaChiGiaoHang}"></span></p>
+                        
+                        <p>
+                            <strong>Người nhận:</strong>
+                            <span th:if="${donHang.tenNguoiNhan != null && #strings.length(donHang.tenNguoiNhan) > 2}"
+                                  th:text="${#strings.substring(donHang.tenNguoiNhan, 0, 1) + '***' + #strings.substring(donHang.tenNguoiNhan, #strings.length(donHang.tenNguoiNhan) - 1, #strings.length(donHang.tenNguoiNhan))}">
+                            </span>
+                            <span th:if="${donHang.tenNguoiNhan == null || #strings.length(donHang.tenNguoiNhan) <= 2}">***</span>
+                        </p>
+                        <p>
+                            <strong>Đến:</strong>
+                            <span th:if="${donHang.diaChiGiaoHang != null && #strings.contains(donHang.diaChiGiaoHang, ',')}"
+                                  th:with="parts=${#strings.arraySplit(donHang.diaChiGiaoHang, ',')}"
+                                  th:text="${parts.length > 2 ? '******, ' + parts[parts.length-2] + ', ' + parts[parts.length-1] : '******, ' + donHang.diaChiGiaoHang}">
+                            </span>
+                            <span th:if="${donHang.diaChiGiaoHang != null && !#strings.contains(donHang.diaChiGiaoHang, ',')}">******</span>
+                            <span th:if="${donHang.diaChiGiaoHang == null}">[Chưa rõ]</span>
+                        </p>
                         <hr>
                         <p><strong>Thu hộ (COD):</strong> <span th:text="${#numbers.formatCurrency(donHang.thanhToan.tongTienCod)}"></span></p>
                     </div>

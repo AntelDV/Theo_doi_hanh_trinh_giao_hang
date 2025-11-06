@@ -51,8 +51,11 @@
                                             </span>
                                         </td>
                                         <td class="table-actions">
-                                            <button class="btn btn-sm btn-primary" 
-                                                    th:onclick="|openCapNhatModal(${dh.idDonHang}, '${dh.maVanDon}', ${dh.thanhToan != null ? dh.thanhToan.tongTienCod : 0})|">
+                                            <button class="btn btn-sm btn-primary"
+                                                    th:data-id="${dh.idDonHang}"
+                                                    th:data-ma="${dh.maVanDon}"
+                                                    th:data-cod="${dh.thanhToan != null ? dh.thanhToan.tongTienCod : 0}"
+                                                    onclick="handleOpenModal(this)">
                                                 <i class="fas fa-edit"></i> Cập nhật
                                             </button>
                                         </td>
@@ -101,7 +104,7 @@
 
                         <div class="form-group">
                              <label for="ghiChuShipper" class="form-label">Ghi chú:</label>
-                            <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" placeholder="Bắt buộc nếu giao thất bại..."></textarea>
+                             <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" placeholder="Ghi chú (nếu có)..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -115,6 +118,18 @@
 
     <script th:src="@{/js/main.js}"></script>
     <script>
+        /**
+         * Hàm này đọc các thuộc tính data-* an toàn từ button
+         * và sau đó gọi hàm openCapNhatModal với dữ liệu đã đọc.
+         */
+        function handleOpenModal(buttonElement) {
+            const idDonHang = buttonElement.getAttribute('data-id');
+            const maVanDon = buttonElement.getAttribute('data-ma');
+            const tienCod = buttonElement.getAttribute('data-cod');
+            
+            openCapNhatModal(idDonHang, maVanDon, tienCod);
+        }
+
         // Cập nhật hàm JS để nhận tiền COD
         function openCapNhatModal(idDonHang, maVanDon, tienCod) {
             document.getElementById('idDonHangCapNhat').value = idDonHang;
@@ -122,16 +137,21 @@
             document.getElementById('selectTrangThai').value = '';
             document.getElementById('ghiChuShipper').value = '';
             
+            // === SỬA LỖI LOGIC: Reset trạng thái required khi mở modal ===
+            document.getElementById('ghiChuShipper').required = false;
+            document.getElementById('ghiChuShipper').placeholder = "Ghi chú (nếu có)...";
+            // =======================================================
+            
             // Xử lý logic COD
             const codSection = document.getElementById('codSection');
             const soTienCodSpan = document.getElementById('soTienCod');
             const daThanhToanCodCheckbox = document.getElementById('daThanhToanCod');
             
-            if (tienCod > 0) {
-                // Chỉ hiển thị mục COD nếu trạng thái "Giao thành công" (ID 5) được chọn
-                soTienCodSpan.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tienCod);
+            const tienCodNum = parseFloat(tienCod) || 0;
+            
+            if (tienCodNum > 0) {
+                soTienCodSpan.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tienCodNum);
                 daThanhToanCodCheckbox.checked = false;
-                // Ẩn ban đầu, chỉ hiện khi chọn đúng trạng thái
                 codSection.style.display = 'none'; 
             } else {
                 codSection.style.display = 'none'; // Ẩn nếu không có COD
@@ -140,18 +160,26 @@
             openModal('capNhatTrangThaiModal');
         }
 
-        // Hàm JS mới để ẩn/hiện mục COD
+        // === SỬA HÀM NÀY ĐỂ THÊM LOGIC VALIDATION ===
         function toggleCodSection(selectedTrangThaiId) {
             const codSection = document.getElementById('codSection');
             const soTienCodSpan = document.getElementById('soTienCod');
+            const ghiChuTextarea = document.getElementById('ghiChuShipper'); // Lấy ô ghi chú
             
-            // Chỉ hiển thị mục COD nếu:
-            // 1. Trạng thái được chọn là "Giao thành công" (ID 5)
-            // 2. Số tiền COD có giá trị (kiểm tra text trong span)
+            // 1. Xử lý logic COD (như cũ)
             if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0đ') {
                 codSection.style.display = 'block';
             } else {
                 codSection.style.display = 'none';
+            }
+            
+            // 2. === THÊM LOGIC MỚI: BẮT BUỘC NHẬP GHI CHÚ KHI GIAO THẤT BẠI (ID 6) ===
+            if (selectedTrangThaiId == '6') { 
+                ghiChuTextarea.required = true;
+                ghiChuTextarea.placeholder = "Bắt buộc nhập lý do thất bại...";
+            } else {
+                ghiChuTextarea.required = false;
+                ghiChuTextarea.placeholder = "Ghi chú (nếu có)...";
             }
         }
     </script>
