@@ -299,18 +299,18 @@ textarea.form-control { min-height: 100px; }
     top: 0; left: 0;
     width: 100%; height: 100%;
     z-index: 1050;
-    display: none; /* SỬA LỖI: Ẩn mặc định (xóa 'display: flex') */
+    display: none; /* Ẩn mặc định */
     overflow: hidden;
     outline: 0;
 }
-/* SỬA LỖI: Chỉ 'flex' khi modal có class 'show' */
 .modal.show { 
     display: flex; 
     align-items: center;
     justify-content: center;
 } 
+/* Sửa lỗi CSS: backdrop chỉ hiện khi modal 'show' */
 .modal.show .modal-backdrop { 
-    display: block; /* Hiện backdrop khi modal show */
+    display: block;
 }
 
 .modal-dialog {
@@ -318,6 +318,11 @@ textarea.form-control { min-height: 100px; }
     width: auto;
     max-width: 500px;
     margin: 1.75rem auto;
+    /* SỬA LỖI 2: MODAL "MÀN ĐEN"
+      Thêm z-index cao hơn backdrop (1040) để đảm bảo form
+      luôn nổi lên trên lớp nền mờ.
+    */
+    z-index: 1051; 
 }
 .modal-content {
     position: relative;
@@ -378,3 +383,22 @@ textarea.form-control { min-height: 100px; }
 .auth-form .form-control { padding: 12px 15px; border-radius: 8px; }
 .auth-link { margin-top: 1.5rem; font-size: 0.9rem; }
 .auth-link a { font-weight: 500; }
+
+
+/* SỬA LỖI 3: FORM XẤU
+  Thêm một class tiện ích dùng CSS Grid
+  để chia layout thành 2 cột
+*/
+.row-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem; /* Khoảng cách giữa 2 cột */
+}
+
+/* Sửa lỗi hiển thị trên màn hình nhỏ hơn cho grid */
+@media (max-width: 576px) {
+    .row-grid-2 {
+        grid-template-columns: 1fr; /* 1 cột trên điện thoại */
+        gap: 0; /* Bỏ khoảng cách cột */
+    }
+}

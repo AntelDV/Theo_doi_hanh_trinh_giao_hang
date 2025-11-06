@@ -5,7 +5,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+// Thêm 2 import này
+import org.hibernate.annotations.Formula;
 import java.nio.charset.StandardCharsets;
+
 import java.util.Date;
 import java.util.List;
 
@@ -42,68 +45,43 @@ public class DonHang {
     private String diaChiGiaoHang;
 
     // =================================================================
-    // SỬA LỖI XUNG ĐỘT HIBERNATE (RAW(255) vs RAW(2000))
+    // KẾT HỢP 2 MỨC MÃ HÓA (ỨNG DỤNG & CSDL)
     
     /**
-     * Trường này mapping với cột RAW(2000) trong CSDL.
-     * SỬA LỖI: Thêm (length = 2000) để Hibernate không cố gắng 
-     * thay đổi nó về 255 byte.
+     * CỘT ĐỂ VIẾT (WRITE):
+     * Trường này map với cột RAW(2000). 
+     * Ứng dụng sẽ GHI byte[] (plaintext) vào đây.
+     * Trigger CSDL sẽ BẮT LẤY và MÃ HÓA nó.
      */
     @Column(name = "GHI_CHU_KHACH_HANG", length = 2000)
     private byte[] ghiChuKhachHangRaw;
 
     /**
-     * Trường này KHÔNG lưu vào CSDL (@Transient).
-     * Dùng để Form (UI) và Service (logic) làm việc (dạng String).
+     * TRƯỜNG ĐỂ ĐỌC (READ):
+     * Trường này KHÔNG phải là cột, nó là một CÔNG THỨC (@Formula).
+     * Khi SELECT, Hibernate sẽ tự động chạy hàm CSDL để GIẢI MÃ.
+     * UTL_RAW.CAST_TO_VARCHAR2 là để chuyển RAW (đã giải mã) về String.
+     * Trường này là READ-ONLY.
      */
-    @Transient
+    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(GHI_CHU_KHACH_HANG))")
     private String ghiChuKhachHang; 
 
     /**
-     * Tự động chạy SAU KHI load dữ liệu từ CSDL.
-     * Chuyển đổi byte[] (ghiChuKhachHangRaw) sang String (ghiChuKhachHang).
-     * * QUAN TRỌNG: 
-     * Vì CSDL đã mã hóa (Mức CSDL), chúng ta không thể giải mã nó ở đây.
-     * Chúng ta phải gọi hàm giải mã của Oracle.
-     * * GIẢI PHÁP TỐT NHẤT:
-     * (Giữ nguyên từ file CSDL_NHOM12.sql của bạn)
-     * ALTER TABLE DON_HANG MODIFY GHI_CHU_KHACH_HANG NVARCHAR2(500);
-     * * Sau đó, thay thế @PostLoad và @PrePersist bằng:
-     * * @Column(name = "GHI_CHU_KHACH_HANG")
-     * @Convert(converter = GhiChuConverter.class) // Cần tạo 1 class Converter
-     * private String ghiChuKhachHang;
-     * * Tuy nhiên, để giữ cho CSDL của bạn (với Trigger và RAW) hoạt động,
-     * chúng ta sẽ giữ nguyên logic @PostLoad/@PrePersist.
+     * HÀM HỖ TRỢ VIẾT (WRITE HELPER):
+     * Vì trường 'ghiChuKhachHang' ở trên là READ-ONLY,
+     * chúng ta dùng hàm này (từ Controller/Service) để set giá trị
+     * cho trường 'ghiChuKhachHangRaw' (trường sẽ được ghi).
      */
-    @PostLoad 
-    void convertRawToString() {
-        if (this.ghiChuKhachHangRaw != null) {
-            try {
-                // Thử chuyển byte[] sang String
-                // Nếu trigger CSDL đã mã hóa, đây sẽ là chuỗi gibberish
-                // Nếu trigger CSDL trả về lỗi (ví dụ: '[DB Error]'), nó sẽ hiển thị
-                this.ghiChuKhachHang = new String(this.ghiChuKhachHangRaw, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                this.ghiChuKhachHang = "[Lỗi đọc ghi chú]";
-            }
-        }
-    }
-
-    /**
-     * Tự động chạy TRƯỚC KHI lưu (INSERT/UPDATE) vào CSDL.
-     * Chuyển đổi String (ghiChuKhachHang) từ Form sang byte[] (ghiChuKhachHangRaw).
-     * Trigger "trg_don_hang_encrypt_note" của CSDL sẽ nhận byte[] này
-     * và MÃ HÓA nó trước khi lưu vào cột RAW.
-     */
-    @PrePersist 
-    @PreUpdate
-    void convertStringToRaw() {
-        if (this.ghiChuKhachHang != null && !this.ghiChuKhachHang.isEmpty()) {
-            this.ghiChuKhachHangRaw = this.ghiChuKhachHang.getBytes(StandardCharsets.UTF_8);
+    public void setGhiChuKhachHangPlainText(String plainText) {
+        if (plainText != null && !plainText.isEmpty()) {
+            this.ghiChuKhachHangRaw = plainText.getBytes(StandardCharsets.UTF_8);
         } else {
             this.ghiChuKhachHangRaw = null;
         }
     }
+
+    // Xóa bỏ các hàm @PostLoad và @PrePersist vì chúng ta đã dùng @Formula
+    
     // =================================================================
 
     @Column(name = "NGAY_TAO")

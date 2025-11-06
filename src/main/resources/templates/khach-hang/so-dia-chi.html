@@ -78,17 +78,19 @@
                             <label for="dcPhuongXaThem" class="form-label">Phường / Xã:</label>
                             <input type="text" id="dcPhuongXaThem" class="form-control" th:field="*{phuongXa}">
                         </div>
-                        <div class="form-group">
-                            <label for="dcQuanHuyenThem" class="form-label">Quận / Huyện: (*)</label>
-                            <input type="text" id="dcQuanHuyenThem" class="form-control" th:field="*{quanHuyen}">
-                             <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="dcTinhTpThem" class="form-label">Tỉnh / Thành phố: (*)</label>
-                            <input type="text" id="dcTinhTpThem" class="form-control" th:field="*{tinhTp}">
-                             <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
-                        </div>
-                         <div class="form-check">
+
+                        <div class="row-grid-2">
+                            <div class="form-group">
+                                <label for="dcQuanHuyenThem" class="form-label">Quận / Huyện: (*)</label>
+                                <input type="text" id="dcQuanHuyenThem" class="form-control" th:field="*{quanHuyen}">
+                                 <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="dcTinhTpThem" class="form-label">Tỉnh / Thành phố: (*)</label>
+                                <input type="text" id="dcTinhTpThem" class="form-control" th:field="*{tinhTp}">
+                                 <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
+                            </div>
+                        </div> <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="dcMacDinhThem" th:field="*{laMacDinh}">
                             <label class="form-check-label" for="dcMacDinhThem">
                                 Đặt làm địa chỉ mặc định
@@ -128,17 +130,19 @@
                             <label for="dcPhuongXaSua" class="form-label">Phường / Xã:</label>
                             <input type="text" id="dcPhuongXaSua" class="form-control" th:field="*{phuongXa}">
                         </div>
-                        <div class="form-group">
-                            <label for="dcQuanHuyenSua" class="form-label">Quận / Huyện: (*)</label>
-                            <input type="text" id="dcQuanHuyenSua" class="form-control" th:field="*{quanHuyen}">
-                             <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="dcTinhTpSua" class="form-label">Tỉnh / Thành phố: (*)</label>
-                            <input type="text" id="dcTinhTpSua" class="form-control" th:field="*{tinhTp}">
-                             <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
-                        </div>
-                         <div class="form-check">
+
+                        <div class="row-grid-2">
+                            <div class="form-group">
+                                <label for="dcQuanHuyenSua" class="form-label">Quận / Huyện: (*)</label>
+                                <input type="text" id="dcQuanHuyenSua" class="form-control" th:field="*{quanHuyen}">
+                                 <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="dcTinhTpSua" class="form-label">Tỉnh / Thành phố: (*)</label>
+                                <input type="text" id="dcTinhTpSua" class="form-control" th:field="*{tinhTp}">
+                                 <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
+                            </div>
+                        </div> <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="dcMacDinhSua" th:field="*{laMacDinh}">
                             <label class="form-check-label" for="dcMacDinhSua">
                                 Đặt làm địa chỉ mặc định

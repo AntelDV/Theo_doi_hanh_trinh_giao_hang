@@ -2,13 +2,13 @@ package com.nhom12.doangiaohang.service;
 
 import com.nhom12.doangiaohang.model.*;
 import com.nhom12.doangiaohang.repository.*;
-// import com.nhom12.doangiaohang.utils.EncryptionUtil; // Gỡ bỏ import
+// Gỡ bỏ import không cần thiết cho ghi chú, nhưng VẪN GIỮ cho PII
+// import com.nhom12.doangiaohang.utils.EncryptionUtil; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// import java.util.Base64; // Gỡ bỏ import
 import java.util.Date;
 import java.util.List;
 import java.util.Optional; 
@@ -25,12 +25,15 @@ public class DonHangService {
     @Autowired private DiaChiRepository diaChiRepository;
     @Autowired private ThanhToanRepository thanhToanRepository; 
     @Autowired private CustomUserHelper userHelper; 
-    // @Autowired private EncryptionUtil encryptionUtil; // Gỡ bỏ Autowired
+    // @Autowired private EncryptionUtil encryptionUtil; // Không cần cho file này nữa
     @Autowired private TaiKhoanService taiKhoanService; 
     @Autowired private NhatKyVanHanhService nhatKyVanHanhService; 
 
     /**
-     * Tạo đơn hàng mới (lưu plaintext).
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Tạo đơn hàng mới.
+     * Gỡ bỏ mã hóa 'ghiChuKhachHang' ở mức ứng dụng.
+     * Thay vào đó, gọi hàm setGhiChuKhachHangPlainText để CSDL tự mã hóa.
      */
     @Transactional 
     public DonHang taoDonHangMoi(DonHang donHang, Integer idDiaChiLayHang, Authentication authentication) {
@@ -48,6 +51,11 @@ public class DonHangService {
         
         donHang.setMaVanDon("DH" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         donHang.setNgayTao(new Date());
+
+        // (SỬA LỖI 3 - KẾT HỢP)
+        // Lấy String từ Form (donHang.getGhiChuKhachHang()) 
+        // và set nó vào trường RAW (plaintext) để Trigger CSDL mã hóa.
+        donHang.setGhiChuKhachHangPlainText(donHang.getGhiChuKhachHang());
 
         if (donHang.getThanhToan() != null) {
             donHang.getThanhToan().setDonHang(donHang); 
@@ -77,7 +85,9 @@ public class DonHangService {
     }
     
     /**
-     * Lấy danh sách đơn hàng của khách hàng (plaintext).
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Gỡ bỏ toàn bộ logic giải mã ở đây.
+     * @Formula trong DonHang.java sẽ tự động giải mã khi SELECT.
      */
     public List<DonHang> getDonHangCuaKhachHangHienTai(Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication); 
@@ -85,9 +95,6 @@ public class DonHangService {
         return list; 
     }
     
-    /**
-     * Lấy chi tiết đơn hàng cho Khách hàng (plaintext).
-     */
     public DonHang getChiTietDonHangCuaKhachHang(String maVanDon, Authentication authentication) {
         DonHang donHang = donHangRepository.findByMaVanDon(maVanDon)
                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
@@ -98,35 +105,27 @@ public class DonHangService {
         return donHang; 
     }
     
-    /**
-     * Lấy chi tiết đơn hàng cho tra cứu công khai (plaintext).
-     */
     public DonHang getDonHangByMaVanDon(String maVanDon) {
         DonHang donHang = donHangRepository.findByMaVanDon(maVanDon)
                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng với mã: " + maVanDon));
         return donHang; 
     }
 
-    /**
-     * Lấy tất cả đơn hàng cho Quản lý (plaintext).
-     */
     public List<DonHang> getAllDonHangForQuanLy() {
        List<DonHang> list = donHangRepository.findAllByOrderByIdDonHangDesc();
        return list;
     }
     
-    /**
-     * Lấy đơn hàng cần xử lý của Shipper (plaintext).
-     */
     public List<DonHang> getDonHangCuaShipperHienTai(Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication); 
         List<DonHang> list = donHangRepository.findDonHangDangXuLyCuaShipper(shipper.getId());
         return list;
     }
     
-    /**
-     * Phân công shipper cho đơn hàng, ghi log.
-     */
+    // =================================================================
+    // CÁC HÀM BÊN DƯỚI ĐÃ CHẠY ĐÚNG LOGIC, GIỮ NGUYÊN
+    // =================================================================
+
     @Transactional
     public void phanCongShipper(Integer idDonHang, Integer idShipper, Authentication authentication) {
         NhanVien quanLy = userHelper.getNhanVienHienTai(authentication); 
@@ -168,9 +167,6 @@ public class DonHangService {
         }
     }
 
-    /**
-     * Shipper cập nhật trạng thái đơn hàng, xử lý COD, ghi log.
-     */
     @Transactional
     public void capNhatTrangThai(Integer idDonHang, Integer idTrangThaiMoi, String ghiChu, boolean daThanhToanCod, Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication); 
@@ -237,9 +233,6 @@ public class DonHangService {
          }
     }
     
-    /**
-     * Tìm shipper hiện tại đang được gán xử lý đơn hàng.
-     */
     private NhanVien findShipperHienTaiCuaDon(DonHang donHang) {
         if (donHang.getHanhTrinh() == null || donHang.getHanhTrinh().isEmpty()) {
             return null;
@@ -254,9 +247,6 @@ public class DonHangService {
         return null; 
     }
 
-    /**
-     * Kiểm tra logic chuyển trạng thái của Shipper.
-     */
     private boolean isTransitionAllowed(int currentStatusId, int nextStatusId) {
         switch (currentStatusId) {
             case 1: return nextStatusId == 2; 
@@ -267,9 +257,6 @@ public class DonHangService {
         }
     }
 
-    /**
-     * Quản lý duyệt hoàn kho đơn hàng, ghi log.
-     */
     @Transactional
     public void hoanKhoDonHang(Integer idDonHang, Authentication authentication) {
         NhanVien quanLy = userHelper.getNhanVienHienTai(authentication); 
@@ -304,9 +291,6 @@ public class DonHangService {
          }
     }
     
-    /**
-     * Tìm shipper gần nhất đã thực hiện hành động Giao thất bại trên đơn hàng.
-     */
     private NhanVien findLastFailedShipper(DonHang donHang) {
          if (donHang.getHanhTrinh() == null || donHang.getHanhTrinh().isEmpty()) {
             return null;

@@ -71,6 +71,8 @@
         <div class="modal-dialog">
             <div class="modal-content">
                  <form th:action="@{/shipper/don-hang/cap-nhat}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    
                     <div class="modal-header">
                         <h5 class="modal-title">Cập nhật Trạng thái Đơn hàng <span id="maVanDonCapNhat"></span></h5>
                         <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>

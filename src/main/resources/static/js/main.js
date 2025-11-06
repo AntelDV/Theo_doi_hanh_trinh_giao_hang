@@ -1,12 +1,17 @@
+/*
+ * File main.js đã được TỐI GIẢN HÓA
+ * Đã loại bỏ logic tự quản lý 'modal-backdrop' (nguyên nhân gây kẹt)
+ * Giờ đây, CSS sẽ tự xử lý việc ẩn/hiện backdrop khi class 'show' được thêm/xóa.
+ */
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. Dropdown Menu cho User Info
+    // 1. Dropdown Menu cho User Info (Logic này đã đúng)
     const userInfoDropdown = document.getElementById('userInfoDropdown');
     const userDropdownMenu = userInfoDropdown ? userInfoDropdown.querySelector('.dropdown-menu') : null;
 
     if (userInfoDropdown && userDropdownMenu) {
-        // Lấy trigger là toàn bộ div user-info hoặc chỉ span username tùy thiết kế
-        const trigger = userInfoDropdown; // Hoặc userInfoDropdown.querySelector('.username-trigger'); nếu bạn tạo riêng
+        // Lấy trigger là toàn bộ div user-info
+        const trigger = userInfoDropdown; 
 
         trigger.addEventListener('click', function(event) {
             userDropdownMenu.classList.toggle('show');
@@ -14,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Đóng dropdown khi click ra ngoài
+    // Đóng dropdown khi click ra ngoài (Logic này đã đúng)
     window.addEventListener('click', function(event) {
         if (userDropdownMenu && userDropdownMenu.classList.contains('show')) {
             // Kiểm tra xem click có nằm trong user-info không
@@ -24,39 +29,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 2. Xử lý đóng Modal cơ bản (Thêm sau nếu cần)
+    // 2. Xử lý đóng Modal cơ bản (SỬA LẠI LOGIC)
     const closeButtons = document.querySelectorAll('[data-dismiss="modal"]');
     closeButtons.forEach(button => {
         button.addEventListener('click', function() {
-            // Tìm modal cha gần nhất và ẩn nó
+            // Tìm modal cha gần nhất và chỉ cần xóa class 'show'
             const modal = this.closest('.modal');
             if (modal) {
                 modal.classList.remove('show');
-                // Optional: Ẩn cả backdrop nếu có
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) backdrop.style.display = 'none';
+                // (Đã xóa code cũ quản lý backdrop)
             }
         });
     });
-
-    // Optional: Đóng modal khi click vào backdrop (Thêm sau nếu cần)
-    // const backdrops = document.querySelectorAll('.modal-backdrop');
-    // backdrops.forEach(backdrop => {
-    //     backdrop.addEventListener('click', function() {
-    //         this.style.display = 'none';
-    //         const modal = document.querySelector('.modal.show'); // Tìm modal đang hiển thị
-    //         if (modal) modal.classList.remove('show');
-    //     });
-    // });
 });
 
-// Hàm để mở modal 
+/**
+ * Hàm để mở modal (SỬA LẠI LOGIC)
+ * @param {string} modalId - ID của modal cần mở
+ */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('show');
-        // Optional: Hiển thị backdrop nếu có
-        const backdrop = document.querySelector('.modal-backdrop'); // Giả sử chỉ có 1 backdrop
-        if (backdrop) backdrop.style.display = 'block';
+         // (Đã xóa code cũ quản lý backdrop)
     }
 }

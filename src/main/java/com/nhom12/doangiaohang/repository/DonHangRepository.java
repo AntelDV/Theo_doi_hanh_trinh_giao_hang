@@ -13,25 +13,27 @@ import java.util.Optional;
 public interface DonHangRepository extends JpaRepository<DonHang, Integer> {
     
     /**
-     * Tìm đơn hàng bằng Mã vận đơn (dùng cho tra cứu).
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Gỡ bỏ các hàm ...Decrypted()
+     * Hàm @Formula trong DonHang.java sẽ tự động giải mã.
      */
     Optional<DonHang> findByMaVanDon(String maVanDon);
 
     /**
-     * Lấy tất cả đơn hàng của một Khách hàng (sắp xếp mới nhất trước).
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Gỡ bỏ các hàm ...Decrypted()
      */
     List<DonHang> findByKhachHangGui_IdOrderByIdDonHangDesc(Integer idKhachHang);
 
     /**
-     * Lấy tất cả đơn hàng (cho Quản lý).
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Gỡ bỏ các hàm ...Decrypted()
      */
     List<DonHang> findAllByOrderByIdDonHangDesc();
 
     /**
-     * Lấy các đơn hàng đang chờ xử lý của một Shipper cụ thể.
-     * Query này tìm các đơn hàng mà bản ghi hành trình mới nhất 
-     * có ID_NHAN_VIEN_THUC_HIEN là shipper đó
-     * và trạng thái đó nằm trong danh sách "cần xử lý".
+     * (SỬA LỖI 3 - KẾT HỢP)
+     * Gỡ bỏ các hàm ...Decrypted()
      */
     // SỬA TỐI ƯU: Bỏ trạng thái 6 (Giao thất bại), vì logic service sẽ
     // tự động chuyển sang 7 (Chờ xử lý) và gỡ gán shipper.

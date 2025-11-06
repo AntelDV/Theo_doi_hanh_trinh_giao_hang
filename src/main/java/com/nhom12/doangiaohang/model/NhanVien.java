@@ -1,8 +1,9 @@
 package com.nhom12.doangiaohang.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+// XÓA CÁC IMPORT VALIDATION NÀY
+// import jakarta.validation.constraints.Email;
+// import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,15 +27,15 @@ public class NhanVien {
     @JoinColumn(name = "ID_TAI_KHOAN", nullable = false, unique = true)
     private TaiKhoan taiKhoan;
     
-    @NotBlank(message = "Mã nhân viên không được để trống")
+    // GỠ BỎ @NotBlank
     @Column(name = "MA_NV", nullable = false, unique = true)
     private String maNV;
 
-    @NotBlank(message = "Họ tên không được để trống")
+    // GỠ BỎ @NotBlank
     @Column(name = "HO_TEN", nullable = false)
     private String hoTen;
 
-    @Email(message = "Email không hợp lệ")
+    // GỠ BỎ @Email
     @Column(name = "EMAIL", unique = true)
     private String email;
 
@@ -45,7 +46,6 @@ public class NhanVien {
     @Temporal(TemporalType.DATE)
     private Date ngayVaoLam;
 
-    // Quan hệ một-nhiều với HanhTrinhDonHang (Nhân viên là người thực hiện)
     @OneToMany(mappedBy = "nhanVienThucHien", fetch = FetchType.LAZY)
     private List<HanhTrinhDonHang> hanhTrinhThucHien;
 }

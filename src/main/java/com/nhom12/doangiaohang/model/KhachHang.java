@@ -5,6 +5,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+// XÓA CÁC IMPORT VALIDATION NÀY
+// import jakarta.validation.constraints.Email;
+// import jakarta.validation.constraints.NotBlank;
+// import jakarta.validation.constraints.Size;
+
 import java.util.Date;
 import java.util.List;
 
@@ -24,9 +29,11 @@ public class KhachHang {
     @JoinColumn(name = "ID_TAI_KHOAN", nullable = false, unique = true)
     private TaiKhoan taiKhoan;
 
+    // GỠ BỎ VALIDATION
     @Column(name = "HO_TEN", nullable = false)
     private String hoTen;
 
+    // GỠ BỎ VALIDATION
     @Column(name = "EMAIL", unique = true)
     private String email;
 
