@@ -1,12 +1,11 @@
 package com.nhom12.doangiaohang.model;
 
 import jakarta.persistence.*;
-// XÓA CÁC IMPORT VALIDATION NÀY
-// import jakarta.validation.constraints.Email;
-// import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.Formula; // Import quan trọng
+import java.nio.charset.StandardCharsets;
 
 import java.util.Date;
 import java.util.List;
@@ -27,20 +26,49 @@ public class NhanVien {
     @JoinColumn(name = "ID_TAI_KHOAN", nullable = false, unique = true)
     private TaiKhoan taiKhoan;
     
-    // GỠ BỎ @NotBlank
     @Column(name = "MA_NV", nullable = false, unique = true)
     private String maNV;
 
-    // GỠ BỎ @NotBlank
+    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
+    // Java sẽ mã hóa HoTen và SĐT trước khi lưu vào đây
     @Column(name = "HO_TEN", nullable = false)
     private String hoTen;
 
-    // GỠ BỎ @Email
-    @Column(name = "EMAIL", unique = true)
-    private String email;
-
     @Column(name = "SO_DIEN_THOAI", unique = true)
     private String soDienThoai;
+
+    // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
+    
+    /**
+     * Cột vật lý: EMAIL (Kiểu RAW)
+     * Java ghi byte[] plaintext vào đây, Trigger sẽ bắt và mã hóa.
+     */
+    @Column(name = "EMAIL", unique = true)
+    private byte[] emailRaw;
+
+    /**
+     * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên.
+     */
+    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(EMAIL))")
+    private String email;
+
+    /**
+     * Setter đặc biệt: Chuyển String Email thành byte[] để gửi xuống DB.
+     */
+    public void setEmail(String email) {
+        this.email = email;
+        if (email != null) {
+            this.emailRaw = email.getBytes(StandardCharsets.UTF_8);
+        } else {
+            this.emailRaw = null;
+        }
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+
+    // ---------------------------------
 
     @Column(name = "NGAY_VAO_LAM")
     @Temporal(TemporalType.DATE)

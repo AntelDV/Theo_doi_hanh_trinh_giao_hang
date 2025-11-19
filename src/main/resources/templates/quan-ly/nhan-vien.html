@@ -15,7 +15,6 @@
                 </div>
                 
                 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
                 <div class="card shadow mb-4">
                      <div class="card-header py-3">
@@ -47,7 +46,6 @@
                                             <span th:unless="${nv.taiKhoan?.trangThai}" class="badge badge-danger">Bị khóa</span>
                                         </td>
                                         <td class="table-actions">
-                                            
                                             <form th:if="${nv.taiKhoan != null and nv.taiKhoan.trangThai}" 
                                                   th:action="@{/quan-ly/nhan-vien/khoa/{id}(id=${nv.id})}" 
                                                   method="post" style="display: inline-block;">
@@ -64,7 +62,6 @@
                                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                                 <button type="submit" class="btn btn-sm btn-success" title="Mở khóa tài khoản"><i class="fas fa-unlock"></i></button>
                                             </form>
-                                            <button class="btn btn-sm btn-secondary" title="Sửa (Chưa làm)"><i class="fas fa-edit"></i></button>
                                         </td>
                                     </tr>
                                     </tbody>
@@ -89,10 +86,11 @@
                         <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
                     </div>
                     <div class="modal-body">
-                         <div th:if="${#fields.hasErrors('nhanVienForm.*')}" class="alert alert-danger">
-                             Vui lòng kiểm tra lại thông tin.
-                         </div>
                         
+                        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                        <div th:if="${#fields.hasErrors('nhanVienForm.*')}" class="alert alert-danger">
+                             Vui lòng kiểm tra lại thông tin bên dưới.
+                        </div>
                         <div class="form-group">
                             <label for="nvMaNV" class="form-label">Mã Nhân viên: (*)</label>
                             <input type="text" id="nvMaNV" class="form-control" th:field="*{maNV}">
@@ -148,7 +146,6 @@
     <script th:src="@{/js/main.js}"></script>
      <script th:inline="javascript">
         /*<![CDATA[*/
-            // Kiểm tra cờ (flag) từ RedirectAttribute để mở lại modal nếu có lỗi
             var showThemModalNV = /*[[${showThemModalNV}]]*/ false;
             if (showThemModalNV) {
                 openModal('taoNhanVienModal');

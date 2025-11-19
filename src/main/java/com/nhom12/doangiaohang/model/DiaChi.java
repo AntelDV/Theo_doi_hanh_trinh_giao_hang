@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.Formula; // Import quan trọng
+import java.nio.charset.StandardCharsets;
 
 @Data
 @Entity
@@ -22,6 +24,7 @@ public class DiaChi {
     @JoinColumn(name = "ID_KHACH_HANG_SO_HUU", nullable = false)
     private KhachHang khachHangSoHuu;
 
+    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
     @NotBlank(message = "Số nhà, đường không được để trống")
     @Column(name = "SO_NHA_DUONG", nullable = false)
     private String soNhaDuong;
@@ -29,9 +32,34 @@ public class DiaChi {
     @Column(name = "PHUONG_XA")
     private String phuongXa;
 
-    @NotBlank(message = "Quận/Huyện không được để trống")
+    // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
+    
+    /**
+     * Cột vật lý: QUAN_HUYEN (Kiểu RAW)
+     */
     @Column(name = "QUAN_HUYEN", nullable = false)
+    private byte[] quanHuyenRaw;
+
+    /**
+     * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên.
+     */
+    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(QUAN_HUYEN))")
     private String quanHuyen;
+
+    public void setQuanHuyen(String quanHuyen) {
+        this.quanHuyen = quanHuyen;
+        if (quanHuyen != null) {
+            this.quanHuyenRaw = quanHuyen.getBytes(StandardCharsets.UTF_8);
+        } else {
+            this.quanHuyenRaw = null;
+        }
+    }
+    
+    public String getQuanHuyen() {
+        return quanHuyen;
+    }
+
+    // ---------------------------------
 
     @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     @Column(name = "TINH_TP", nullable = false)

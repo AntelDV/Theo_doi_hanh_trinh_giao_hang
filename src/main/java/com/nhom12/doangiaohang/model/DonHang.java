@@ -4,11 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-// Thêm 2 import này
 import org.hibernate.annotations.Formula;
 import java.nio.charset.StandardCharsets;
-
 import java.util.Date;
 import java.util.List;
 
@@ -35,58 +32,57 @@ public class DonHang {
     @JoinColumn(name = "ID_DIA_CHI_LAY_HANG", nullable = false)
     private DiaChi diaChiLayHang;
 
-    @Column(name = "TEN_NGUOI_NHAN", nullable = false)
+    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
+    @Column(name = "TEN_NGUOI_NHAN", nullable = false, length = 500)
     private String tenNguoiNhan;
 
-    @Column(name = "SDT_NGUOI_NHAN", nullable = false)
-    private String sdtNguoiNhan;
-
-    @Column(name = "DIA_CHI_GIAO_HANG", nullable = false, length = 500)
+    @Column(name = "DIA_CHI_GIAO_HANG", nullable = false, length = 2000)
     private String diaChiGiaoHang;
 
-    // =================================================================
-    
+    // --- MÃ HÓA MỨC CSDL (TRIGGER ORACLE) ---
     /**
-     * CỘT ĐỂ VIẾT (WRITE):
-     * Trường này map với cột RAW(2000). 
-     * Ứng dụng sẽ GHI byte[] (plaintext) vào đây.
-     * Trigger CSDL sẽ BẮT LẤY và MÃ HÓA nó.
+     * Cột vật lý: SDT_NGUOI_NHAN (Kiểu RAW)
+     * Java ghi byte[] plaintext vào đây, Trigger sẽ bắt và mã hóa.
      */
-    @Column(name = "GHI_CHU_KHACH_HANG", length = 2000)
-    private byte[] ghiChuKhachHangRaw;
+    @Column(name = "SDT_NGUOI_NHAN", nullable = false)
+    private byte[] sdtNguoiNhanRaw;
 
     /**
-     * TRƯỜNG ĐỂ ĐỌC (READ):
-     * Trường này KHÔNG phải là cột, nó là một CÔNG THỨC (@Formula).
-     * Khi SELECT, Hibernate sẽ tự động chạy hàm CSDL để GIẢI MÃ.
+     * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên bằng hàm giải mã của Oracle.
      */
-    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(GHI_CHU_KHACH_HANG))")
-    
-    // === SỬA LỖI TẠI ĐÂY ===
-    // Thêm @Transient để báo cho JPA bỏ qua trường này khi INSERT/UPDATE,
-    // giải quyết xung đột Ánh xạ Trùng lặp (DuplicateMappingException)
-    // và lỗi Rollback Giao dịch.
-    @Transient
-    private String ghiChuKhachHang; 
+    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(SDT_NGUOI_NHAN))")
+    private String sdtNguoiNhan;
 
     /**
-     * HÀM HỖ TRỢ VIẾT (WRITE HELPER):
-     * Dùng để set giá trị cho trường 'ghiChuKhachHangRaw'.
-     * (Hàm này đã chính xác)
+     * Setter đặc biệt: Chuyển String SĐT thành byte[] để gửi xuống DB.
      */
-    public void setGhiChuKhachHangPlainText(String plainText) {
-        if (plainText != null && !plainText.isEmpty()) {
-            this.ghiChuKhachHangRaw = plainText.getBytes(StandardCharsets.UTF_8);
+    public void setSdtNguoiNhan(String sdt) {
+        this.sdtNguoiNhan = sdt;
+        if (sdt != null) {
+            this.sdtNguoiNhanRaw = sdt.getBytes(StandardCharsets.UTF_8);
         } else {
-            this.ghiChuKhachHangRaw = null;
+            this.sdtNguoiNhanRaw = null;
         }
     }
     
-    // =================================================================
+    public String getSdtNguoiNhan() {
+        return sdtNguoiNhan;
+    }
+
+    // ---------------------------------
+
+    @Column(name = "GHI_CHU_KHACH_HANG", length = 500)
+    private String ghiChuKhachHang;
 
     @Column(name = "NGAY_TAO")
     @Temporal(TemporalType.DATE)
     private Date ngayTao;
+
+    // === THÊM MỚI TUẦN 6: CHỮ KÝ SỐ CỦA KHÁCH HÀNG (RSA) ===
+    @Column(name = "CH_KY_KHACH_HANG", columnDefinition = "CLOB")
+    @Lob
+    private String chKyKhachHang;
+    // ========================================================
 
     @OneToMany(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderBy("thoiGianCapNhat DESC")
@@ -95,9 +91,7 @@ public class DonHang {
     @OneToOne(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private ThanhToan thanhToan;
 
-    /**
-     * Helper: Lấy trạng thái mới nhất từ danh sách hành trình.
-     */
+    // Helper methods
     @Transient
     public TrangThaiDonHang getTrangThaiHienTai() {
         if (hanhTrinh != null && !hanhTrinh.isEmpty()) {
@@ -106,14 +100,10 @@ public class DonHang {
         return null;
     }
 
-    /**
-     * Helper: Lấy shipper đang được gán cho đơn hàng.
-     */
     @Transient
     public NhanVien getShipperHienTai() {
          if (hanhTrinh != null) {
             for (HanhTrinhDonHang ht : hanhTrinh) {
-                // Tìm hành trình mới nhất có gán shipper và trạng thái đang hoạt động
                 if (ht.getNhanVienThucHien() != null && ht.getTrangThai() != null && 
                     List.of(1, 2, 3, 4, 6, 8).contains(ht.getTrangThai().getIdTrangThai())) {
                     return ht.getNhanVienThucHien();

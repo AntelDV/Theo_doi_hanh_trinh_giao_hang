@@ -199,4 +199,16 @@ public class QuanLyController {
         
         return "quan-ly/nhat-ky"; 
     }
+    
+    @GetMapping("/don-hang/chi-tiet/{id}")
+    public String xemChiTietDonHang(@PathVariable("id") Integer idDonHang, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            DonHang donHang = donHangService.getChiTietDonHangChoQuanLy(idDonHang);
+            model.addAttribute("donHang", donHang);
+            return "quan-ly/chi-tiet-don-hang"; // Trả về view mới
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xem chi tiết: " + e.getMessage());
+            return "redirect:/quan-ly/don-hang";
+        }
+    }
 }

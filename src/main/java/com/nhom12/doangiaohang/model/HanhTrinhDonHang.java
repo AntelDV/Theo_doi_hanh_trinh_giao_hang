@@ -4,14 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
 import java.util.Date;
 
 @Data
 @Entity
 @Table(name = "HANH_TRINH_DON_HANG")
-@EqualsAndHashCode(of = "idHanhTrinh") // Chỉ dùng ID để so sánh
-@ToString(exclude = {"donHang", "nhanVienThucHien"}) // Tránh vòng lặp vô hạn khi log
+@EqualsAndHashCode(of = "idHanhTrinh")
+@ToString(exclude = {"donHang", "nhanVienThucHien"})
 public class HanhTrinhDonHang {
     
     @Id
@@ -28,13 +27,18 @@ public class HanhTrinhDonHang {
     @JoinColumn(name = "ID_NHAN_VIEN_THUC_HIEN")
     private NhanVien nhanVienThucHien;
 
-    // Lỗi của bạn sẽ hết sau khi tạo file TrangThaiDonHang.java
-    @ManyToOne(fetch = FetchType.EAGER) // Lấy trạng thái ngay lập tức
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ID_TRANG_THAI", nullable = false)
     private TrangThaiDonHang trangThai;
 
     @Column(name = "GHI_CHU_NHAN_VIEN", length = 500)
     private String ghiChuNhanVien;
+
+    // === THÊM MỚI TUẦN 6: CHỮ KÝ SỐ CỦA SHIPPER (RSA) ===
+    @Column(name = "CH_KY_SO", columnDefinition = "CLOB")
+    @Lob
+    private String chKySo;
+    // ====================================================
 
     @Column(name = "THOI_GIAN_CAP_NHAT", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Temporal(TemporalType.TIMESTAMP)

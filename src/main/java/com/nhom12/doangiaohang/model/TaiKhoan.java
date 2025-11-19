@@ -39,4 +39,13 @@ public class TaiKhoan {
     @Column(name = "THOI_HAN_MA")
     @Temporal(TemporalType.DATE) // Khớp với CSDL của bạn
     private Date thoiHanMa;
+    
+    @Column(name = "PUBLIC_KEY", columnDefinition = "CLOB")
+    @Lob 
+    private String publicKey;
+    
+    @Column(name = "PRIVATE_KEY", columnDefinition = "CLOB")
+    @Lob
+    private String privateKey;
+    
 }
