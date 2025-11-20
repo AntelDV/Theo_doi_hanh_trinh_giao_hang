@@ -3,46 +3,50 @@ package com.nhom12.doangiaohang.service;
 import com.nhom12.doangiaohang.model.NhatKyVanHanh;
 import com.nhom12.doangiaohang.model.TaiKhoan;
 import com.nhom12.doangiaohang.repository.NhatKyVanHanhRepository;
-import jakarta.persistence.criteria.Predicate; 
-import jakarta.servlet.http.HttpServletRequest; // Import HttpServletRequest
+import com.nhom12.doangiaohang.utils.EncryptionUtil;
+import com.nhom12.doangiaohang.utils.RSAUtil;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort; 
-import org.springframework.data.jpa.domain.Specification; 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder; // Import RequestContextHolder
-import org.springframework.web.context.request.ServletRequestAttributes; // Import ServletRequestAttributes
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.ArrayList; 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Service
 public class NhatKyVanHanhService {
 
-    @Autowired
-    private NhatKyVanHanhRepository nhatKyVanHanhRepository;
+    @Autowired private NhatKyVanHanhRepository nhatKyVanHanhRepository;
+    @Autowired private CustomUserHelper userHelper;
+    @Autowired private EncryptionUtil encryptionUtil;
+    @Autowired private RSAUtil rsaUtil;
 
-    // Ghi nhật ký mới (Tự động lấy IP)
     @Transactional
     public void logAction(TaiKhoan taiKhoanThucHien, String hanhDong, String doiTuongBiAnhHuong, Integer idDoiTuong, String moTaChiTiet) {
+        // Hàm này dùng cho các log thường (không qua RSA trigger)
         NhatKyVanHanh log = new NhatKyVanHanh();
         log.setTaiKhoanThucHien(taiKhoanThucHien);
         log.setHanhDong(hanhDong);
         log.setDoiTuongBiAnhHuong(doiTuongBiAnhHuong);
         log.setIdDoiTuong(idDoiTuong);
         log.setMoTaChiTiet(moTaChiTiet);
-        log.setDiaChiIp(getClientIpAddress()); // Lấy IP tự động
-        log.setThoiGianThucHien(new Date()); 
-        
+        log.setDiaChiIp(getClientIpAddress());
+        log.setThoiGianThucHien(new Date());
         nhatKyVanHanhRepository.save(log);
     }
     
-    // Lấy nhật ký có lọc
+    // --- LOGIC QUAN TRỌNG: Đọc và Giải mã RSA (SV3) ---
     public List<NhatKyVanHanh> findNhatKy(String tenDangNhap, String hanhDong, Date tuNgay, Date denNgay) {
-        return nhatKyVanHanhRepository.findAll(Specification.where((root, query, cb) -> {
+        List<NhatKyVanHanh> logs = nhatKyVanHanhRepository.findAll(Specification.where((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-
             if (tenDangNhap != null && !tenDangNhap.isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("taiKhoanThucHien").get("tenDangNhap")), "%" + tenDangNhap.toLowerCase() + "%"));
             }
@@ -56,28 +60,47 @@ public class NhatKyVanHanhService {
                 Date endDatePlusOne = new Date(denNgay.getTime() + (1000 * 60 * 60 * 24));
                 predicates.add(cb.lessThan(root.get("thoiGianThucHien"), endDatePlusOne));
             }
-
             return cb.and(predicates.toArray(new Predicate[0]));
-        }), Sort.by(Sort.Direction.DESC, "thoiGianThucHien")); 
+        }), Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
+
+        // Giải mã RSA cho từng dòng log
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            TaiKhoan myAccount = userHelper.getTaiKhoanHienTai(auth);
+            
+            if (myAccount != null && myAccount.getPrivateKey() != null) {
+                // Giải mã Private Key (đang được mã hóa AES)
+                String myPrivateKey = encryptionUtil.decrypt(myAccount.getPrivateKey());
+                
+                for (NhatKyVanHanh log : logs) {
+                    // Chỉ giải mã nếu log đó được mã hóa bởi Trigger (dấu hiệu nhận biết tùy chọn, hoặc thử giải mã hết)
+                    // Ở đây ta thử giải mã tất cả, nếu lỗi thì giữ nguyên text gốc
+                    if (log.getMoTaChiTiet() != null && log.getMoTaChiTiet().length() > 50) { // Base64 thường dài
+                        String decryptedContent = rsaUtil.decrypt(log.getMoTaChiTiet(), myPrivateKey);
+                        log.setMoTaChiTiet(decryptedContent);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Không thể giải mã nhật ký: " + e.getMessage());
+        }
+
+        return logs;
     }
     
-    // Hàm tiện ích lấy địa chỉ IP của client
     private String getClientIpAddress() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("Proxy-Client-IP");
+        try {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            String ipAddress = request.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getRemoteAddr();
+            }
+            if (ipAddress != null && ipAddress.contains(",")) {
+                ipAddress = ipAddress.split(",")[0].trim();
+            }
+            return ipAddress;
+        } catch (Exception e) {
+            return "Unknown";
         }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-        // Handle multiple IPs in X-Forwarded-For header
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
-        }
-        return ipAddress;
     }
 }

@@ -1,126 +1,122 @@
 package com.nhom12.doangiaohang.utils;
 
-import jakarta.annotation.PostConstruct; 
-import org.slf4j.Logger; 
-import org.slf4j.LoggerFactory; 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component; // KÍCH HOẠT LẠI
+import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec; 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom; 
+import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * Lớp tiện ích mã hóa AES-256 (Mã hóa mức ứng dụng).
- * Dùng để mã hóa PII (Họ tên, Email, SĐT).
- * Sử dụng khóa từ application.properties.
- */
-@Component // SỬA LỖI: KÍCH HOẠT LẠI COMPONENT NÀY
+@Component
 public class EncryptionUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(EncryptionUtil.class);
     private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding"; 
-    private static final int IV_SIZE = 16; // 16 bytes IV for CBC
+    private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    private static final int IV_SIZE = 16;
 
-    // Đọc khóa Base64 từ application.properties
     @Value("${app.encryption.key}")
     private String base64Key;
 
-    private SecretKeySpec secretKey;
-    private SecureRandom secureRandom; 
+    private SecretKeySpec staticSecretKey;
+    private SecureRandom secureRandom;
 
-    /**
-     * Khởi tạo SecretKeySpec từ khóa Base64 khi Spring Boot khởi động.
-     */
     @PostConstruct
     private void init() {
         try {
             byte[] decodedKey = Base64.getDecoder().decode(base64Key);
-            if (decodedKey.length != 32) { // AES-256 yêu cầu khóa 32 byte
-                 logger.error("Invalid AES key length. Expected 32 bytes for AES-256, but got {}.", decodedKey.length);
-                 throw new IllegalArgumentException("Invalid AES key length. Expected 32 bytes for AES-256.");
-            }
-            this.secretKey = new SecretKeySpec(decodedKey, ALGORITHM);
+            this.staticSecretKey = new SecretKeySpec(decodedKey, ALGORITHM);
             this.secureRandom = new SecureRandom();
-             logger.info("EncryptionUtil initialized successfully with AES-256 key.");
-        } catch (IllegalArgumentException e) {
-             logger.error("Error decoding Base64 key: {}. Key not found or invalid.", e.getMessage());
-             // Lỗi này sẽ xảy ra nếu bạn quên thêm 'app.encryption.key' vào properties
-             throw new RuntimeException("Failed to initialize EncryptionUtil. Did you set 'app.encryption.key' in properties?", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khởi tạo EncryptionUtil: " + e.getMessage());
         }
     }
 
-    /**
-     * Mã hóa dữ liệu (String) sử dụng AES-256-CBC.
-     * @param dataToEncrypt Dữ liệu (ví dụ: "Nguyễn Văn A")
-     * @return Chuỗi Base64(IV + EncryptedData)
-     */
-    public String encrypt(String dataToEncrypt) {
-        if (dataToEncrypt == null || dataToEncrypt.isEmpty()) return dataToEncrypt;
+    // === PHẦN CŨ: MÃ HÓA TĨNH (TUẦN 5) ===
+    public String encrypt(String data) {
+        return encryptAES(data, this.staticSecretKey);
+    }
+
+    public String decrypt(String data) {
+        return decryptAES(data, this.staticSecretKey);
+    }
+
+    // === PHẦN MỚI: MÃ HÓA ĐỘNG CHO HYBRID (TUẦN 7) ===
+
+    // 1. Sinh khóa phiên (Session Key) ngẫu nhiên
+    public SecretKey generateSessionKey() {
         try {
-            // 1. Tạo Initialization Vector (IV) ngẫu nhiên
+            KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM);
+            keyGen.init(256); // AES-256
+            return keyGen.generateKey();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi sinh khóa phiên", e);
+        }
+    }
+
+    // 2. Helper chuyển đổi Key <-> String
+    public String keyToString(SecretKey key) {
+        return Base64.getEncoder().encodeToString(key.getEncoded());
+    }
+
+    public SecretKey stringToKey(String keyStr) {
+        byte[] decodedKey = Base64.getDecoder().decode(keyStr);
+        return new SecretKeySpec(decodedKey, ALGORITHM);
+    }
+
+    // 3. Mã hóa AES với khóa bất kỳ (dùng cho cả Tĩnh và Động)
+    public String encryptAES(String data, SecretKey key) {
+        if (data == null) return null;
+        try {
             byte[] iv = new byte[IV_SIZE];
             secureRandom.nextBytes(iv);
             IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
-            // 2. Mã hóa
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
-            byte[] encryptedBytes = cipher.doFinal(dataToEncrypt.getBytes(StandardCharsets.UTF_8));
+            cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
+            byte[] encryptedBytes = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
 
-            // 3. Kết hợp IV (16 bytes) và Dữ liệu đã mã hóa
-            byte[] combinedPayload = new byte[iv.length + encryptedBytes.length];
-            System.arraycopy(iv, 0, combinedPayload, 0, iv.length); // IV đầu tiên
-            System.arraycopy(encryptedBytes, 0, combinedPayload, iv.length, encryptedBytes.length); // Data theo sau
+            byte[] combined = new byte[iv.length + encryptedBytes.length];
+            System.arraycopy(iv, 0, combined, 0, iv.length);
+            System.arraycopy(encryptedBytes, 0, combined, iv.length, encryptedBytes.length);
 
-            // 4. Trả về dạng Base64 để lưu vào CSDL (cột VARCHAR2)
-            return Base64.getEncoder().encodeToString(combinedPayload);
+            return Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
-            logger.error("Error encrypting data: {}", e.getMessage(), e);
-            return "[Error Encrypting]"; 
+            logger.error("Lỗi mã hóa AES: {}", e.getMessage());
+            return "[Lỗi Mã hóa]";
         }
     }
 
-    /**
-     * Giải mã dữ liệu (Base64) đã được mã hóa bằng AES-256-CBC.
-     * @param dataToDecrypt Chuỗi Base64(IV + EncryptedData)
-     * @return Dữ liệu gốc (String)
-     */
-    public String decrypt(String dataToDecrypt) {
-         if (dataToDecrypt == null || dataToDecrypt.isEmpty()) return dataToDecrypt;
+    public String decryptAES(String encryptedData, SecretKey key) {
+        if (encryptedData == null) return null;
         try {
-            // 1. Giải mã Base64
-            byte[] combinedPayload = Base64.getDecoder().decode(dataToDecrypt);
+            byte[] combined = Base64.getDecoder().decode(encryptedData);
+            if (combined.length < IV_SIZE) return encryptedData; // Không phải mã hóa hợp lệ
 
-            if (combinedPayload.length < IV_SIZE) {
-                logger.warn("Error decrypting data: Input data too short to contain IV. Returning as-is.");
-                return dataToDecrypt; // Trả về như cũ nếu không phải dữ liệu mã hóa
-            }
-
-            // 2. Tách IV (16 bytes đầu tiên)
             byte[] iv = new byte[IV_SIZE];
-            System.arraycopy(combinedPayload, 0, iv, 0, iv.length);
+            System.arraycopy(combined, 0, iv, 0, iv.length);
             IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
-            // 3. Tách dữ liệu mã hóa (phần còn lại)
-            int encryptedDataLength = combinedPayload.length - IV_SIZE;
-            byte[] encryptedBytes = new byte[encryptedDataLength];
-            System.arraycopy(combinedPayload, IV_SIZE, encryptedBytes, 0, encryptedDataLength);
+            int len = combined.length - IV_SIZE;
+            byte[] encryptedBytes = new byte[len];
+            System.arraycopy(combined, IV_SIZE, encryptedBytes, 0, len);
 
-            // 4. Giải mã
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
+            cipher.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
             byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            
+
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-             // Lỗi này xảy ra nếu dữ liệu là plaintext (chưa mã hóa) hoặc sai khóa
-             logger.warn("Warn decrypting data (maybe plaintext?): {}. Returning as-is.", e.getMessage());
-             return dataToDecrypt; // Trả về dữ liệu gốc
+            logger.warn("Lỗi giải mã AES (có thể là plaintext): {}", e.getMessage());
+            return encryptedData;
         }
     }
 }

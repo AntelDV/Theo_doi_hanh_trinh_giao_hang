@@ -4,20 +4,20 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
 import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "NHAT_KY_VAN_HANH")
-@EqualsAndHashCode(of = "idNhatKy")
+@Table(name = "LICH_SU_HOAT_DONG") // Đã sửa tên bảng cho khớp SQL
+@EqualsAndHashCode(of = "idHoatDong")
 @ToString(exclude = "taiKhoanThucHien")
 public class NhatKyVanHanh {
+    
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "nhat_ky_van_hanh_seq")
-    @SequenceGenerator(name = "nhat_ky_van_hanh_seq", sequenceName = "NHAT_KY_VAN_HANH_SEQ", allocationSize = 1)
-    @Column(name = "ID_NHAT_KY")
-    private Integer idNhatKy;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lich_su_seq")
+    @SequenceGenerator(name = "lich_su_seq", sequenceName = "LICH_SU_HOAT_DONG_SEQ", allocationSize = 1)
+    @Column(name = "ID_HOAT_DONG") // Đã sửa tên cột
+    private Integer idHoatDong;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_TAI_KHOAN_THUC_HIEN", nullable = false)
@@ -32,7 +32,8 @@ public class NhatKyVanHanh {
     @Column(name = "ID_DOI_TUONG")
     private Integer idDoiTuong;
 
-    @Column(name = "MO_TA_CHI_TIET", length = 1000)
+    // Cột này chứa dữ liệu MÃ HÓA RSA từ Trigger
+    @Column(name = "MO_TA_CHI_TIET", length = 4000) 
     private String moTaChiTiet;
 
     @Column(name = "THOI_GIAN_THUC_HIEN", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

@@ -38,6 +38,15 @@ public class HanhTrinhDonHang {
     @Column(name = "CH_KY_SO", columnDefinition = "CLOB")
     @Lob
     private String chKySo;
+    
+    // === TUẦN 7 (SV2): MÃ HÓA LAI - BÁO CÁO SỰ CỐ ===
+    @Column(name = "CHI_TIET_SU_CO", columnDefinition = "CLOB")
+    @Lob
+    private String chiTietSuCo; // Dữ liệu
+
+    @Column(name = "MA_KHOA_SU_CO", columnDefinition = "CLOB")
+    @Lob
+    private String maKhoaSuCo; // Khóa
     // ====================================================
 
     @Column(name = "THOI_GIAN_CAP_NHAT", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
