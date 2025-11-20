@@ -34,7 +34,6 @@ public class HanhTrinhDonHang {
     @Column(name = "GHI_CHU_NHAN_VIEN", length = 500)
     private String ghiChuNhanVien;
 
-    // === THÊM MỚI TUẦN 6: CHỮ KÝ SỐ CỦA SHIPPER (RSA) ===
     @Column(name = "CH_KY_SO", columnDefinition = "CLOB")
     @Lob
     private String chKySo;
@@ -47,7 +46,7 @@ public class HanhTrinhDonHang {
     @Column(name = "MA_KHOA_SU_CO", columnDefinition = "CLOB")
     @Lob
     private String maKhoaSuCo; // Khóa
-    // ====================================================
+    // ================================================
 
     @Column(name = "THOI_GIAN_CAP_NHAT", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Temporal(TemporalType.TIMESTAMP)

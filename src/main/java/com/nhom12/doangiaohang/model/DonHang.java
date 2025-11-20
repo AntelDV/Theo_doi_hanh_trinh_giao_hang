@@ -32,30 +32,18 @@ public class DonHang {
     @JoinColumn(name = "ID_DIA_CHI_LAY_HANG", nullable = false)
     private DiaChi diaChiLayHang;
 
-    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
     @Column(name = "TEN_NGUOI_NHAN", nullable = false, length = 500)
     private String tenNguoiNhan;
 
     @Column(name = "DIA_CHI_GIAO_HANG", nullable = false, length = 2000)
     private String diaChiGiaoHang;
 
-    // --- MÃ HÓA MỨC CSDL (TRIGGER ORACLE) ---
-    /**
-     * Cột vật lý: SDT_NGUOI_NHAN (Kiểu RAW)
-     * Java ghi byte[] plaintext vào đây, Trigger sẽ bắt và mã hóa.
-     */
     @Column(name = "SDT_NGUOI_NHAN", nullable = false)
     private byte[] sdtNguoiNhanRaw;
 
-    /**
-     * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên bằng hàm giải mã của Oracle.
-     */
     @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(SDT_NGUOI_NHAN))")
     private String sdtNguoiNhan;
 
-    /**
-     * Setter đặc biệt: Chuyển String SĐT thành byte[] để gửi xuống DB.
-     */
     public void setSdtNguoiNhan(String sdt) {
         this.sdtNguoiNhan = sdt;
         if (sdt != null) {
@@ -69,8 +57,6 @@ public class DonHang {
         return sdtNguoiNhan;
     }
 
-    // ---------------------------------
-
     @Column(name = "GHI_CHU_KHACH_HANG", length = 500)
     private String ghiChuKhachHang;
 
@@ -78,7 +64,6 @@ public class DonHang {
     @Temporal(TemporalType.DATE)
     private Date ngayTao;
 
-    // === THÊM MỚI TUẦN 6: CHỮ KÝ SỐ CỦA KHÁCH HÀNG (RSA) ===
     @Column(name = "CH_KY_KHACH_HANG", columnDefinition = "CLOB")
     @Lob
     private String chKyKhachHang;
@@ -91,7 +76,7 @@ public class DonHang {
     @Column(name = "MA_KHOA_HANG_HOA", columnDefinition = "CLOB")
     @Lob
     private String maKhoaHangHoa; // Khóa
-    // ========================================================
+    // =================================================
 
     @OneToMany(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderBy("thoiGianCapNhat DESC")
@@ -100,7 +85,6 @@ public class DonHang {
     @OneToOne(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private ThanhToan thanhToan;
 
-    // Helper methods
     @Transient
     public TrangThaiDonHang getTrangThaiHienTai() {
         if (hanhTrinh != null && !hanhTrinh.isEmpty()) {

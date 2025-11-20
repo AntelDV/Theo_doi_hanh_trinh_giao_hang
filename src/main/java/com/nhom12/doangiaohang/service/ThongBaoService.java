@@ -49,12 +49,12 @@ public class ThongBaoService {
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhan_IdOrderByNgayTaoDesc(toi.getId());
         
         // Giải mã nội dung để hiển thị
-        String myPrivateKey = encryptionUtil.decrypt(toi.getPrivateKey());
-    
-    
-        for (ThongBaoMat tb : list) {
-            String content = hybridService.decrypt(tb.getNoiDung(), tb.getMaKhoaPhien(), myPrivateKey);
-            tb.setNoiDung(content); // Set lại nội dung đã giải mã vào object để hiển thị ra view
+        if (toi.getPrivateKey() != null) {
+            String myPrivateKey = encryptionUtil.decrypt(toi.getPrivateKey());
+            for (ThongBaoMat tb : list) {
+                String content = hybridService.decrypt(tb.getNoiDung(), tb.getMaKhoaPhien(), myPrivateKey);
+                tb.setNoiDung(content); // Set lại nội dung đã giải mã vào object để hiển thị ra view
+            }
         }
         return list;
     }

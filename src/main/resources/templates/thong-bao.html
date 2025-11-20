@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head(pageTitle='Hộp thư Mật')}"></head>
+<body>
+    <div class="app-wrapper">
+        <nav th:replace="~{layout :: sidebar}"></nav>
+        <div class="main-content">
+            <header th:replace="~{layout :: topbar}"></header>
+            <main class="page-content">
+                <h1 class="page-header animate__animated animate__fadeInLeft">Hộp thư Bảo mật (Mã hóa Lai)</h1>
+                
+                <div th:if="${successMessage}" class="alert alert-success animate__animated animate__bounceIn" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__shakeX" th:text="${errorMessage}"></div>
+
+                <div class="card shadow mb-4 animate__animated animate__fadeInUp" sec:authorize="hasRole('ROLE_QUANLY')">
+                    <div class="card-header py-3 bg-gradient-primary">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-paper-plane"></i> Gửi Chỉ đạo Mật</h6>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/thong-bao/gui}" method="post">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Người nhận (Username):</label>
+                                        <input type="text" name="nguoiNhan" class="form-control" placeholder="VD: shipper1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>Nội dung Mật (Sẽ được mã hóa Lai AES+RSA):</label>
+                                        <textarea name="noiDung" class="form-control" rows="2" placeholder="Nhập nội dung chỉ đạo tuyệt mật..." required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Mã hóa & Gửi</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-inbox"></i> Hộp thư đến (Đã giải mã tự động)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="20%">Thời gian</th>
+                                        <th width="20%">Người gửi</th>
+                                        <th>Nội dung (Đã giải mã)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted">Hộp thư trống</td></tr>
+                                    <tr th:each="tb : ${danhSachThongBao}">
+                                        <td th:text="${#dates.format(tb.ngayTao, 'dd/MM/yyyy HH:mm')}"></td>
+                                        <td>
+                                            <span class="badge badge-info" th:text="${tb.nguoiGui.tenDangNhap}"></span>
+                                        </td>
+                                        <td th:text="${tb.noiDung}" class="text-success font-weight-bold"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

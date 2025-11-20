@@ -9,11 +9,11 @@
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header">Tạo Đơn hàng Mới</h1>
+                <h1 class="page-header animate__animated animate__fadeInLeft">Tạo Đơn hàng Mới</h1>
                 
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__headShake" th:text="${errorMessage}"></div>
 
-                <form th:action="@{/khach-hang/tao-don-hang}" th:object="${donHang}" method="post">
+                <form th:action="@{/khach-hang/tao-don-hang}" th:object="${donHang}" method="post" class="animate__animated animate__fadeInUp">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card shadow mb-4">
@@ -27,14 +27,23 @@
                                                     th:value="${dc.idDiaChi}" 
                                                     th:text="${dc.getFullAddress()}"
                                                     th:selected="${dc.laMacDinh}"></option> </select>
-                                        <div class="mt-2"><a th:href="@{/khach-hang/so-dia-chi}">Quản lý (hoặc thêm) sổ địa chỉ</a></div>
+                                        <div class="mt-2"><a th:href="@{/khach-hang/so-dia-chi}"><i class="fas fa-map-marker-alt"></i> Quản lý sổ địa chỉ</a></div>
                                     </div>
                                     <hr>
                                     <div class="form-group">
-                                         <label for="ghiChuKhachHang" class="form-label">Ghi chú cho Shipper:</label>
-                                        <textarea id="ghiChuKhachHang" th:field="*{ghiChuKhachHang}" class="form-control" rows="3" placeholder="Ví dụ: Hàng dễ vỡ, Gọi trước khi đến..."></textarea>
+                                         <label for="ghiChuKhachHang" class="form-label">Ghi chú cho Shipper (Công khai):</label>
+                                        <textarea id="ghiChuKhachHang" th:field="*{ghiChuKhachHang}" class="form-control" rows="2" placeholder="Ví dụ: Hàng dễ vỡ, Gọi trước khi đến..."></textarea>
                                     </div>
-                                </div>
+
+                                    <div class="form-group mt-3 p-3 border border-danger rounded bg-white shadow-sm">
+                                        <label for="moTaHangHoa" class="form-label text-danger font-weight-bold">
+                                            <i class="fas fa-file-contract"></i> Khai báo Hàng Giá trị cao (Bảo Mật):
+                                        </label>
+                                        <textarea id="moTaHangHoa" th:field="*{moTaHangHoa}" class="form-control border-danger" rows="3" 
+                                                  placeholder="Nhập mô tả chi tiết (Seri, Model...). Hệ thống sẽ dùng Mã hóa Lai (AES+RSA) để bảo vệ. Shipper KHÔNG THỂ ĐỌC."></textarea>
+                                        <small class="text-muted"><i class="fas fa-shield-alt"></i> Chỉ Quản lý cấp cao mới có khóa để giải mã.</small>
+                                    </div>
+                                    </div>
                             </div>
                         </div>
 
@@ -56,15 +65,20 @@
                                     </div>
                                      <div class="form-group">
                                          <label for="tienThuHo" class="form-label">Tiền thu hộ (COD - nếu có):</label>
-                                        <input type="number" id="tienThuHo" th:field="*{thanhToan.tongTienCod}" class="form-control" value="0" min="0"> <small class="form-text">Nhập 0 nếu không thu hộ.</small>
+                                         <div class="input-group">
+                                            <input type="number" id="tienThuHo" th:field="*{thanhToan.tongTienCod}" class="form-control" value="0" min="0">
+                                            <span class="input-group-text">VNĐ</span>
+                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-lg"> <i class="fas fa-check-circle"></i> Xác nhận Tạo đơn</button>
+                    <div class="text-center mb-5">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 shadow"> 
+                            <i class="fas fa-check-circle"></i> Xác nhận & Ký số (RSA)
+                        </button>
                     </div>
                 </form>
             </main>

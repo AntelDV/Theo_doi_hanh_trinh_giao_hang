@@ -9,19 +9,19 @@
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header">Đơn hàng Cần Xử lý</h1>
+                <h1 class="page-header animate__animated animate__fadeInLeft">Đơn hàng Cần Xử lý</h1>
                 
-                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                <div th:if="${successMessage}" class="alert alert-success animate__animated animate__bounceIn" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__shakeX" th:text="${errorMessage}"></div>
 
-                <div class="card shadow mb-4">
+                <div class="card shadow mb-4 animate__animated animate__fadeInUp">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Danh sách Đơn hàng của bạn</h6>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered" width="100%" cellspacing="0">
-                                <thead>
+                            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                <thead class="thead-light">
                                     <tr>
                                         <th>Mã VĐ</th>
                                         <th>Địa chỉ Giao</th>
@@ -34,14 +34,14 @@
                                 </thead>
                                 <tbody>
                                     <tr th:if="${#lists.isEmpty(donHangList)}">
-                                        <td colspan="7" class="text-center">Bạn không có đơn hàng nào cần xử lý.</td>
+                                        <td colspan="7" class="text-center text-muted">Bạn không có đơn hàng nào cần xử lý.</td>
                                     </tr>
                                     <tr th:each="dh : ${donHangList}">
-                                        <td th:text="${dh.maVanDon}">DH55667</td>
-                                        <td th:text="${dh.diaChiGiaoHang}">222 Đường X, Q.Y, TP Z</td>
-                                        <td th:text="${dh.tenNguoiNhan}">Nguyễn Thị D</td>
-                                        <td th:text="${dh.sdtNguoiNhan}">0911223344</td>
-                                        <td th:text="${dh.thanhToan != null ? #numbers.formatCurrency(dh.thanhToan.tongTienCod) : '0đ'}">0đ</td>
+                                        <td th:text="${dh.maVanDon}" class="font-weight-bold text-primary"></td>
+                                        <td th:text="${dh.diaChiGiaoHang}"></td>
+                                        <td th:text="${dh.tenNguoiNhan}"></td>
+                                        <td th:text="${dh.sdtNguoiNhan}"></td>
+                                        <td th:text="${dh.thanhToan != null ? #numbers.formatCurrency(dh.thanhToan.tongTienCod) : '0đ'}" class="text-danger font-weight-bold"></td>
                                         <td>
                                             <span th:if="${dh.getTrangThaiHienTai() != null}" 
                                                   th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
@@ -51,7 +51,7 @@
                                             </span>
                                         </td>
                                         <td class="table-actions">
-                                            <button class="btn btn-sm btn-primary"
+                                            <button class="btn btn-sm btn-primary shadow-sm"
                                                     th:data-id="${dh.idDonHang}"
                                                     th:data-ma="${dh.maVanDon}"
                                                     th:data-cod="${dh.thanhToan != null ? dh.thanhToan.tongTienCod : 0}"
@@ -69,21 +69,23 @@
         </div>
     </div>
 
-    <div class="modal" id="capNhatTrangThaiModal" tabindex="-1">
+    <div class="modal fade" id="capNhatTrangThaiModal" tabindex="-1">
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
                  <form th:action="@{/shipper/don-hang/cap-nhat}" method="post">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     
-                    <div class="modal-header">
-                        <h5 class="modal-title">Cập nhật Trạng thái Đơn hàng <span id="maVanDonCapNhat"></span></h5>
-                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-edit"></i> Cập nhật: <span id="maVanDonCapNhat"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close">&times;</button>
                     </div>
+                    
                     <div class="modal-body">
                          <input type="hidden" name="idDonHang" id="idDonHangCapNhat">
+                        
                         <div class="form-group">
-                            <label for="selectTrangThai" class="form-label">Chọn Trạng thái Mới:</label>
+                            <label for="selectTrangThai" class="form-label font-weight-bold">Chọn Trạng thái Mới:</label>
                             <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" required onchange="toggleCodSection(this.value)">
                                  <option value="">-- Chọn trạng thái --</option>
                                 <option th:each="tt : ${trangThaiList}"
@@ -92,24 +94,31 @@
                             </select>
                         </div>
                         
-                        <div class="form-group" id="codSection" style="display:none; background: #fdfaea; padding: 10px; border-radius: 5px;">
-                            <p class="font-weight-bold">Số tiền thu hộ (COD): <span id="soTienCod" class="text-danger"></span></p>
+                        <div class="form-group animate__animated animate__fadeIn" id="codSection" style="display:none; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba;">
+                            <p class="font-weight-bold mb-2"><i class="fas fa-money-bill-wave text-success"></i> Số tiền thu hộ (COD): <span id="soTienCod" class="text-danger h5"></span></p>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="daThanhToanCod" name="daThanhToanCod" value="true">
                                 <label class="form-check-label" for="daThanhToanCod">
-                                    Xác nhận ĐÃ THU TIỀN này
+                                    Tôi xác nhận <b>ĐÃ THU ĐỦ</b> số tiền này từ khách.
                                 </label>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                             <label for="ghiChuShipper" class="form-label">Ghi chú:</label>
-                             <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" placeholder="Ghi chú (nếu có)..."></textarea>
+                        <div class="form-group mt-3">
+                             <label for="ghiChuShipper" class="form-label font-weight-bold">Ghi chú / Báo cáo sự cố:</label>
+                             <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" 
+                                       placeholder="Ghi chú thường..." onkeyup="checkSecureReport(this)"></textarea>
+                             
+                             <small class="text-muted" id="normalNoteHint">Nhập ghi chú ngắn gọn.</small>
+                             <div id="secureReportHint" class="mt-2 p-2 bg-light border border-danger rounded text-danger animate__animated animate__fadeIn" style="display: none;">
+                                <i class="fas fa-lock"></i> <b>Chế độ Báo cáo Mật:</b> Nội dung này sẽ được Mã hóa Lai (AES+RSA) và gửi trực tiếp cho Admin.
+                             </div>
                         </div>
                     </div>
+                    
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Xác nhận Cập nhật</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận & Ký số</button>
                     </div>
                  </form>
             </div>
@@ -118,31 +127,24 @@
 
     <script th:src="@{/js/main.js}"></script>
     <script>
-        /**
-         * Hàm này đọc các thuộc tính data-* an toàn từ button
-         * và sau đó gọi hàm openCapNhatModal với dữ liệu đã đọc.
-         */
         function handleOpenModal(buttonElement) {
             const idDonHang = buttonElement.getAttribute('data-id');
             const maVanDon = buttonElement.getAttribute('data-ma');
             const tienCod = buttonElement.getAttribute('data-cod');
-            
             openCapNhatModal(idDonHang, maVanDon, tienCod);
         }
 
-        // Cập nhật hàm JS để nhận tiền COD
         function openCapNhatModal(idDonHang, maVanDon, tienCod) {
             document.getElementById('idDonHangCapNhat').value = idDonHang;
             document.getElementById('maVanDonCapNhat').innerText = maVanDon;
             document.getElementById('selectTrangThai').value = '';
             document.getElementById('ghiChuShipper').value = '';
-            
-            // === SỬA LỖI LOGIC: Reset trạng thái required khi mở modal ===
             document.getElementById('ghiChuShipper').required = false;
-            document.getElementById('ghiChuShipper').placeholder = "Ghi chú (nếu có)...";
-            // =======================================================
             
-            // Xử lý logic COD
+            // Reset hint
+            document.getElementById('normalNoteHint').style.display = 'block';
+            document.getElementById('secureReportHint').style.display = 'none';
+
             const codSection = document.getElementById('codSection');
             const soTienCodSpan = document.getElementById('soTienCod');
             const daThanhToanCodCheckbox = document.getElementById('daThanhToanCod');
@@ -154,32 +156,45 @@
                 daThanhToanCodCheckbox.checked = false;
                 codSection.style.display = 'none'; 
             } else {
-                codSection.style.display = 'none'; // Ẩn nếu không có COD
+                codSection.style.display = 'none';
             }
-            
             openModal('capNhatTrangThaiModal');
         }
 
-        // === SỬA HÀM NÀY ĐỂ THÊM LOGIC VALIDATION ===
         function toggleCodSection(selectedTrangThaiId) {
             const codSection = document.getElementById('codSection');
             const soTienCodSpan = document.getElementById('soTienCod');
-            const ghiChuTextarea = document.getElementById('ghiChuShipper'); // Lấy ô ghi chú
+            const ghiChuTextarea = document.getElementById('ghiChuShipper'); 
             
-            // 1. Xử lý logic COD (như cũ)
-            if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0đ') {
+            // Hiện COD nếu Giao thành công (ID 5)
+            if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0 ₫') {
                 codSection.style.display = 'block';
             } else {
                 codSection.style.display = 'none';
             }
             
-            // 2. === THÊM LOGIC MỚI: BẮT BUỘC NHẬP GHI CHÚ KHI GIAO THẤT BẠI (ID 6) ===
+            // Bắt buộc ghi chú nếu Thất bại (ID 6)
             if (selectedTrangThaiId == '6') { 
                 ghiChuTextarea.required = true;
                 ghiChuTextarea.placeholder = "Bắt buộc nhập lý do thất bại...";
             } else {
                 ghiChuTextarea.required = false;
                 ghiChuTextarea.placeholder = "Ghi chú (nếu có)...";
+            }
+        }
+        
+        // Logic hiển thị thông báo "Chế độ mật" khi nhập dài
+        function checkSecureReport(textarea) {
+            const len = textarea.value.length;
+            const secureHint = document.getElementById('secureReportHint');
+            const normalHint = document.getElementById('normalNoteHint');
+            
+            if (len > 10) { // Giả định > 10 ký tự là báo cáo chi tiết
+                secureHint.style.display = 'block';
+                normalHint.style.display = 'none';
+            } else {
+                secureHint.style.display = 'none';
+                normalHint.style.display = 'block';
             }
         }
     </script>

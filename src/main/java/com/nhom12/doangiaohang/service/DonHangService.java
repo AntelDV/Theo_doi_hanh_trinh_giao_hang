@@ -224,11 +224,10 @@ public class DonHangService {
     @Transactional
     public void hoanKhoDonHang(Integer idDon, Authentication auth) {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();
-        // Logic tìm shipper cuối cùng... (giữ nguyên như cũ)
-        // ...
+        // Logic tìm shipper cuối cùng...
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(dh); 
-        // ht.setNhanVienThucHien(lastShipper); // Bạn tự điền nốt logic tìm shipper cũ nếu cần
+        // Lưu ý: bạn có thể thêm logic tìm last shipper ở đây nếu muốn chính xác hơn
         ht.setTrangThai(trangThaiDonHangRepository.findById(8).orElseThrow()); // Đang hoàn
         ht.setGhiChuNhanVien("Duyệt hoàn kho");
         ht.setThoiGianCapNhat(new Date());

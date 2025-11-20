@@ -4,30 +4,48 @@
 <head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Hệ thống Giao Hàng</title>
+    <title th:text="${pageTitle}">Hệ thống Giao Hàng Bảo Mật</title>
+    
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        /* Tinh chỉnh hiệu ứng */
+        .card { transition: transform 0.2s ease-in-out; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.15) !important; }
+        .btn { transition: all 0.2s; }
+        .btn:active { transform: scale(0.95); }
+    </style>
 </head>
 
 <body>
     <nav class="sidebar" th:fragment="sidebar">
-        <a th:href="@{/}" class="sidebar-brand">
+        <a th:href="@{/}" class="sidebar-brand animate__animated animate__pulse animate__infinite">
             <i class="fas fa-shipping-fast"></i>
-            <span>Giao Hàng</span>
+            <span>Giao Hàng 12</span>
         </a>
         <ul class="sidebar-menu">
             
-            <li th:classappend="${currentURI == '/' 
-                               or #strings.endsWith(currentURI, '/dashboard')} ? 'active' : ''"> 
-                <a th:href="@{/}"> <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span> </a>
+            <li th:classappend="${currentURI == '/' or #strings.endsWith(currentURI, '/dashboard')} ? 'active' : ''"> 
+                <a th:href="@{/}"> <i class="fas fa-tachometer-alt"></i> <span>Tổng quan</span> </a>
             </li>
 
+            <div sec:authorize="hasAnyRole('ROLE_QUANLY', 'ROLE_SHIPPER')">
+                <li th:classappend="${#strings.startsWith(currentURI, '/thong-bao')} ? 'active' : ''">
+                    <a th:href="@{/thong-bao}"> 
+                        <i class="fas fa-user-secret"></i> 
+                        <span>Hộp thư Mật (Lai)</span> 
+                    </a>
+                </li>
+            </div>
             <div sec:authorize="hasRole('ROLE_KHACHHANG')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/tao-don-hang')} ? 'active' : ''">
                     <a th:href="@{/khach-hang/tao-don-hang}"> <i class="fas fa-plus-circle"></i> <span>Tạo Đơn hàng</span> </a>
                 </li>
-                <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/danh-sach-don-hang') 
-                                   or #strings.startsWith(currentURI, '/khach-hang/chi-tiet-don-hang')} ? 'active' : ''">
+                <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/danh-sach-don-hang') or #strings.startsWith(currentURI, '/khach-hang/chi-tiet-don-hang')} ? 'active' : ''">
                     <a th:href="@{/khach-hang/danh-sach-don-hang}"> <i class="fas fa-box"></i> <span>Đơn hàng Của tôi</span> </a>
                 </li>
                 <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/so-dia-chi')} ? 'active' : ''">
@@ -60,12 +78,12 @@
              <div class="username-trigger">
                 <span class="username">
                     <span sec:authorize="isAuthenticated()" sec:authentication="name">Username</span>
-                    <span sec:authorize="isAnonymous()">User</span>
+                    <span sec:authorize="isAnonymous()">Khách</span>
                 </span>
                 <i class="fas fa-caret-down" style="margin-left: 8px;"></i>
              </div>
-            <ul class="dropdown-menu">
-                <li><a href="#"><i class="fas fa-user fa-sm fa-fw"></i> Hồ sơ</a></li>
+            <ul class="dropdown-menu animate__animated animate__fadeIn">
+                <li><a href="#"><i class="fas fa-user fa-sm fa-fw"></i> Hồ sơ cá nhân</a></li>
                 <li>
                     <form th:action="@{/logout}" method="post" style="margin: 0;">
                          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
