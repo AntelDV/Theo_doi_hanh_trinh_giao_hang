@@ -67,4 +67,26 @@ public class ShipperController {
         }
         return "redirect:/shipper/don-hang";
     }
+    
+    @GetMapping("/dashboard")
+    public String dashboard(Authentication authentication, Model model) {
+        List<DonHang> list = donHangService.getDonHangCuaShipperHienTai(authentication);
+        
+        long canLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1 || d.getTrangThaiHienTai().getIdTrangThai() == 2).count();
+        long canGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
+        // Tính tổng COD của các đơn đang giữ (Đang giao)
+        double codDangGiu = list.stream()
+                .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 4 && d.getThanhToan() != null && !d.getThanhToan().isDaThanhToanCod())
+                .mapToDouble(d -> d.getThanhToan().getTongTienCod())
+                .sum();
+        
+        model.addAttribute("countCanLay", canLay);
+        model.addAttribute("countCanGiao", canGiao);
+        model.addAttribute("codDangGiu", codDangGiu);
+        
+        // List 5 đơn cần xử lý gấp
+        model.addAttribute("donHangGap", list.size() > 5 ? list.subList(0, 5) : list);
+
+        return "shipper/dashboard";
+    }
 }

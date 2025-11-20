@@ -213,4 +213,31 @@ public class KhachHangController {
         }
         return "redirect:/khach-hang/so-dia-chi";
     }
+    
+    @GetMapping("/dashboard")
+    public String dashboard(Authentication authentication, Model model) {
+        // Lấy danh sách đơn hàng của khách
+        List<DonHang> list = donHangService.getDonHangCuaKhachHangHienTai(authentication);
+        
+        // Tính toán số liệu
+        long choLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
+        long dangGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
+        long hoanThanh = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5).count();
+        double tongTien = list.stream()
+                .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
+                .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen() != null ? d.getThanhToan().getPhiVanChuyen() : 0))
+                .sum();
+
+        model.addAttribute("countChoLay", choLay);
+        model.addAttribute("countDangGiao", dangGiao);
+        model.addAttribute("countHoanThanh", hoanThanh);
+        model.addAttribute("tongTien", tongTien);
+        
+        // Đơn mới nhất để hiện timeline
+        if(!list.isEmpty()) {
+            model.addAttribute("donMoiNhat", list.get(0));
+        }
+
+        return "khach-hang/dashboard";
+    }
 }

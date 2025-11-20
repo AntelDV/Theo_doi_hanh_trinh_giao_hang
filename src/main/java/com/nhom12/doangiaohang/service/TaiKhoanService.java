@@ -209,12 +209,14 @@ public class TaiKhoanService {
     // PHẦN 4: CÁC HÀM QUÊN MẬT KHẨU & ĐỔI MẬT KHẨU
     // ============================================================
     
+    @Transactional
     public void processForgotPassword(String usernameOrEmail) {
-        // Lưu ý: Do Email bị mã hóa nên chỉ tìm theo Username
+        // Tìm tài khoản
         TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(usernameOrEmail)
-            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản: " + usernameOrEmail));
 
-        String token = UUID.randomUUID().toString();
+        // Sinh Token ngẫu nhiên
+        String token = UUID.randomUUID().toString().substring(0, 6).toUpperCase(); // Lấy 6 ký tự cho gọn
         taiKhoan.setMaDatLaiMk(token);
         
         // Token hết hạn sau 15 phút
@@ -223,7 +225,11 @@ public class TaiKhoanService {
         
         taiKhoanRepository.save(taiKhoan);
         
-        // (Trong thực tế, đoạn này sẽ gửi Email chứa Token)
+        // === GIẢ LẬP GỬI EMAIL (IN RA CONSOLE) ===
+        System.out.println("==================================================");
+        System.out.println(" [MÔ PHỎNG EMAIL] Gửi đến user: " + usernameOrEmail);
+        System.out.println(" >> MÃ XÁC NHẬN (OTP) CỦA BẠN LÀ: " + token);
+        System.out.println("==================================================");
     }
     
     public TaiKhoan validatePasswordResetToken(String token) {

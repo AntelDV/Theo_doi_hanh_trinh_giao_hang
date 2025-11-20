@@ -211,4 +211,26 @@ public class QuanLyController {
             return "redirect:/quan-ly/don-hang";
         }
     }
+    
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        List<DonHang> all = donHangService.getAllDonHangForQuanLy();
+        
+        long totalOrders = all.size();
+        // Tổng doanh thu (đơn thành công)
+        double totalRevenue = all.stream()
+             .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
+             .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen()!=null?d.getThanhToan().getPhiVanChuyen():0))
+             .sum();
+             
+        long totalShippers = nhanVienService.getAllShippers().size();
+        long waitingOrders = all.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
+
+        model.addAttribute("totalOrders", totalOrders);
+        model.addAttribute("totalRevenue", totalRevenue);
+        model.addAttribute("totalShippers", totalShippers);
+        model.addAttribute("waitingOrders", waitingOrders);
+
+        return "quan-ly/dashboard"; 
+    }
 }
