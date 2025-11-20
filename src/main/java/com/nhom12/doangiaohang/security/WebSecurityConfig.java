@@ -35,7 +35,9 @@ public class WebSecurityConfig {
                     "/login",
                     // Thêm các đường dẫn tra cứu công khai
                     "/tra-cuu",
-                    "/tra-cuu/don-hang" 
+                    "/tra-cuu/don-hang",
+                    "/setup", 
+                    "/setup-success"
                 ).permitAll()
                 
                 .requestMatchers("/quan-ly/**").hasRole("QUANLY")

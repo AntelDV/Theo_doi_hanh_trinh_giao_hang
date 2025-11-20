@@ -23,9 +23,31 @@ public class KhachHangController {
     @Autowired private DonHangService donHangService;
     @Autowired private DiaChiService diaChiService;
 
-    // Trang chủ khách hàng
+    // --- DASHBOARD MỚI (ĐÃ CÓ LOGIC TÍNH TOÁN) ---
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(Authentication authentication, Model model) {
+        // Lấy danh sách đơn hàng của khách
+        List<DonHang> list = donHangService.getDonHangCuaKhachHangHienTai(authentication);
+        
+        // Tính toán số liệu
+        long choLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
+        long dangGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
+        long hoanThanh = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5).count();
+        double tongTien = list.stream()
+                .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
+                .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen() != null ? d.getThanhToan().getPhiVanChuyen() : 0))
+                .sum();
+
+        model.addAttribute("countChoLay", choLay);
+        model.addAttribute("countDangGiao", dangGiao);
+        model.addAttribute("countHoanThanh", hoanThanh);
+        model.addAttribute("tongTien", tongTien);
+        
+        // Đơn mới nhất để hiện timeline
+        if(!list.isEmpty()) {
+            model.addAttribute("donMoiNhat", list.get(0));
+        }
+
         return "khach-hang/dashboard";
     }
 
@@ -102,8 +124,6 @@ public class KhachHangController {
     }
     
     // === CÁC HÀM XỬ LÝ SỔ ĐỊA CHỈ ===
-    
-    // Hiển thị trang Sổ địa chỉ
     @GetMapping("/so-dia-chi")
     public String soDiaChi(Authentication authentication, Model model) {
          List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);
@@ -119,7 +139,6 @@ public class KhachHangController {
         return "khach-hang/so-dia-chi";
     }
     
-    // Thêm địa chỉ mới - POST
     @PostMapping("/so-dia-chi/them")
     public String processThemDiaChi(@Valid @ModelAttribute("diaChiMoi") DiaChi diaChiMoi,
                                      BindingResult bindingResult,
@@ -141,7 +160,6 @@ public class KhachHangController {
         return "redirect:/khach-hang/so-dia-chi";
     }
     
-    // Lấy thông tin địa chỉ để sửa - GET
     @GetMapping("/so-dia-chi/sua/{id}")
     public String showSuaDiaChiForm(@PathVariable("id") Integer idDiaChi,
                                      Authentication authentication,
@@ -156,7 +174,6 @@ public class KhachHangController {
         return "redirect:/khach-hang/so-dia-chi";
     }
     
-    // Xử lý Cập nhật địa chỉ - POST
     @PostMapping("/so-dia-chi/sua")
     public String processSuaDiaChi(@Valid @ModelAttribute("diaChiSua") DiaChi diaChiSua,
                                     BindingResult bindingResult,
@@ -182,7 +199,6 @@ public class KhachHangController {
          return "redirect:/khach-hang/so-dia-chi";
     }
     
-    // Xử lý Xóa địa chỉ - POST
     @PostMapping("/so-dia-chi/xoa/{id}")
     public String processXoaDiaChi(@PathVariable("id") Integer idDiaChi,
                                     Authentication authentication,
@@ -198,7 +214,6 @@ public class KhachHangController {
         return "redirect:/khach-hang/so-dia-chi";
     }
     
-    // Xử lý Đặt làm mặc định - POST
     @PostMapping("/so-dia-chi/mac-dinh/{id}")
     public String processDatMacDinh(@PathVariable("id") Integer idDiaChi,
                                      Authentication authentication,
@@ -212,32 +227,5 @@ public class KhachHangController {
              redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
         }
         return "redirect:/khach-hang/so-dia-chi";
-    }
-    
-    @GetMapping("/dashboard")
-    public String dashboard(Authentication authentication, Model model) {
-        // Lấy danh sách đơn hàng của khách
-        List<DonHang> list = donHangService.getDonHangCuaKhachHangHienTai(authentication);
-        
-        // Tính toán số liệu
-        long choLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
-        long dangGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
-        long hoanThanh = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5).count();
-        double tongTien = list.stream()
-                .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
-                .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen() != null ? d.getThanhToan().getPhiVanChuyen() : 0))
-                .sum();
-
-        model.addAttribute("countChoLay", choLay);
-        model.addAttribute("countDangGiao", dangGiao);
-        model.addAttribute("countHoanThanh", hoanThanh);
-        model.addAttribute("tongTien", tongTien);
-        
-        // Đơn mới nhất để hiện timeline
-        if(!list.isEmpty()) {
-            model.addAttribute("donMoiNhat", list.get(0));
-        }
-
-        return "khach-hang/dashboard";
     }
 }

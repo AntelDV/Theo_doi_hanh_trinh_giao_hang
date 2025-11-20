@@ -13,6 +13,7 @@ import java.util.Properties;
 @Configuration
 public class DataSourceConfig {
 
+    // Tên file chứa thông tin kết nối (sẽ nằm cùng thư mục với file chạy)
     public static final String CONFIG_FILE = "db-config.properties";
 
     @Bean
@@ -21,8 +22,8 @@ public class DataSourceConfig {
         Properties props = new Properties();
         File file = new File(CONFIG_FILE);
 
+        // Trường hợp 1: Đã có file cấu hình (Đã Setup xong) -> Kết nối Oracle thật
         if (file.exists()) {
-            // Nếu tìm thấy file cấu hình, đọc và kết nối Oracle
             try (FileInputStream fis = new FileInputStream(file)) {
                 props.load(fis);
                 System.out.println(">> [INFO] Đang kết nối CSDL từ file cấu hình: " + props.getProperty("url"));
@@ -34,16 +35,16 @@ public class DataSourceConfig {
                         .password(props.getProperty("password"))
                         .build();
             } catch (Exception e) {
-                System.err.println(">> [ERROR] Lỗi đọc file cấu hình. Chuyển sang H2.");
+                System.err.println(">> [ERROR] Lỗi đọc file cấu hình. Chuyển sang chế độ Setup (H2).");
             }
         } else {
-            System.out.println(">> [WARN] Không tìm thấy file db-config.properties. Chạy chế độ Setup (H2 Database).");
+            System.out.println(">> [WARN] Không tìm thấy file " + CONFIG_FILE + ". Chuyển sang chế độ Setup (H2).");
         }
 
-        // Mặc định: Chạy H2 In-Memory để ứng dụng khởi động được (để vào trang Setup)
+        // Trường hợp 2: Chưa có file cấu hình -> Chạy Database ảo (H2) để hiện trang Setup
         return DataSourceBuilder.create()
                 .driverClassName("org.h2.Driver")
-                .url("jdbc:h2:mem:setupdb;DB_CLOSE_DELAY=-1")
+                .url("jdbc:h2:mem:setupdb;DB_CLOSE_DELAY=-1;MODE=Oracle") 
                 .username("sa")
                 .password("")
                 .build();
