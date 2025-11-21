@@ -18,17 +18,21 @@ public class TrackingController {
 
     @GetMapping("/tra-cuu")
     public String showTrackingPage() {
-        return "tra-cuu"; // Trang tra-cuu.html
+        return "tra-cuu"; 
     }
 
     @PostMapping("/tra-cuu/don-hang")
     public String trackDonHang(@RequestParam("maVanDon") String maVanDon, Model model, RedirectAttributes redirectAttributes) {
         try {
-            DonHang donHang = donHangService.getDonHangByMaVanDon(maVanDon);
+            // Xóa khoảng trắng thừa nếu user copy paste lỗi
+            String maChuan = maVanDon.trim();
+            DonHang donHang = donHangService.getDonHangByMaVanDon(maChuan);
+            
             model.addAttribute("donHang", donHang);
-            return "chi-tiet-cong-khai"; // Trang chi-tiet-cong-khai.html
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "chi-tiet-cong-khai"; 
+        } catch (Exception e) {
+            // Bắt mọi lỗi (Không tìm thấy, Lỗi DB...) để không bị trang trắng
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng với mã: " + maVanDon);
             return "redirect:/tra-cuu";
         }
     }

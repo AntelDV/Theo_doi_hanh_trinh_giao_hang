@@ -16,9 +16,10 @@ public class SetupController {
 
     @GetMapping("/setup")
     public String showSetupPage(Model model) {
+        // Kiểm tra file tại đường dẫn tuyệt đối
         File file = new File(DataSourceConfig.CONFIG_FILE);
         if (file.exists()) {
-            model.addAttribute("message", "Hệ thống đã được cấu hình. Nếu muốn cấu hình lại, hãy xóa file 'db-config.properties' và khởi động lại.");
+            model.addAttribute("message", "Đã có cấu hình tại: " + file.getAbsolutePath());
             return "setup-success";
         }
         return "setup";
@@ -33,20 +34,30 @@ public class SetupController {
                                Model model) {
         try {
             Properties props = new Properties();
-            String url = "jdbc:oracle:thin:@" + host + ":" + port + ":" + sid;
+            // URL chuẩn cho Oracle
+            String url = "jdbc:oracle:thin:@" + host + ":" + port + "/" + sid; 
+            // Lưu ý: Nếu dùng SID cũ (xe, orcl) thì dùng dấu ":", nếu dùng ServiceName (FREEPDB1) thì dùng dấu "/"
+            // Để an toàn, bạn có thể thử cả 2 hoặc dùng "/" phổ biến hơn cho bản mới.
             
+            // Nếu user dùng SID dạng cũ (dấu :)
+            if (sid.length() <= 4) { 
+                url = "jdbc:oracle:thin:@" + host + ":" + port + ":" + sid;
+            }
+
             props.setProperty("url", url);
             props.setProperty("username", username);
             props.setProperty("password", password);
 
-            // Lưu vào file
-            try (FileOutputStream fos = new FileOutputStream(DataSourceConfig.CONFIG_FILE)) {
+            File file = new File(DataSourceConfig.CONFIG_FILE);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
                 props.store(fos, "Oracle Database Configuration");
             }
+            
+            System.out.println(">> [SETUP] Đã lưu file cấu hình tại: " + file.getAbsolutePath());
 
             return "redirect:/setup-success";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Lỗi lưu cấu hình: " + e.getMessage());
+            model.addAttribute("errorMessage", "Lỗi lưu file: " + e.getMessage());
             return "setup";
         }
     }

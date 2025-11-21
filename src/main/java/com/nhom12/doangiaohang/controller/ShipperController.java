@@ -20,14 +20,12 @@ public class ShipperController {
     @Autowired private DonHangService donHangService;
     @Autowired private TrangThaiDonHangRepository trangThaiDonHangRepository; 
 
-    // --- DASHBOARD MỚI ---
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         List<DonHang> list = donHangService.getDonHangCuaShipperHienTai(authentication);
         
         long canLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1 || d.getTrangThaiHienTai().getIdTrangThai() == 2).count();
         long canGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
-        // Tính tổng COD của các đơn đang giữ (Đang giao)
         double codDangGiu = list.stream()
                 .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 4 && d.getThanhToan() != null && !d.getThanhToan().isDaThanhToanCod())
                 .mapToDouble(d -> d.getThanhToan().getTongTienCod())
@@ -37,7 +35,6 @@ public class ShipperController {
         model.addAttribute("countCanGiao", canGiao);
         model.addAttribute("codDangGiu", codDangGiu);
         
-        // List 5 đơn cần xử lý gấp
         model.addAttribute("donHangGap", list.size() > 5 ? list.subList(0, 5) : list);
 
         return "shipper/dashboard";
@@ -47,6 +44,8 @@ public class ShipperController {
     public String donHangCanXuLy(Authentication authentication, Model model) {
         List<DonHang> donHangList = donHangService.getDonHangCuaShipperHienTai(authentication);
         
+        // Danh sách trạng thái Shipper được chọn:
+        // 2: Đã lấy, 4: Đang giao, 5: Thành công, 6: Thất bại, 9: Đã hoàn kho
         List<TrangThaiDonHang> trangThaiList = trangThaiDonHangRepository.findAllById(
                 List.of(2, 4, 5, 6, 9) 
         );
@@ -69,7 +68,8 @@ public class ShipperController {
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật: " + e.getMessage());
         } catch (Exception e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
+             // Nếu lỗi ORA-20002 xảy ra, nó sẽ rơi vào đây.
+             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
              e.printStackTrace(); 
         }
         return "redirect:/shipper/don-hang";

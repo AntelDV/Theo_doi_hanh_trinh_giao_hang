@@ -28,9 +28,8 @@ public class DonHangService {
     @Autowired private CustomUserHelper userHelper;
     @Autowired private EncryptionUtil encryptionUtil;
     @Autowired private RSAUtil rsaUtil;
-    @Autowired private HybridEncryptionService hybridService; // Service Mã hóa Lai
+    @Autowired private HybridEncryptionService hybridService; 
 
-    // Tiện ích lấy Private Key
     private String getMyPrivateKey(Authentication authentication) {
         TaiKhoan tk = userHelper.getTaiKhoanHienTai(authentication);
         if (tk == null || tk.getPrivateKey() == null) {
@@ -39,22 +38,30 @@ public class DonHangService {
         return encryptionUtil.decrypt(tk.getPrivateKey());
     }
 
-    // Tiện ích giải mã PII (Tuần 5)
+    // === HÀM GIẢI MÃ ĐÃ ĐƯỢC NÂNG CẤP (FIX LỖI HIỂN THỊ TÊN SHIPPER) ===
     private void decryptDonHangPII(DonHang donHang) {
         if (donHang != null) {
             try {
+                // 1. Thông tin khách hàng
                 donHang.setTenNguoiNhan(encryptionUtil.decrypt(donHang.getTenNguoiNhan()));
                 donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(donHang.getDiaChiGiaoHang()));
                 if (donHang.getDiaChiLayHang() != null) {
                     donHang.getDiaChiLayHang().setSoNhaDuong(encryptionUtil.decrypt(donHang.getDiaChiLayHang().getSoNhaDuong()));
                 }
+                
+                // 2. Tên Shipper trong lịch sử hành trình
+                if (donHang.getHanhTrinh() != null) {
+                    for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
+                        if (ht.getNhanVienThucHien() != null) {
+                            String tenMaHoa = ht.getNhanVienThucHien().getHoTen();
+                            ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(tenMaHoa));
+                        }
+                    }
+                }
             } catch (Exception e) { /* Ignore */ }
         }
     }
 
-    // ============================================================
-    // 1. TẠO ĐƠN HÀNG (Có tích hợp Mã hóa Lai cho Mô tả hàng - SV3)
-    // ============================================================
     @Transactional
     public DonHang taoDonHangMoi(DonHang donHang, Integer idDiaChiLayHang, Authentication authentication) {
         KhachHang khachHangGui = userHelper.getKhachHangHienTai(authentication);
@@ -65,13 +72,10 @@ public class DonHangService {
         donHang.setMaVanDon("DH" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         donHang.setNgayTao(new Date());
 
-        // Mã hóa PII (Tuần 5)
         donHang.setTenNguoiNhan(encryptionUtil.encrypt(donHang.getTenNguoiNhan()));
         donHang.setDiaChiGiaoHang(encryptionUtil.encrypt(donHang.getDiaChiGiaoHang()));
 
-        // === TUẦN 7 (SV3): MÃ HÓA LAI MÔ TẢ HÀNG ===
         if (donHang.getMoTaHangHoa() != null && !donHang.getMoTaHangHoa().isEmpty()) {
-            // Tìm Admin (ID=1) để lấy Public Key
             TaiKhoan admin = taiKhoanRepository.findById(1).orElse(null);
             if (admin != null && admin.getPublicKey() != null) {
                 HybridResult res = hybridService.encrypt(donHang.getMoTaHangHoa(), admin.getPublicKey());
@@ -80,14 +84,12 @@ public class DonHangService {
             }
         }
 
-        // Ký số (Tuần 6 - SV1)
         try {
             String dataToSign = "CreateOrder|" + donHang.getMaVanDon();
             String signature = rsaUtil.sign(dataToSign, getMyPrivateKey(authentication));
             donHang.setChKyKhachHang(signature);
         } catch (Exception e) { e.printStackTrace(); }
 
-        // Lưu & Tạo hành trình đầu
         if (donHang.getThanhToan() == null) { 
             ThanhToan tt = new ThanhToan(); tt.setDonHang(donHang); donHang.setThanhToan(tt);
         } else { donHang.getThanhToan().setDonHang(donHang); }
@@ -103,18 +105,14 @@ public class DonHangService {
         return saved;
     }
 
-    // ============================================================
-    // 2. CẬP NHẬT TRẠNG THÁI (Có Ký số SV1 + Báo cáo mật SV2)
-    // ============================================================
     @Transactional
     public void capNhatTrangThai(Integer idDonHang, Integer idTrangThaiMoi, String ghiChu, boolean daThanhToanCod, Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication);
         DonHang donHang = donHangRepository.findById(idDonHang).orElseThrow();
         TrangThaiDonHang trangThaiMoi = trangThaiDonHangRepository.findById(idTrangThaiMoi).orElseThrow();
 
-        // Xử lý COD
         if (idTrangThaiMoi == 5 && donHang.getThanhToan().getTongTienCod() > 0) {
-             if (!daThanhToanCod) throw new IllegalStateException("Chưa thu tiền COD");
+             if (!daThanhToanCod) throw new IllegalStateException("Chưa xác nhận thu tiền COD.");
              donHang.getThanhToan().setDaThanhToanCod(true);
              thanhToanRepository.save(donHang.getThanhToan());
         }
@@ -128,22 +126,17 @@ public class DonHangService {
         String ghiChuFinal = (ghiChu != null) ? ghiChu : "";
         ht.setGhiChuNhanVien(ghiChuFinal);
 
-        // === TUẦN 7 (SV2): MÃ HÓA LAI BÁO CÁO SỰ CỐ ===
-        // Nếu trạng thái là Thất bại (6) hoặc Hoàn kho (8) và có ghi chú dài -> Coi là báo cáo sự cố
         if ((idTrangThaiMoi == 6 || idTrangThaiMoi == 8) && ghiChuFinal.length() > 10) {
             TaiKhoan admin = taiKhoanRepository.findById(1).orElse(null);
             if (admin != null) {
                 HybridResult res = hybridService.encrypt(ghiChuFinal, admin.getPublicKey());
                 ht.setChiTietSuCo(res.encryptedData);
                 ht.setMaKhoaSuCo(res.encryptedSessionKey);
-                ht.setGhiChuNhanVien("Đã gửi báo cáo mật."); // Ẩn nội dung gốc
+                ht.setGhiChuNhanVien("Đã gửi báo cáo mật."); 
             }
         }
 
-        // === TUẦN 6 (SV1): KÝ SỐ (QUAN TRỌNG ĐỂ QUA TRIGGER) ===
         try {
-            // Format chuỗi ký phải khớp Trigger Oracle: 
-            // 'UpdateStatus|' || ID_DON || '|' || ID_TRANG_THAI || '|' || ID_SHIPPER || '|' || GHI_CHU
             String dataToSign = "UpdateStatus|" + idDonHang + "|" + idTrangThaiMoi + "|" + shipper.getId() + "|" + ht.getGhiChuNhanVien();
             String signature = rsaUtil.sign(dataToSign, getMyPrivateKey(authentication));
             ht.setChKySo(signature);
@@ -153,7 +146,6 @@ public class DonHangService {
 
         hanhTrinhDonHangRepository.save(ht);
         
-        // Tự động chuyển trạng thái nếu thất bại
         if (idTrangThaiMoi == 6) {
              HanhTrinhDonHang htAuto = new HanhTrinhDonHang();
              htAuto.setDonHang(donHang);
@@ -164,7 +156,6 @@ public class DonHangService {
         }
     }
     
-    // === CÁC HÀM ĐỌC DỮ LIỆU (READ) ===
     public List<DonHang> getDonHangCuaShipperHienTai(Authentication auth) {
         NhanVien shipper = userHelper.getNhanVienHienTai(auth);
         List<DonHang> list = donHangRepository.findDonHangDangXuLyCuaShipper(shipper.getId());
@@ -197,25 +188,25 @@ public class DonHangService {
         return dh;
     }
     
+    // === ĐÃ SỬA: Dùng orElseThrow để báo lỗi rõ ràng ===
     public DonHang getDonHangByMaVanDon(String ma) {
-        DonHang dh = donHangRepository.findByMaVanDon(ma).orElseThrow();
+        DonHang dh = donHangRepository.findByMaVanDon(ma)
+                .orElseThrow(() -> new IllegalArgumentException("Mã vận đơn không tồn tại"));
         decryptDonHangPII(dh);
         return dh;
     }
 
-    // === HÀM GIẢI MÃ LAI (CHO ADMIN XEM) ===
     public String giaiMaLai(String encryptedData, String encryptedKey, Authentication auth) {
         return hybridService.decrypt(encryptedData, encryptedKey, getMyPrivateKey(auth));
     }
 
-    // Hàm Phân công / Hoàn kho (Giữ nguyên logic cũ)
     @Transactional
     public void phanCongShipper(Integer idDon, Integer idShip, Authentication auth) {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();
         NhanVien ship = nhanVienRepository.findById(idShip).orElseThrow();
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(dh); ht.setNhanVienThucHien(ship);
-        ht.setTrangThai(trangThaiDonHangRepository.findById(4).orElseThrow()); // Đang giao
+        ht.setTrangThai(trangThaiDonHangRepository.findById(4).orElseThrow());
         ht.setGhiChuNhanVien("Quản lý phân công");
         ht.setThoiGianCapNhat(new Date());
         hanhTrinhDonHangRepository.save(ht);
@@ -224,11 +215,10 @@ public class DonHangService {
     @Transactional
     public void hoanKhoDonHang(Integer idDon, Authentication auth) {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();
-        // Logic tìm shipper cuối cùng...
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(dh); 
-        // Lưu ý: bạn có thể thêm logic tìm last shipper ở đây nếu muốn chính xác hơn
-        ht.setTrangThai(trangThaiDonHangRepository.findById(8).orElseThrow()); // Đang hoàn
+        // (Có thể thêm logic tìm shipper cũ ở đây nếu cần)
+        ht.setTrangThai(trangThaiDonHangRepository.findById(8).orElseThrow());
         ht.setGhiChuNhanVien("Duyệt hoàn kho");
         ht.setThoiGianCapNhat(new Date());
         hanhTrinhDonHangRepository.save(ht);

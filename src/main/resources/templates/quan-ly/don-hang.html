@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<head th:replace="~{layout :: head(pageTitle='Đơn hàng Cần Xử lý')}"></head>
+<head th:replace="~{layout :: head(pageTitle='Quản lý Đơn hàng')}"></head>
 
 <body>
     <div class="app-wrapper">
@@ -9,55 +9,66 @@
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header">Đơn hàng Cần Xử lý</h1>
-                
-                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                <h1 class="page-header">Quản lý Đơn hàng</h1>
 
-                <div class="card shadow mb-4">
+                <div th:if="${successMessage}" class="alert alert-success animate__animated animate__bounceIn" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__shakeX" th:text="${errorMessage}"></div>
+
+                <div class="card shadow mb-4 animate__animated animate__fadeInUp">
                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Danh sách Đơn hàng của bạn</h6>
+                        <h6 class="m-0 font-weight-bold text-primary">Danh sách Tất cả Đơn hàng</h6>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered" width="100%" cellspacing="0">
-                                <thead>
+                            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                                <thead class="thead-light">
                                     <tr>
                                         <th>Mã VĐ</th>
-                                        <th>Địa chỉ Giao</th>
+                                        <th>Người gửi</th>
                                         <th>Người nhận</th>
-                                        <th>SĐT Nhận</th>
-                                        <th>COD</th>
                                         <th>Trạng thái</th>
+                                        <th>Shipper</th>
                                         <th>Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr th:if="${#lists.isEmpty(donHangList)}">
-                                        <td colspan="7" class="text-center">Bạn không có đơn hàng nào cần xử lý.</td>
+                                        <td colspan="6" class="text-center text-muted">Chưa có đơn hàng nào.</td>
                                     </tr>
                                     <tr th:each="dh : ${donHangList}">
-                                        <td th:text="${dh.maVanDon}">DH55667</td>
-                                        <td th:text="${dh.diaChiGiaoHang}">222 Đường X, Q.Y, TP Z</td>
-                                        <td th:text="${dh.tenNguoiNhan}">Nguyễn Thị D</td>
-                                        <td th:text="${dh.sdtNguoiNhan}">0911223344</td>
-                                        <td th:text="${dh.thanhToan != null ? #numbers.formatCurrency(dh.thanhToan.tongTienCod) : '0đ'}">0đ</td>
+                                        <td th:text="${dh.maVanDon}" class="font-weight-bold text-primary"></td>
+                                        <td th:text="${dh.khachHangGui.hoTen}"></td>
+                                        <td th:text="${dh.tenNguoiNhan}"></td>
                                         <td>
                                             <span th:if="${dh.getTrangThaiHienTai() != null}" 
                                                   th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
                                                   class="badge" 
-                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') ? 'badge-danger' : 
+                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thành công') ? 'badge-success' : 
+                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') or #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ xử lý') ? 'badge-danger' : 
                                                                    #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ lấy') ? 'badge-warning' : 'badge-info'}">
                                             </span>
                                         </td>
+                                        <td th:text="${dh.getShipperHienTai() != null ? dh.getShipperHienTai().hoTen : '---'}"></td>
                                         <td class="table-actions">
-                                            <button class="btn btn-sm btn-primary"
+                                            <button th:if="${dh.getTrangThaiHienTai().idTrangThai == 1 || dh.getTrangThaiHienTai().idTrangThai == 7}" 
+                                                    class="btn btn-sm btn-info shadow-sm" 
                                                     th:data-id="${dh.idDonHang}"
                                                     th:data-ma="${dh.maVanDon}"
-                                                    th:data-cod="${dh.thanhToan != null ? dh.thanhToan.tongTienCod : 0}"
-                                                    onclick="handleOpenModal(this)">
-                                                <i class="fas fa-edit"></i> Cập nhật
+                                                    onclick="openPhanCongModal(this)">
+                                                <i class="fas fa-user-plus"></i> Phân công
                                             </button>
+                                            
+                                            <form th:if="${dh.getTrangThaiHienTai().idTrangThai == 8}" 
+                                                  th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display: inline-block;">
+                                                <input type="hidden" name="idDonHang" th:value="${dh.idDonHang}">
+                                                <button type="submit" class="btn btn-sm btn-secondary shadow-sm" onclick="return confirm('Xác nhận đơn hàng đã về kho?')">
+                                                    <i class="fas fa-warehouse"></i> Duyệt về kho
+                                                </button>
+                                            </form>
+
+                                            <a th:href="@{/quan-ly/don-hang/chi-tiet/{id}(id=${dh.idDonHang})}" class="btn btn-sm btn-light border" title="Xem chi tiết">
+                                                  <i class="fas fa-eye text-primary"></i>
+                                          </a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -69,106 +80,47 @@
         </div>
     </div>
 
-    <div class="modal" id="capNhatTrangThaiModal" tabindex="-1">
+    <div class="modal fade" id="phanCongModal" tabindex="-1">
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
-                 <form th:action="@{/shipper/don-hang/cap-nhat}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    
-                    <div class="modal-header">
-                        <h5 class="modal-title">Cập nhật Trạng thái Đơn hàng <span id="maVanDonCapNhat"></span></h5>
-                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                <form th:action="@{/quan-ly/don-hang/phan-cong}" method="post">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-tasks"></i> Phân công Đơn hàng <span id="maVanDonPhanCong"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close">&times;</button>
                     </div>
                     <div class="modal-body">
-                         <input type="hidden" name="idDonHang" id="idDonHangCapNhat">
+                        <input type="hidden" name="idDonHang" id="idDonHangPhanCong">
                         <div class="form-group">
-                            <label for="selectTrangThai" class="form-label">Chọn Trạng thái Mới:</label>
-                            <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" required onchange="toggleCodSection(this.value)">
-                                 <option value="">-- Chọn trạng thái --</option>
-                                <option th:each="tt : ${trangThaiList}"
-                                        th:value="${tt.idTrangThai}"
-                                        th:text="${tt.tenTrangThai}"></option>
+                            <label for="selectShipper" class="form-label font-weight-bold">Chọn Shipper phụ trách:</label>
+                            <select id="selectShipper" name="idShipper" class="form-control" required>
+                                 <option value="">-- Chọn nhân viên --</option>
+                                <option th:each="shipper : ${shipperList}"
+                                        th:value="${shipper.id}"
+                                        th:text="${shipper.hoTen} + ' (' + ${shipper.maNV} + ')'"></option>
                             </select>
-                        </div>
-                        
-                        <div class="form-group" id="codSection" style="display:none; background: #fdfaea; padding: 10px; border-radius: 5px;">
-                            <p class="font-weight-bold">Số tiền thu hộ (COD): <span id="soTienCod" class="text-danger"></span></p>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="daThanhToanCod" name="daThanhToanCod" value="true">
-                                <label class="form-check-label" for="daThanhToanCod">
-                                    Xác nhận ĐÃ THU TIỀN này
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                             <label for="ghiChuShipper" class="form-label">Ghi chú / Báo cáo sự cố:</label>
-                             <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" 
-                                       placeholder="Ghi chú thường HOẶC nhập chi tiết sự cố (trên 10 ký tự) để tự động MÃ HÓA MẬT gửi Admin."></textarea>
-                             <small class="text-info" id="noteHelp">* Nếu chọn 'Giao thất bại' và viết dài > 10 ký tự, hệ thống sẽ tự động dùng Mã hóa Lai để bảo mật nội dung này.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Xác nhận Cập nhật</button>
+                        <button type="submit" class="btn btn-info">Xác nhận Phân công</button>
                     </div>
-                 </form>
+                </form>
             </div>
         </div>
     </div>
 
     <script th:src="@{/js/main.js}"></script>
     <script>
-        function handleOpenModal(buttonElement) {
-            const idDonHang = buttonElement.getAttribute('data-id');
-            const maVanDon = buttonElement.getAttribute('data-ma');
-            const tienCod = buttonElement.getAttribute('data-cod');
+        function openPhanCongModal(btn) {
+            const id = btn.getAttribute('data-id');
+            const ma = btn.getAttribute('data-ma');
             
-            openCapNhatModal(idDonHang, maVanDon, tienCod);
-        }
-
-        function openCapNhatModal(idDonHang, maVanDon, tienCod) {
-            document.getElementById('idDonHangCapNhat').value = idDonHang;
-            document.getElementById('maVanDonCapNhat').innerText = maVanDon;
-            document.getElementById('selectTrangThai').value = '';
-            document.getElementById('ghiChuShipper').value = '';
+            document.getElementById('idDonHangPhanCong').value = id;
+            document.getElementById('maVanDonPhanCong').innerText = ma;
+            document.getElementById('selectShipper').value = ''; 
             
-            document.getElementById('ghiChuShipper').required = false;
-            
-            const codSection = document.getElementById('codSection');
-            const soTienCodSpan = document.getElementById('soTienCod');
-            const daThanhToanCodCheckbox = document.getElementById('daThanhToanCod');
-            
-            const tienCodNum = parseFloat(tienCod) || 0;
-            
-            if (tienCodNum > 0) {
-                soTienCodSpan.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tienCodNum);
-                daThanhToanCodCheckbox.checked = false;
-                codSection.style.display = 'none'; 
-            } else {
-                codSection.style.display = 'none';
-            }
-            
-            openModal('capNhatTrangThaiModal');
-        }
-
-        function toggleCodSection(selectedTrangThaiId) {
-            const codSection = document.getElementById('codSection');
-            const soTienCodSpan = document.getElementById('soTienCod');
-            const ghiChuTextarea = document.getElementById('ghiChuShipper'); 
-            
-            if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0đ') {
-                codSection.style.display = 'block';
-            } else {
-                codSection.style.display = 'none';
-            }
-            
-            if (selectedTrangThaiId == '6') { 
-                ghiChuTextarea.required = true;
-            } else {
-                ghiChuTextarea.required = false;
-            }
+            openModal('phanCongModal');
         }
     </script>
 </body>
