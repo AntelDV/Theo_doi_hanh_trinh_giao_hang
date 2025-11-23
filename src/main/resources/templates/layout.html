@@ -4,16 +4,11 @@
 <head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Hệ thống Giao Hàng Bảo Mật</title>
-    
+    <title th:text="${pageTitle}">Hệ thống Giao Hàng</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    
     <style>
-        /* Tinh chỉnh hiệu ứng */
         .card { transition: transform 0.2s ease-in-out; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.15) !important; }
         .btn { transition: all 0.2s; }
@@ -23,7 +18,7 @@
 
 <body>
     <nav class="sidebar" th:fragment="sidebar">
-        <a th:href="@{/}" class="sidebar-brand animate__animated animate__pulse animate__infinite">
+        <a th:href="@{/}" class="sidebar-brand">
             <i class="fas fa-shipping-fast"></i>
             <span>Giao Hàng 12</span>
         </a>
@@ -37,10 +32,11 @@
                 <li th:classappend="${#strings.startsWith(currentURI, '/thong-bao')} ? 'active' : ''">
                     <a th:href="@{/thong-bao}"> 
                         <i class="fas fa-user-secret"></i> 
-                        <span>Hộp thư Mật (Lai)</span> 
+                        <span>Hộp thư Bảo mật</span> 
                     </a>
                 </li>
             </div>
+
             <div sec:authorize="hasRole('ROLE_KHACHHANG')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/tao-don-hang')} ? 'active' : ''">
                     <a th:href="@{/khach-hang/tao-don-hang}"> <i class="fas fa-plus-circle"></i> <span>Tạo Đơn hàng</span> </a>

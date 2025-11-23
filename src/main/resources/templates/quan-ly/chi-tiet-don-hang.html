@@ -4,19 +4,18 @@
 <head th:replace="~{layout :: head(pageTitle='Chi tiết Đơn hàng')}"></head>
 
 <style>
-    /* Copy style timeline từ trang khách hàng sang cho đẹp */
     .timeline { list-style: none; padding: 0; position: relative; }
     .timeline::before { content: ''; position: absolute; top: 0; bottom: 0; width: 3px; background: var(--border-color); left: 30px; margin-left: -1.5px; }
     .timeline-item { margin-bottom: 20px; position: relative; padding-left: 60px; }
-    .timeline-item::before { content: ''; background: var(--secondary-color); position: absolute; left: 30px; top: 5px; width: 15px; height: 15px; border-radius: 50%; margin-left: -7.5px; z-index: 1; }
+    .timeline-item::before { content: ''; background: var(--secondary); position: absolute; left: 30px; top: 5px; width: 15px; height: 15px; border-radius: 50%; margin-left: -7.5px; z-index: 1; }
     .timeline-item.status-success::before { background: var(--success); }
     .timeline-item.status-danger::before { background: var(--danger); }
-    .timeline-item.status-current::before { background: var(--primary-color); border: 3px solid #fff; box-shadow: 0 0 0 3px var(--primary-color); width: 20px; height: 20px; margin-left: -10px; }
+    .timeline-item.status-current::before { background: var(--primary); border: 3px solid #fff; box-shadow: 0 0 0 3px var(--primary); width: 20px; height: 20px; margin-left: -10px; }
     .timeline-content { background: var(--white); border-radius: 0.35rem; padding: 15px; border: 1px solid var(--border-color); position: relative; }
     .timeline-content::before { content: ''; position: absolute; top: 10px; left: -10px; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid var(--border-color); }
     .timeline-content::after { content: ''; position: absolute; top: 11px; left: -9px; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-right: 9px solid #fff; }
-    .timeline-time { font-size: 0.85em; color: var(--secondary-color); display: block; margin-bottom: 5px;}
-    .timeline-status { font-weight: 600; color: var(--dark-text); margin-bottom: 5px;}
+    .timeline-time { font-size: 0.85em; color: var(--secondary); display: block; margin-bottom: 5px;}
+    .timeline-status { font-weight: 600; color: var(--dark); margin-bottom: 5px;}
     .timeline-note { font-size: 0.9em; color: #555; }
 </style>
 
@@ -28,7 +27,9 @@
             <main class="page-content">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="page-header mb-0" th:text="'Chi tiết Đơn hàng: ' + ${donHang.maVanDon}"></h1>
-                    <a th:href="@{/quan-ly/don-hang}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay lại Danh sách</a>
+                    <a th:href="@{/quan-ly/don-hang}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại Danh sách
+                    </a>
                 </div>
 
                 <div class="row">

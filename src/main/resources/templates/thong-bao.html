@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{layout :: head(pageTitle='Hộp thư Mật')}"></head>
+<head th:replace="~{layout :: head(pageTitle='Hộp thư Bảo mật')}"></head>
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header animate__animated animate__fadeInLeft">Hộp thư Bảo mật (Mã hóa Lai)</h1>
+                <h1 class="page-header animate__animated animate__fadeInLeft">Hộp thư Bảo mật</h1>
                 
                 <div th:if="${successMessage}" class="alert alert-success animate__animated animate__bounceIn" th:text="${successMessage}"></div>
                 <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__shakeX" th:text="${errorMessage}"></div>
@@ -27,19 +27,19 @@
                                 </div>
                                 <div class="col-md-8">
                                     <div class="form-group">
-                                        <label>Nội dung Mật (Sẽ được mã hóa Lai AES+RSA):</label>
+                                        <label>Nội dung Bảo mật:</label>
                                         <textarea name="noiDung" class="form-control" rows="2" placeholder="Nhập nội dung chỉ đạo tuyệt mật..." required></textarea>
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Mã hóa & Gửi</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Gửi Bảo mật</button>
                         </form>
                     </div>
                 </div>
 
                 <div class="card shadow animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-inbox"></i> Hộp thư đến (Đã giải mã tự động)</h6>
+                        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-inbox"></i> Hộp thư đến</h6>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -48,7 +48,7 @@
                                     <tr>
                                         <th width="20%">Thời gian</th>
                                         <th width="20%">Người gửi</th>
-                                        <th>Nội dung (Đã giải mã)</th>
+                                        <th>Nội dung</th>
                                     </tr>
                                 </thead>
                                 <tbody>
