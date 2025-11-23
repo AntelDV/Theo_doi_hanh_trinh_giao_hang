@@ -6,14 +6,16 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets; 
 
 @Component
 public class RSAUtil {
 
     private static final String ALGORITHM = "RSA";
-    private static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
-    private static final int KEY_SIZE = 1024; // Đồng bộ với Oracle key size
+    private static final String SIGNATURE_ALGORITHM = "SHA256withRSA"; // Khớp với Oracle
+    private static final int KEY_SIZE = 1024;
 
+    // ... (Giữ nguyên generateKeyPair, keyToString, stringToPublicKey) ...
     public KeyPair generateKeyPair() {
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
@@ -42,54 +44,52 @@ public class RSAUtil {
         return keyFactory.generatePrivate(spec);
     }
 
-    // Mã hóa RSA (Dùng Public Key)
+    // ... (Giữ nguyên encrypt, decrypt) ...
     public String encrypt(String data, String publicKeyStr) {
         try {
             PublicKey publicKey = stringToPublicKey(publicKeyStr);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-            byte[] encryptedBytes = cipher.doFinal(data.getBytes());
+            byte[] encryptedBytes = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encryptedBytes);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi mã hóa RSA", e);
         }
     }
 
-    // Giải mã RSA (Dùng Private Key)
     public String decrypt(String encryptedData, String privateKeyStr) {
         try {
             PrivateKey privateKey = stringToPrivateKey(privateKeyStr);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
-            return new String(decryptedBytes);
+            return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            // Trả về nguyên gốc nếu không giải mã được (để tránh lỗi hiển thị)
             return encryptedData;
         }
     }
 
-    // Tạo chữ ký số (Dùng Private Key)
+    // === QUAN TRỌNG: SỬA HÀM KÝ SỐ ===
     public String sign(String data, String privateKeyStr) {
         try {
             PrivateKey privateKey = stringToPrivateKey(privateKeyStr);
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             signature.initSign(privateKey);
-            signature.update(data.getBytes("UTF-8"));
+            // Ép kiểu UTF-8 để đồng bộ với Oracle
+            signature.update(data.getBytes(StandardCharsets.UTF_8));
             byte[] signatureBytes = signature.sign();
             return Base64.getEncoder().encodeToString(signatureBytes);
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo chữ ký số", e);
+            throw new RuntimeException("Lỗi tạo chữ ký số: " + e.getMessage(), e);
         }
     }
 
-    // Xác thực chữ ký số (Dùng Public Key)
     public boolean verify(String data, String signatureStr, String publicKeyStr) {
         try {
             PublicKey publicKey = stringToPublicKey(publicKeyStr);
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             signature.initVerify(publicKey);
-            signature.update(data.getBytes("UTF-8"));
+            signature.update(data.getBytes(StandardCharsets.UTF_8));
             byte[] signatureBytes = Base64.getDecoder().decode(signatureStr);
             return signature.verify(signatureBytes);
         } catch (Exception e) {

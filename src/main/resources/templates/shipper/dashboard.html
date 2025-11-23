@@ -7,51 +7,37 @@
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header animate__animated animate__fadeInLeft">Bảng tin Shipper</h1>
+                <h1 class="page-header">Bảng tin Shipper</h1>
 
-                <div class="row animate__animated animate__fadeInUp">
-                    <div class="col-xl-4 col-md-6">
+                <div class="row">
+                    <div class="col-md-4">
                         <div class="card-counter warning">
-                            <div class="text-xs text-warning">Cần lấy / Về kho</div>
                             <div class="h5" th:text="${countCanLay}">0</div>
-                            <i class="fas fa-dolly icon text-warning"></i>
+                            <div class="small text-warning">Cần lấy / Về kho</div>
                         </div>
                     </div>
-                    <div class="col-xl-4 col-md-6">
+                    <div class="col-md-4">
                         <div class="card-counter info">
-                            <div class="text-xs text-info">Đang đi giao</div>
                             <div class="h5" th:text="${countCanGiao}">0</div>
-                            <i class="fas fa-motorcycle icon text-info"></i>
+                            <div class="small text-info">Đang đi giao</div>
                         </div>
                     </div>
-                    <div class="col-xl-4 col-md-6">
+                    <div class="col-md-4">
                         <div class="card-counter danger">
-                            <div class="text-xs text-danger">Tiền COD đang giữ</div>
                             <div class="h5" th:text="${#numbers.formatCurrency(codDangGiu)}">0 ₫</div>
-                            <i class="fas fa-money-bill-wave icon text-danger"></i>
+                            <div class="small text-danger">Tiền COD đang giữ</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card shadow mb-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
-                    <div class="card-header py-3 bg-gradient-warning">
-                        <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-tasks"></i> Nhiệm vụ cần xử lý ngay</h6>
-                    </div>
+                <div class="card mt-3">
+                    <div class="card-header">Nhiệm vụ cần xử lý ngay</div>
                     <div class="card-body">
                         <div class="table-responsive">
                              <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Mã VĐ</th>
-                                        <th>Loại việc</th>
-                                        <th>Địa chỉ</th>
-                                        <th>Hành động</th>
-                                    </tr>
-                                </thead>
+                                <thead><tr><th>Mã VĐ</th><th>Loại việc</th><th>Địa chỉ</th><th>Hành động</th></tr></thead>
                                 <tbody>
-                                    <tr th:if="${#lists.isEmpty(donHangGap)}">
-                                        <td colspan="4" class="text-center">Tuyệt vời! Bạn không còn đơn tồn đọng.</td>
-                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(donHangGap)}"><td colspan="4" class="text-center">Hết đơn tồn đọng.</td></tr>
                                     <tr th:each="dh : ${donHangGap}">
                                         <td th:text="${dh.maVanDon}" class="font-weight-bold"></td>
                                         <td>
@@ -69,7 +55,6 @@
                         </div>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>

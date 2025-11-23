@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{layout :: head(pageTitle='Sổ Địa chỉ')}"></head>
-
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
@@ -11,7 +9,9 @@
             <main class="page-content">
                  <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="page-header mb-0">Sổ Địa chỉ Của tôi</h1>
-                    <button class="btn btn-primary" onclick="openModal('themDiaChiModal')"> <i class="fas fa-plus"></i> Thêm Địa chỉ Mới</button>
+                    <button class="btn btn-primary" onclick="openModal('themDiaChiModal')"> 
+                        <i class="fas fa-plus"></i> Thêm Địa chỉ Mới
+                    </button>
                 </div>
                 
                 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
@@ -19,86 +19,69 @@
 
                 <div class="row">
                     <div th:if="${#lists.isEmpty(diaChiList)}" class="col-12">
-                        <div class="card shadow">
-                            <div class="card-body text-center">
-                                <p>Bạn chưa có địa chỉ nào được lưu. Hãy thêm một địa chỉ mới!</p>
-                            </div>
+                        <div class="card text-center p-5">
+                            <p class="text-muted" style="font-size: 1.2rem;">Bạn chưa có địa chỉ nào. Hãy thêm mới ngay!</p>
                         </div>
                     </div>
                     
                     <div class="col-md-6 mb-4" th:each="dc : ${diaChiList}">
-                        <div class="card shadow h-100">
+                        <div class="card address-card h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                     <h6 class="card-title font-weight-bold text-primary mb-0">
-                                        Địa chỉ 
-                                        <span th:if="${dc.laMacDinh}" class="text-warning"><i class="fas fa-star"></i> (Mặc định)</span>
-                                     </h6>
-                                      <div class="table-actions">
-                                          <form th:if="!${dc.laMacDinh}" th:action="@{/khach-hang/so-dia-chi/mac-dinh/{id}(id=${dc.idDiaChi})}" method="post" style="display: inline-block;">
-                                              <button type="submit" class="btn btn-sm" title="Đặt làm mặc định"><i class="far fa-star"></i></button>
-                                          </form>
-                                          <a th:href="@{/khach-hang/so-dia-chi/sua/{id}(id=${dc.idDiaChi})}" class="btn btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
-                                          <form th:action="@{/khach-hang/so-dia-chi/xoa/{id}(id=${dc.idDiaChi})}" method="post" style="display: inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
-                                              <button type="submit" class="btn btn-sm text-danger" title="Xóa"><i class="fas fa-trash"></i></button>
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                     <div class="card-title font-weight-bold text-primary">
+                                        <i class="fas fa-map-marker-alt mr-2"></i> Địa chỉ nhận hàng
+                                        <span th:if="${dc.laMacDinh}" class="badge badge-warning ml-2"><i class="fas fa-star"></i> Mặc định</span>
+                                     </div>
+                                      <div class="btn-group">
+                                          <a th:href="@{/khach-hang/so-dia-chi/sua/{id}(id=${dc.idDiaChi})}" class="btn btn-sm btn-info" title="Sửa"><i class="fas fa-edit"></i></a>
+                                          <form th:action="@{/khach-hang/so-dia-chi/xoa/{id}(id=${dc.idDiaChi})}" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa?');">
+                                              <button class="btn btn-sm btn-danger" title="Xóa"><i class="fas fa-trash"></i></button>
                                           </form>
                                     </div>
                                 </div>
-                                <p class="card-text mb-1" th:text="${dc.soNhaDuong}"></p>
-                                <p class="card-text" th:text="${dc.phuongXa} ? ${dc.phuongXa} + ', ' + ${dc.quanHuyen} + ', ' + ${dc.tinhTp} : ${dc.quanHuyen} + ', ' + ${dc.tinhTp}"></p>
+                                <p class="address-text" th:text="${dc.getFullAddress()}"></p>
+                                
+                                <form th:if="!${dc.laMacDinh}" th:action="@{/khach-hang/so-dia-chi/mac-dinh/{id}(id=${dc.idDiaChi})}" method="post" class="mt-3">
+                                    <button type="submit" class="btn btn-sm btn-secondary btn-block">Đặt làm mặc định</button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>
 
-     <div class="modal" id="themDiaChiModal" tabindex="-1">
-        <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal" id="themDiaChiModal">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form th:action="@{/khach-hang/so-dia-chi/them}" th:object="${diaChiMoi}" method="post" novalidate>
+                <form th:action="@{/khach-hang/so-dia-chi/them}" th:object="${diaChiMoi}" method="post">
                     <div class="modal-header">
                         <h5 class="modal-title">Thêm Địa chỉ Mới</h5>
-                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                        <button type="button" class="close" onclick="closeModal('themDiaChiModal')">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div th:if="${#fields.hasErrors('diaChiMoi.*')}" class="alert alert-danger">
-                            Vui lòng kiểm tra lại các trường thông tin.
-                        </div>
-                        
                         <div class="form-group">
-                            <label for="dcSoNhaDuongThem" class="form-label">Số nhà, Đường: (*)</label>
-                            <input type="text" id="dcSoNhaDuongThem" class="form-control" th:field="*{soNhaDuong}">
-                            <span th:if="${#fields.hasErrors('soNhaDuong')}" th:errors="*{soNhaDuong}" class="form-error"></span>
+                            <label class="form-label">Số nhà, Tên đường (*):</label>
+                            <input type="text" class="form-control" th:field="*{soNhaDuong}" required placeholder="Ví dụ: 123 Đường ABC">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group"><label class="form-label">Phường/Xã:</label><input type="text" class="form-control" th:field="*{phuongXa}"></div>
+                            <div class="col-md-6 form-group"><label class="form-label">Quận/Huyện (*):</label><input type="text" class="form-control" th:field="*{quanHuyen}" required></div>
                         </div>
                         <div class="form-group">
-                            <label for="dcPhuongXaThem" class="form-label">Phường / Xã:</label>
-                            <input type="text" id="dcPhuongXaThem" class="form-control" th:field="*{phuongXa}">
+                            <label class="form-label">Tỉnh/Thành phố (*):</label>
+                            <input type="text" class="form-control" th:field="*{tinhTp}" required>
                         </div>
-
-                        <div class="row-grid-2">
-                            <div class="form-group">
-                                <label for="dcQuanHuyenThem" class="form-label">Quận / Huyện: (*)</label>
-                                <input type="text" id="dcQuanHuyenThem" class="form-control" th:field="*{quanHuyen}">
-                                 <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="dcTinhTpThem" class="form-label">Tỉnh / Thành phố: (*)</label>
-                                <input type="text" id="dcTinhTpThem" class="form-control" th:field="*{tinhTp}">
-                                 <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
-                            </div>
-                        </div> <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="dcMacDinhThem" th:field="*{laMacDinh}">
-                            <label class="form-check-label" for="dcMacDinhThem">
+                        <div class="form-group">
+                            <label class="d-flex align-items-center" style="cursor: pointer;">
+                                <input type="checkbox" th:field="*{laMacDinh}" style="width: 18px; height: 18px; margin-right: 10px;"> 
                                 Đặt làm địa chỉ mặc định
                             </label>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('themDiaChiModal')">Hủy</button>
                         <button type="submit" class="btn btn-primary">Lưu Địa chỉ</button>
                     </div>
                 </form>
@@ -106,52 +89,27 @@
         </div>
     </div>
     
-     <div class="modal" id="suaDiaChiModal" tabindex="-1">
-        <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal" id="suaDiaChiModal">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form th:action="@{/khach-hang/so-dia-chi/sua}" th:object="${diaChiSua}" method="post" novalidate>
+                <form th:action="@{/khach-hang/so-dia-chi/sua}" th:object="${diaChiSua}" method="post">
                      <input type="hidden" th:field="*{idDiaChi}"/>
                     <div class="modal-header">
                         <h5 class="modal-title">Sửa Địa chỉ</h5>
-                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">&times;</button>
+                        <button type="button" class="close" onclick="closeModal('suaDiaChiModal')">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div th:if="${#fields.hasErrors('diaChiSua.*')}" class="alert alert-danger">
-                             Vui lòng kiểm tra lại các trường thông tin.
+                        <div class="form-group"><label class="form-label">Số nhà:</label><input type="text" class="form-control" th:field="*{soNhaDuong}" required></div>
+                        <div class="row">
+                            <div class="col-md-6 form-group"><label class="form-label">Phường/Xã:</label><input type="text" class="form-control" th:field="*{phuongXa}"></div>
+                            <div class="col-md-6 form-group"><label class="form-label">Quận/Huyện:</label><input type="text" class="form-control" th:field="*{quanHuyen}" required></div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="dcSoNhaDuongSua" class="form-label">Số nhà, Đường: (*)</label>
-                            <input type="text" id="dcSoNhaDuongSua" class="form-control" th:field="*{soNhaDuong}">
-                            <span th:if="${#fields.hasErrors('soNhaDuong')}" th:errors="*{soNhaDuong}" class="form-error"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="dcPhuongXaSua" class="form-label">Phường / Xã:</label>
-                            <input type="text" id="dcPhuongXaSua" class="form-control" th:field="*{phuongXa}">
-                        </div>
-
-                        <div class="row-grid-2">
-                            <div class="form-group">
-                                <label for="dcQuanHuyenSua" class="form-label">Quận / Huyện: (*)</label>
-                                <input type="text" id="dcQuanHuyenSua" class="form-control" th:field="*{quanHuyen}">
-                                 <span th:if="${#fields.hasErrors('quanHuyen')}" th:errors="*{quanHuyen}" class="form-error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="dcTinhTpSua" class="form-label">Tỉnh / Thành phố: (*)</label>
-                                <input type="text" id="dcTinhTpSua" class="form-control" th:field="*{tinhTp}">
-                                 <span th:if="${#fields.hasErrors('tinhTp')}" th:errors="*{tinhTp}" class="form-error"></span>
-                            </div>
-                        </div> <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="dcMacDinhSua" th:field="*{laMacDinh}">
-                            <label class="form-check-label" for="dcMacDinhSua">
-                                Đặt làm địa chỉ mặc định
-                            </label>
-                        </div>
+                        <div class="form-group"><label class="form-label">Tỉnh/TP:</label><input type="text" class="form-control" th:field="*{tinhTp}" required></div>
+                        <div class="form-group"><label><input type="checkbox" th:field="*{laMacDinh}"> Mặc định</label></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Lưu Thay đổi</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('suaDiaChiModal')">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
                     </div>
                 </form>
             </div>
@@ -160,18 +118,11 @@
 
     <script th:src="@{/js/main.js}"></script>
     <script th:inline="javascript">
-        /*<![CDATA[*/
-            // Sửa logic JS: Chỉ kiểm tra cờ (flag) từ RedirectAttribute
-            var showThemModal = /*[[${showThemModal}]]*/ false;
-            if (showThemModal) {
-                openModal('themDiaChiModal');
-            }
-            
-             var showSuaModal = /*[[${showSuaModal}]]*/ false;
-             if (showSuaModal) {
-                 openModal('suaDiaChiModal');
-             }
-        /*]]>*/
+        var showThemModal = /*[[${showThemModal}]]*/ false;
+        if (showThemModal) openModal('themDiaChiModal');
+        
+        var showSuaModal = /*[[${showSuaModal}]]*/ false;
+        if (showSuaModal) openModal('suaDiaChiModal');
     </script>
 </body>
 </html>

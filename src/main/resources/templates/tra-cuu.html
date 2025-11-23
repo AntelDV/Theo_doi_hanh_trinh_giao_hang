@@ -9,21 +9,18 @@
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <h1>Tra cứu Hành trình</h1>
-            <p>Nhập mã vận đơn để theo dõi đơn hàng của bạn</p>
-
+            <h1 class="text-primary">Tra cứu</h1>
+            <p>Nhập mã vận đơn để theo dõi</p>
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-            <form class="auth-form" th:action="@{/tra-cuu/don-hang}" method="post">
+            <form th:action="@{/tra-cuu/don-hang}" method="post">
                 <div class="form-group">
-                    <input type="text" id="maVanDon" name="maVanDon" class="form-control" placeholder="Nhập mã vận đơn (VD: DH123456)" required>
+                    <input type="text" name="maVanDon" class="form-control" placeholder="VD: DH123456" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Tra cứu</button>
+                <button type="submit" class="btn btn-primary btn-block">Tra cứu</button>
             </form>
-
-            <div class="auth-link">
-                <span>Bạn là thành viên? </span>
-                <a th:href="@{/login}">Đăng nhập ngay</a>
+            <div class="mt-3 text-center">
+                <a th:href="@{/login}">Đăng nhập hệ thống</a>
             </div>
         </div>
     </div>

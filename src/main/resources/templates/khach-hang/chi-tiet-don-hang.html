@@ -1,96 +1,72 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{layout :: head(pageTitle='Chi tiết Đơn hàng')}"></head>
-
-<style>
-    .timeline { list-style: none; padding: 0; position: relative; }
-    .timeline::before {
-        content: ''; position: absolute; top: 0; bottom: 0; width: 3px;
-        background: var(--border-color); left: 30px; margin-left: -1.5px;
-    }
-    .timeline-item { margin-bottom: 20px; position: relative; padding-left: 60px; }
-    .timeline-item::before { /* Icon circle */
-        content: ''; background: var(--secondary-color); position: absolute;
-        left: 30px; top: 5px; width: 15px; height: 15px;
-        border-radius: 50%; margin-left: -7.5px; z-index: 1;
-    }
-    /* Các trạng thái đặc biệt */
-    .timeline-item.status-success::before { background: var(--success); }
-    .timeline-item.status-danger::before { background: var(--danger); }
-    .timeline-item.status-current::before { /* Trạng thái mới nhất */
-        background: var(--primary-color); border: 3px solid #fff; 
-        box-shadow: 0 0 0 3px var(--primary-color); 
-        width: 20px; height: 20px; margin-left: -10px;
-    }
-
-    .timeline-content {
-        background: var(--white); border-radius: 0.35rem; padding: 15px;
-        border: 1px solid var(--border-color); position: relative;
-    }
-     .timeline-content::before { /* Mũi tên tam giác */
-        content: ''; position: absolute; top: 10px; left: -10px;
-        border-top: 10px solid transparent; border-bottom: 10px solid transparent;
-        border-right: 10px solid var(--border-color);
-    }
-     .timeline-content::after {
-         content: ''; position: absolute; top: 11px; left: -9px;
-        border-top: 9px solid transparent; border-bottom: 9px solid transparent;
-        border-right: 9px solid #fff;
-    }
-
-    .timeline-time { font-size: 0.85em; color: var(--secondary-color); display: block; margin-bottom: 5px;}
-    .timeline-status { font-weight: 600; color: var(--dark-text); margin-bottom: 5px;}
-    .timeline-note { font-size: 0.9em; color: #555; }
-</style>
-
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header" th:text="'Chi tiết Đơn hàng: ' + ${donHang.maVanDon}">Chi tiết Đơn hàng</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="page-header mb-0" th:text="'Mã vận đơn: ' + ${donHang.maVanDon}"></h1>
+                    <a th:href="@{/khach-hang/danh-sach-don-hang}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
 
                 <div class="row">
-                    <div class="col-lg-5 mb-4">
-                        <div class="card shadow">
-                             <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Thông tin Đơn hàng</h6></div>
+                    <div class="col-md-5 mb-4">
+                        <div class="card h-100">
+                             <div class="card-header">Thông tin Đơn hàng</div>
                             <div class="card-body">
-                                <p><strong>Mã vận đơn:</strong> <span th:text="${donHang.maVanDon}"></span></p>
                                 <p><strong>Ngày tạo:</strong> <span th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></span></p>
                                 <hr>
-                                <p><strong>Người gửi:</strong> <span th:text="${donHang.khachHangGui.hoTen}"></span></p>
-                                <p><strong>Địa chỉ lấy:</strong> <span th:text="${donHang.diaChiLayHang.getFullAddress()}"></span></p>
+                                <div class="mb-3">
+                                    <div class="form-label" style="color: #888;">Người gửi</div>
+                                    <div class="font-weight-bold" th:text="${donHang.khachHangGui.hoTen}"></div>
+                                    <div style="color: #666;" th:text="${donHang.diaChiLayHang.getFullAddress()}"></div>
+                                </div>
                                 <hr>
-                                <p><strong>Người nhận:</strong> <span th:text="${donHang.tenNguoiNhan}"></span></p>
-                                <p><strong>SĐT:</strong> <span th:text="${donHang.sdtNguoiNhan}"></span></p>
-                                <p><strong>Địa chỉ giao:</strong> <span th:text="${donHang.diaChiGiaoHang}"></span></p>
+                                <div class="mb-3">
+                                    <div class="form-label" style="color: #888;">Người nhận</div>
+                                    <div class="font-weight-bold" th:text="${donHang.tenNguoiNhan}"></div>
+                                    <div style="color: #666;" th:text="${donHang.sdtNguoiNhan}"></div>
+                                    <div class="mt-1" th:text="${donHang.diaChiGiaoHang}"></div>
+                                </div>
                                 <hr>
-                                <p><strong>Thu hộ (COD):</strong> <span th:text="${#numbers.formatCurrency(donHang.thanhToan.tongTienCod)}"></span></p>
-                                <p><strong>Ghi chú:</strong> <span th:text="${donHang.ghiChuKhachHang ?: 'Không có'}"></span></p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Thu hộ (COD):</strong>
+                                    <span class="badge badge-danger" style="font-size: 1em;" th:text="${#numbers.formatCurrency(donHang.thanhToan.tongTienCod)}"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-7 mb-4">
-                         <div class="card shadow">
-                             <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Hành trình Đơn hàng</h6></div>
+                    <div class="col-md-7 mb-4">
+                         <div class="card h-100">
+                             <div class="card-header">Lịch sử Hành trình</div>
                              <div class="card-body">
                                 <ul class="timeline">
-                                    <tr th:if="${#lists.isEmpty(donHang.hanhTrinh)}">
-                                        <p>Chưa có thông tin hành trình.</p>
-                                    </tr>
-                                    <li th:each="ht, iterStat : ${donHang.hanhTrinh}" 
-                                        class="timeline-item"
-                                        th:classappend="${iterStat.first ? 'status-current' : ''} + 
-                                                      (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thành công')} ? 'status-success' : '') +
-                                                      (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại') or #strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'hủy')} ? 'status-danger' : '')">
+                                    <li th:if="${#lists.isEmpty(donHang.hanhTrinh)}" class="text-center text-muted">Chưa có thông tin.</li>
+                                    <li th:each="ht, iter : ${donHang.hanhTrinh}" class="timeline-item"
+                                        th:classappend="${iter.first ? 'status-current' : ''} + 
+                                                        (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thành công')} ? 'status-success' : '') +
+                                                        (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại')} ? 'status-danger' : '')">
+                                        
                                         <div class="timeline-content">
-                                            <span class="timeline-time"><i class="far fa-clock"></i> <span th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy HH:mm')}"></span></span>
-                                            <p class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></p>
-                                            <p class="timeline-note" th:if="${ht.ghiChuNhanVien}" th:text="${ht.ghiChuNhanVien}"></p>
-                                            <p class="timeline-note" th:if="${ht.nhanVienThucHien}" th:text="'(Shipper: ' + ${ht.nhanVienThucHien.hoTen} + ')'"></p>
+                                            <span class="timeline-time" th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy HH:mm')}"></span>
+                                            <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
+                                            
+                                            <div th:if="${ht.ghiChuNhanVien != null and !#strings.containsIgnoreCase(ht.ghiChuNhanVien, 'mật')}" 
+                                                 class="text-muted" th:text="${ht.ghiChuNhanVien}"></div>
+                                            
+                                            <div th:if="${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại')}" class="text-danger small mt-1">
+                                                <i class="fas fa-exclamation-circle"></i> Đang chờ xử lý lại.
+                                            </div>
+
+                                            <div th:if="${ht.nhanVienThucHien}" class="mt-2 pt-2 border-top" style="font-size: 0.85rem; color: var(--primary);">
+                                                <i class="fas fa-truck"></i> Shipper: <span th:text="${ht.nhanVienThucHien.hoTen}"></span>
+                                            </div>
                                         </div>
                                     </li>
                                 </ul>

@@ -1,78 +1,39 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{layout :: head(pageTitle='Nhật ký Vận hành')}"></head>
-
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header">Nhật ký Vận hành Hệ thống</h1>
-
-                <div class="card shadow mb-4">
-                    <div class="card-body">
-                         <form th:action="@{/quan-ly/nhat-ky}" method="get" class="row g-3 align-items-end">
-                             <div class="col-md-3">
-                                <label for="tenDangNhap" class="form-label">Tên đăng nhập</label>
-                                <input type="text" class="form-control" id="tenDangNhap" name="tenDangNhap" th:value="${tenDangNhapFilter}">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="hanhDong" class="form-label">Hành động</label>
-                                <input type="text" class="form-control" id="hanhDong" name="hanhDong" th:value="${hanhDongFilter}">
-                            </div>
-                             <div class="col-md-2">
-                                <label for="tuNgay" class="form-label">Từ ngày</label>
-                                <input type="date" class="form-control" id="tuNgay" name="tuNgay" th:value="${tuNgayFilter != null ? #dates.format(tuNgayFilter, 'yyyy-MM-dd') : ''}">
-                             </div>
-                             <div class="col-md-2">
-                                 <label for="denNgay" class="form-label">Đến ngày</label>
-                                <input type="date" class="form-control" id="denNgay" name="denNgay" th:value="${denNgayFilter != null ? #dates.format(denNgayFilter, 'yyyy-MM-dd') : ''}">
-                             </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100"> <i class="fas fa-filter"></i> Lọc</button>
-                            </div>
-                         </form>
-                    </div>
-                </div>
-
-                <div class="card shadow mb-4">
-                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Chi tiết Hoạt động</h6>
-                    </div>
+                <h1 class="page-header">Nhật ký Vận hành</h1>
+                <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered" width="100%" cellspacing="0">
+                            <table class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Thời gian</th>
                                         <th>Người thực hiện</th>
                                         <th>Hành động</th>
                                         <th>Đối tượng</th>
-                                        <th>ID Đối tượng</th>
                                         <th>Chi tiết</th>
-                                        <th>IP</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                     <tr th:if="${#lists.isEmpty(nhatKyList)}">
-                                        <td colspan="7" class="text-center">Không có nhật ký nào phù hợp.</td>
-                                    </tr>
                                     <tr th:each="log : ${nhatKyList}">
                                         <td th:text="${#dates.format(log.thoiGianThucHien, 'dd/MM/yyyy HH:mm:ss')}"></td>
-                                        <td th:text="${log.taiKhoanThucHien?.tenDangNhap}"></td> <td th:text="${log.hanhDong}"></td>
+                                        <td th:text="${log.taiKhoanThucHien?.tenDangNhap}"></td> 
+                                        <td th:text="${log.hanhDong}"></td>
                                         <td th:text="${log.doiTuongBiAnhHuong}"></td>
-                                        <td th:text="${log.idDoiTuong}"></td>
                                         <td th:text="${log.moTaChiTiet}"></td>
-                                        <td th:text="${log.diaChiIp}"></td>
                                     </tr>
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>

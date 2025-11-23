@@ -1,6 +1,5 @@
 package com.nhom12.doangiaohang.controller;
 
-// === BEGIN IMPORTS ===
 import com.nhom12.doangiaohang.dto.NhanVienDangKyForm; 
 import com.nhom12.doangiaohang.model.DonHang;
 import com.nhom12.doangiaohang.model.NhanVien;
@@ -23,7 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Date; 
 import java.util.List;
-// === END IMPORTS ===
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/quan-ly")
@@ -34,7 +34,7 @@ public class QuanLyController {
     @Autowired private TaiKhoanService taiKhoanService; 
     @Autowired private NhatKyVanHanhService nhatKyVanHanhService; 
 
-    // --- DASHBOARD MỚI ---
+    // --- DASHBOARD MỚI VỚI DỮ LIỆU BIỂU ĐỒ ---
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         List<DonHang> all = donHangService.getAllDonHangForQuanLy();
@@ -54,6 +54,18 @@ public class QuanLyController {
         model.addAttribute("totalShippers", totalShippers);
         model.addAttribute("waitingOrders", waitingOrders);
 
+        // --- LOGIC MỚI: Chuẩn bị dữ liệu cho Biểu đồ Tròn (Tỷ lệ trạng thái đơn hàng) ---
+        // Group đơn hàng theo tên trạng thái và đếm số lượng
+        Map<String, Long> statusCounts = all.stream()
+            .collect(Collectors.groupingBy(d -> d.getTrangThaiHienTai().getTenTrangThai(), Collectors.counting()));
+        
+        // Tách Key (Labels) và Value (Data) để gửi sang JavaScript
+        List<String> chartLabels = statusCounts.keySet().stream().collect(Collectors.toList());
+        List<Long> chartData = statusCounts.values().stream().collect(Collectors.toList());
+        
+        model.addAttribute("chartLabels", chartLabels);
+        model.addAttribute("chartData", chartData);
+
         return "quan-ly/dashboard"; 
     }
 
@@ -67,6 +79,10 @@ public class QuanLyController {
         return "quan-ly/don-hang"; 
     }
 
+    // ... (Giữ nguyên các hàm khác: phanCongShipper, hoanKhoDonHang, nhan-vien, nhat-ky, ...) 
+    // Lưu ý: Copy lại toàn bộ phần code bên dưới của file cũ vào đây để đảm bảo không mất chức năng.
+    // Để gọn, tôi chỉ hiển thị phần thay đổi ở dashboard.
+    
     @PostMapping("/don-hang/phan-cong")
     public String phanCongShipper(@RequestParam("idDonHang") Integer idDonHang,
                                   @RequestParam("idShipper") Integer idShipper,

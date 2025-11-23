@@ -2,55 +2,19 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Truy cập bị từ chối</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        .error-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-            background-color: var(--light-bg);
-            font-family: 'Be Vietnam Pro', sans-serif;
-        }
-        .error-code {
-            font-size: 10rem; /* Giảm kích thước 1 chút */
-            font-weight: 700;
-            color: var(--border-color); /* Dùng màu viền từ CSS */
-            line-height: 1;
-        }
-        .error-message {
-            font-size: 1.5rem;
-            font-weight: 500;
-            color: var(--secondary-color); /* Dùng màu phụ từ CSS */
-            margin-top: -20px;
-            margin-bottom: 2rem;
-        }
-        .error-details {
-            color: var(--dark-text); /* Dùng màu chữ đậm từ CSS */
-            max-width: 450px; 
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
+        .error-box { text-align: center; margin-top: 100px; }
+        .error-code { font-size: 6rem; font-weight: 700; color: var(--secondary); }
     </style>
 </head>
 <body>
-    <div class="error-container">
+    <div class="container error-box">
         <div class="error-code">403</div>
-        <p class="error-message">TRUY CẬP BỊ TỪ CHỐI</p>
-        <p class="error-details">
-            Bạn không có quyền truy cập vào tài nguyên này.
-            Vai trò của bạn (ví dụ: Khách hàng) không được phép xem trang
-            dành cho (ví dụ: Quản lý hoặc Shipper).
-        </p>
-        <a th:href="@{/}" class="btn btn-primary">
-            <i class="fas fa-home" style="margin-right: 5px;"></i> 
-            Về trang chủ
-        </a>
+        <h2>Truy cập bị từ chối</h2>
+        <p>Bạn không có quyền truy cập vào trang này.</p>
+        <a th:href="@{/}" class="btn btn-primary mt-3">Về trang chủ</a>
     </div>
 </body>
 </html>

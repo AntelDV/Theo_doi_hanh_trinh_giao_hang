@@ -3,54 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký Tài khoản</title>
+    <title>Đăng ký</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-card">
-            <h1>Tạo tài khoản mới</h1>
-            <p>Chào mừng bạn đến với dịch vụ của chúng tôi</p>
-
-            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <h1 class="text-primary">Đăng ký</h1>
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-            <form class="auth-form" th:action="@{/register}" th:object="${dangKyForm}" method="post" novalidate>
-                
+            <form th:action="@{/register}" th:object="${dangKyForm}" method="post">
                 <div class="form-group">
-                    <input type="text" class="form-control" th:field="*{hoTen}" placeholder="Họ và Tên (*)">
-                    <span th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}" class="form-error"></span>
+                    <input type="text" class="form-control" th:field="*{hoTen}" placeholder="Họ và Tên (*)" required>
                 </div>
-                
                 <div class="form-group">
-                    <input type="email" class="form-control" th:field="*{email}" placeholder="Địa chỉ Email (*)">
-                    <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="form-error"></span>
+                    <input type="email" class="form-control" th:field="*{email}" placeholder="Email (*)" required>
                 </div>
-                
                 <div class="form-group">
-                    <input type="tel" class="form-control" th:field="*{soDienThoai}" placeholder="Số điện thoại (*)">
-                    <span th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}" class="form-error"></span>
+                    <input type="tel" class="form-control" th:field="*{soDienThoai}" placeholder="Số điện thoại (*)" required>
                 </div>
-                
                 <div class="form-group">
-                    <input type="text" class="form-control" th:field="*{tenDangNhap}" placeholder="Tên đăng nhập (*)">
-                    <span th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}" class="form-error"></span>
+                    <input type="text" class="form-control" th:field="*{tenDangNhap}" placeholder="Tên đăng nhập (*)" required>
                 </div>
-                
                 <div class="form-group">
-                    <input type="password" class="form-control" th:field="*{matKhau}" placeholder="Mật khẩu (*)">
-                    <span th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}" class="form-error"></span>
+                    <input type="password" class="form-control" th:field="*{matKhau}" placeholder="Mật khẩu (*)" required>
                 </div>
-                
-                <button type="submit" class="btn btn-primary">Đăng ký</button>
+                <button type="submit" class="btn btn-primary btn-block">Đăng ký</button>
             </form>
-            
-            <div class="auth-link">
-                <span>Đã có tài khoản? </span>
-                <a th:href="@{/login}">Đăng nhập ngay</a>
-            </div>
-             <div class="auth-link" style="margin-top: 10px;">
-                <a th:href="@{/tra-cuu}">Tra cứu đơn hàng (Không cần tài khoản)</a>
+            <div class="mt-3 small">
+                <span>Đã có tài khoản? </span> <a th:href="@{/login}">Đăng nhập ngay</a>
             </div>
         </div>
     </div>

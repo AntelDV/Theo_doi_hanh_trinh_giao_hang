@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{layout :: head(pageTitle='Quản lý Đơn hàng')}"></head>
-
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
@@ -10,65 +8,38 @@
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
                 <h1 class="page-header">Quản lý Đơn hàng</h1>
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-                <div th:if="${successMessage}" class="alert alert-success animate__animated animate__bounceIn" th:text="${successMessage}"></div>
-                <div th:if="${errorMessage}" class="alert alert-danger animate__animated animate__shakeX" th:text="${errorMessage}"></div>
-
-                <div class="card shadow mb-4 animate__animated animate__fadeInUp">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Danh sách Tất cả Đơn hàng</h6>
-                    </div>
+                <div class="card">
+                    <div class="card-header">Danh sách Tất cả Đơn hàng</div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th>Mã VĐ</th>
-                                        <th>Người gửi</th>
-                                        <th>Người nhận</th>
-                                        <th>Trạng thái</th>
-                                        <th>Shipper</th>
-                                        <th>Hành động</th>
-                                    </tr>
-                                </thead>
+                            <table class="table table-bordered"> <thead><tr><th>Mã VĐ</th><th>Người gửi</th><th>Người nhận</th><th>Trạng thái</th><th>Shipper</th><th>Hành động</th></tr></thead>
                                 <tbody>
-                                    <tr th:if="${#lists.isEmpty(donHangList)}">
-                                        <td colspan="6" class="text-center text-muted">Chưa có đơn hàng nào.</td>
-                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(donHangList)}"><td colspan="6" class="text-center">Chưa có đơn hàng nào.</td></tr>
                                     <tr th:each="dh : ${donHangList}">
-                                        <td th:text="${dh.maVanDon}" class="font-weight-bold text-primary"></td>
+                                        <td th:text="${dh.maVanDon}" class="text-primary font-weight-bold"></td>
                                         <td th:text="${dh.khachHangGui.hoTen}"></td>
                                         <td th:text="${dh.tenNguoiNhan}"></td>
                                         <td>
-                                            <span th:if="${dh.getTrangThaiHienTai() != null}" 
-                                                  th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
-                                                  class="badge" 
-                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thành công') ? 'badge-success' : 
-                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') or #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ xử lý') ? 'badge-danger' : 
-                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ lấy') ? 'badge-warning' : 'badge-info'}">
-                                            </span>
+                                            <span th:if="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-danger">CẦN XỬ LÝ</span>
+                                            <span th:unless="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-info" th:text="${dh.getTrangThaiHienTai().tenTrangThai}"></span>
                                         </td>
                                         <td th:text="${dh.getShipperHienTai() != null ? dh.getShipperHienTai().hoTen : '---'}"></td>
-                                        <td class="table-actions">
+                                        <td>
                                             <button th:if="${dh.getTrangThaiHienTai().idTrangThai == 1 || dh.getTrangThaiHienTai().idTrangThai == 7}" 
-                                                    class="btn btn-sm btn-info shadow-sm" 
-                                                    th:data-id="${dh.idDonHang}"
-                                                    th:data-ma="${dh.maVanDon}"
-                                                    onclick="openPhanCongModal(this)">
-                                                <i class="fas fa-user-plus"></i> Phân công
+                                                    class="btn btn-sm btn-info" 
+                                                    th:attr="onclick='openPhanCong(\'' + ${dh.idDonHang} + '\', \'' + ${dh.maVanDon} + '\')'">
+                                                <i class="fas fa-user-plus"></i>
                                             </button>
                                             
-                                            <form th:if="${dh.getTrangThaiHienTai().idTrangThai == 8}" 
-                                                  th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display: inline-block;">
+                                            <form th:if="${dh.getTrangThaiHienTai().idTrangThai == 8}" th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display:inline;">
                                                 <input type="hidden" name="idDonHang" th:value="${dh.idDonHang}">
-                                                <button type="submit" class="btn btn-sm btn-secondary shadow-sm" onclick="return confirm('Xác nhận đơn hàng đã về kho?')">
-                                                    <i class="fas fa-warehouse"></i> Duyệt về kho
-                                                </button>
+                                                <button class="btn btn-sm btn-warning"><i class="fas fa-warehouse"></i></button>
                                             </form>
 
-                                            <a th:href="@{/quan-ly/don-hang/chi-tiet/{id}(id=${dh.idDonHang})}" class="btn btn-sm btn-light border" title="Xem chi tiết">
-                                                  <i class="fas fa-eye text-primary"></i>
-                                          </a>
+                                            <a th:href="@{/quan-ly/don-hang/chi-tiet/{id}(id=${dh.idDonHang})}" class="btn btn-sm btn-secondary"><i class="fas fa-eye"></i></a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -80,46 +51,36 @@
         </div>
     </div>
 
-    <div class="modal fade" id="phanCongModal" tabindex="-1">
-        <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal" id="phanCongModal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form th:action="@{/quan-ly/don-hang/phan-cong}" method="post">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title"><i class="fas fa-tasks"></i> Phân công Đơn hàng <span id="maVanDonPhanCong"></span></h5>
-                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close">&times;</button>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Phân công: <span id="maVanDonPC"></span></h5>
+                        <button type="button" class="close" onclick="closeModal('phanCongModal')">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="idDonHang" id="idDonHangPhanCong">
+                        <input type="hidden" name="idDonHang" id="idDonHangPC">
                         <div class="form-group">
-                            <label for="selectShipper" class="form-label font-weight-bold">Chọn Shipper phụ trách:</label>
-                            <select id="selectShipper" name="idShipper" class="form-control" required>
-                                 <option value="">-- Chọn nhân viên --</option>
-                                <option th:each="shipper : ${shipperList}"
-                                        th:value="${shipper.id}"
-                                        th:text="${shipper.hoTen} + ' (' + ${shipper.maNV} + ')'"></option>
+                            <label class="form-label">Chọn Shipper phụ trách:</label>
+                            <select name="idShipper" class="form-control">
+                                <option th:each="s : ${shipperList}" th:value="${s.id}" th:text="${s.hoTen} + ' (' + ${s.maNV} + ')'"></option>
                             </select>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-info">Xác nhận Phân công</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('phanCongModal')">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
     <script th:src="@{/js/main.js}"></script>
     <script>
-        function openPhanCongModal(btn) {
-            const id = btn.getAttribute('data-id');
-            const ma = btn.getAttribute('data-ma');
-            
-            document.getElementById('idDonHangPhanCong').value = id;
-            document.getElementById('maVanDonPhanCong').innerText = ma;
-            document.getElementById('selectShipper').value = ''; 
-            
+        function openPhanCong(id, ma) {
+            document.getElementById('idDonHangPC').value = id;
+            document.getElementById('maVanDonPC').innerText = ma;
             openModal('phanCongModal');
         }
     </script>

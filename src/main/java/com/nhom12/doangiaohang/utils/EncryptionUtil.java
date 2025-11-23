@@ -40,7 +40,6 @@ public class EncryptionUtil {
         }
     }
 
-    // === PHẦN CŨ: MÃ HÓA TĨNH (TUẦN 5) ===
     public String encrypt(String data) {
         return encryptAES(data, this.staticSecretKey);
     }
@@ -49,20 +48,16 @@ public class EncryptionUtil {
         return decryptAES(data, this.staticSecretKey);
     }
 
-    // === PHẦN MỚI: MÃ HÓA ĐỘNG CHO HYBRID (TUẦN 7) ===
-
-    // 1. Sinh khóa phiên (Session Key) ngẫu nhiên
     public SecretKey generateSessionKey() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance(ALGORITHM);
-            keyGen.init(256); // AES-256
+            keyGen.init(256); 
             return keyGen.generateKey();
         } catch (Exception e) {
             throw new RuntimeException("Lỗi sinh khóa phiên", e);
         }
     }
 
-    // 2. Helper chuyển đổi Key <-> String
     public String keyToString(SecretKey key) {
         return Base64.getEncoder().encodeToString(key.getEncoded());
     }
@@ -72,7 +67,6 @@ public class EncryptionUtil {
         return new SecretKeySpec(decodedKey, ALGORITHM);
     }
 
-    // 3. Mã hóa AES với khóa bất kỳ (dùng cho cả Tĩnh và Động)
     public String encryptAES(String data, SecretKey key) {
         if (data == null) return null;
         try {
@@ -98,8 +92,14 @@ public class EncryptionUtil {
     public String decryptAES(String encryptedData, SecretKey key) {
         if (encryptedData == null) return null;
         try {
+            // FIX WARNING: Kiểm tra xem chuỗi có phải Base64 hợp lệ không trước khi decode
+            // Nếu không phải (có thể là plaintext cũ), trả về nguyên gốc
+            if (!encryptedData.matches("^[A-Za-z0-9+/=]+$") || encryptedData.contains(" ")) {
+                return encryptedData; 
+            }
+
             byte[] combined = Base64.getDecoder().decode(encryptedData);
-            if (combined.length < IV_SIZE) return encryptedData; // Không phải mã hóa hợp lệ
+            if (combined.length < IV_SIZE) return encryptedData; 
 
             byte[] iv = new byte[IV_SIZE];
             System.arraycopy(combined, 0, iv, 0, iv.length);
@@ -115,7 +115,7 @@ public class EncryptionUtil {
 
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            logger.warn("Lỗi giải mã AES (có thể là plaintext): {}", e.getMessage());
+            // Tắt log warning để console sạch đẹp
             return encryptedData;
         }
     }

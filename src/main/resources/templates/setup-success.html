@@ -2,16 +2,15 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Cấu hình Thành công</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Thành công</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="text-center" style="padding-top: 100px; background: #f8f9fc;">
-    <div class="container">
-        <div class="alert alert-success">
-            <h4 class="alert-heading">Cấu hình đã được lưu!</h4>
-            <p th:text="${message} ?: 'Thông tin kết nối đã được ghi vào file db-config.properties.'"></p>
-            <hr>
-            <p class="mb-0 font-weight-bold">Vui lòng TẮT ứng dụng (Stop) và KHỞI ĐỘNG LẠI (Start) để áp dụng kết nối mới.</p>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="text-success">Cấu hình Xong!</h1>
+            <p th:text="${message}"></p>
+            <p>Vui lòng khởi động lại ứng dụng.</p>
         </div>
     </div>
 </body>

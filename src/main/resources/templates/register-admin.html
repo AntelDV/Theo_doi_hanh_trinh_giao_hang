@@ -2,64 +2,34 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo Tài khoản Nhân viên</title>
+    <title>Setup Admin</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <div class="auth-container">
-        <div class="auth-card" style="max-width: 600px;"> <h1>Tạo Tài khoản Nhân viên</h1>
-            <p>(Chỉ dành cho mục đích kiểm thử)</p>
-
+        <div class="auth-card" style="max-width: 500px;">
+            <h1 class="text-primary">Tạo Admin/Shipper</h1>
             <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-            <form class="auth-form" th:action="@{/register-admin}" th:object="${nhanVienForm}" method="post" novalidate>
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                
-                <div class="form-group">
-                    <label for="maNV">Mã Nhân viên:</label>
-                    <input type="text" class="form-control" th:field="*{maNV}" placeholder="QL01 hoặc SP01">
-                    <span th:if="${#fields.hasErrors('maNV')}" th:errors="*{maNV}" class="form-error"></span>
+            <form th:action="@{/register-admin}" th:object="${nhanVienForm}" method="post">
+                <div class="row">
+                    <div class="col-md-6 form-group"><input type="text" class="form-control" th:field="*{maNV}" placeholder="Mã NV" required></div>
+                    <div class="col-md-6 form-group"><input type="text" class="form-control" th:field="*{hoTen}" placeholder="Họ Tên" required></div>
                 </div>
-                
-                 <div class="row-grid-2">
-                    <div class="form-group">
-                        <label for="hoTen">Họ Tên:</label>
-                        <input type="text" class="form-control" th:field="*{hoTen}">
-                        <span th:if="${#fields.hasErrors('hoTen')}" th:errors="*{hoTen}" class="form-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" class="form-control" th:field="*{email}">
-                        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="form-error"></span>
-                    </div>
-                </div> <div class="row-grid-2">
-                     <div class="form-group">
-                        <label for="soDienThoai">Số điện thoại:</label>
-                        <input type="text" class="form-control" th:field="*{soDienThoai}">
-                        <span th:if="${#fields.hasErrors('soDienThoai')}" th:errors="*{soDienThoai}" class="form-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="tenDangNhap">Tên đăng nhập:</label>
-                        <input type="text" class="form-control" th:field="*{tenDangNhap}">
-                        <span th:if="${#fields.hasErrors('tenDangNhap')}" th:errors="*{tenDangNhap}" class="form-error"></span>
-                    </div>
-                </div> <div class="row-grid-2">
-                    <div class="form-group">
-                        <label for="matKhau">Mật khẩu:</label>
-                        <input type="password" class="form-control" th:field="*{matKhau}">
-                        <span th:if="${#fields.hasErrors('matKhau')}" th:errors="*{matKhau}" class="form-error"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="idVaiTro">Vai trò:</label>
-                        <select th:field="*{idVaiTro}" class="form-control">
-                            <option value="1">Quản lý</option>
-                            <option value="2">Shipper</option>
-                        </select>
-                        <span th:if="${#fields.hasErrors('idVaiTro')}" th:errors="*{idVaiTro}" class="form-error"></span>
-                    </div>
-                </div> <button type="submit" class="btn btn-primary">Tạo Nhân viên</button>
+                <div class="form-group"><input type="email" class="form-control" th:field="*{email}" placeholder="Email" required></div>
+                <div class="form-group"><input type="text" class="form-control" th:field="*{soDienThoai}" placeholder="SĐT" required></div>
+                <div class="row">
+                    <div class="col-md-6 form-group"><input type="text" class="form-control" th:field="*{tenDangNhap}" placeholder="User" required></div>
+                    <div class="col-md-6 form-group"><input type="password" class="form-control" th:field="*{matKhau}" placeholder="Pass" required></div>
+                </div>
+                <div class="form-group">
+                    <select class="form-control" th:field="*{idVaiTro}">
+                        <option value="1">Quản lý</option>
+                        <option value="2">Shipper</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Tạo</button>
             </form>
         </div>
     </div>

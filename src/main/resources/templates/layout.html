@@ -1,44 +1,25 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Hệ thống Giao Hàng Bảo Mật</title>
-    
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    
+    <title th:text="${pageTitle}">Hệ thống Giao Hàng</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    
-    <style>
-        /* Tinh chỉnh hiệu ứng */
-        .card { transition: transform 0.2s ease-in-out; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.15) !important; }
-        .btn { transition: all 0.2s; }
-        .btn:active { transform: scale(0.95); }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
     <nav class="sidebar" th:fragment="sidebar">
-        <a th:href="@{/}" class="sidebar-brand animate__animated animate__pulse animate__infinite">
-            <i class="fas fa-shipping-fast"></i>
-            <span>Giao Hàng 12</span>
+        <a th:href="@{/}" class="sidebar-brand">
+            <i class="fas fa-shipping-fast running-truck"></i> <span>Giao Hàng 12</span>
         </a>
         <ul class="sidebar-menu">
-            
             <li th:classappend="${currentURI == '/' or #strings.endsWith(currentURI, '/dashboard')} ? 'active' : ''"> 
                 <a th:href="@{/}"> <i class="fas fa-tachometer-alt"></i> <span>Tổng quan</span> </a>
             </li>
-
             <div sec:authorize="hasAnyRole('ROLE_QUANLY', 'ROLE_SHIPPER')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/thong-bao')} ? 'active' : ''">
-                    <a th:href="@{/thong-bao}"> 
-                        <i class="fas fa-user-secret"></i> 
-                        <span>Hộp thư Mật (Lai)</span> 
-                    </a>
+                    <a th:href="@{/thong-bao}"> <i class="fas fa-user-secret"></i> <span>Hộp thư Bảo mật</span> </a>
                 </li>
             </div>
             <div sec:authorize="hasRole('ROLE_KHACHHANG')">
@@ -52,13 +33,11 @@
                     <a th:href="@{/khach-hang/so-dia-chi}"> <i class="fas fa-map-marked-alt"></i> <span>Sổ Địa chỉ</span> </a>
                 </li>
             </div>
-
             <div sec:authorize="hasRole('ROLE_SHIPPER')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/shipper/don-hang')} ? 'active' : ''">
                     <a th:href="@{/shipper/don-hang}"> <i class="fas fa-truck-loading"></i> <span>Đơn hàng Cần xử lý</span> </a>
                 </li>
             </div>
-
             <div sec:authorize="hasRole('ROLE_QUANLY')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/quan-ly/don-hang')} ? 'active' : ''">
                     <a th:href="@{/quan-ly/don-hang}"> <i class="fas fa-boxes"></i> <span>Quản lý Đơn hàng</span> </a>
@@ -75,19 +54,16 @@
     
     <header class="topbar" th:fragment="topbar">
         <div class="user-info" id="userInfoDropdown">
-             <div class="username-trigger">
-                <span class="username">
-                    <span sec:authorize="isAuthenticated()" sec:authentication="name">Username</span>
-                    <span sec:authorize="isAnonymous()">Khách</span>
-                </span>
-                <i class="fas fa-caret-down" style="margin-left: 8px;"></i>
-             </div>
-            <ul class="dropdown-menu animate__animated animate__fadeIn">
-                <li><a href="#"><i class="fas fa-user fa-sm fa-fw"></i> Hồ sơ cá nhân</a></li>
+             <span class="username">
+                Xin chào, <span sec:authorize="isAuthenticated()" sec:authentication="name">User</span>
+             </span>
+             <i class="fas fa-caret-down"></i>
+             
+             <ul class="dropdown-menu">
+                <li><button type="button"><i class="fas fa-user"></i> Hồ sơ cá nhân</button></li>
                 <li>
-                    <form th:action="@{/logout}" method="post" style="margin: 0;">
-                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit"> <i class="fas fa-sign-out-alt fa-sm fa-fw"></i> Đăng xuất </button>
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit"> <i class="fas fa-sign-out-alt"></i> Đăng xuất </button>
                     </form>
                 </li>
             </ul>

@@ -1,67 +1,80 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{layout :: head(pageTitle='Quản trị Hệ thống')}"></head>
+<head th:replace="~{layout :: head(pageTitle='Dashboard Admin')}"></head>
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
         <div class="main-content">
             <header th:replace="~{layout :: topbar}"></header>
             <main class="page-content">
-                <h1 class="page-header animate__animated animate__fadeInLeft">Tổng quan Hệ thống</h1>
-
-                <div class="row animate__animated animate__fadeInUp">
-                    <div class="col-xl-3 col-md-6">
+                <h1 class="page-header">Tổng quan Hệ thống</h1>
+                <div class="row">
+                    <div class="col-md-3">
                         <div class="card-counter primary">
-                            <div class="text-xs text-primary">Tổng Đơn hàng</div>
                             <div class="h5" th:text="${totalOrders}">0</div>
-                            <i class="fas fa-box icon text-primary"></i>
+                            <div class="small text-primary">Đơn hàng</div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6">
+                    <div class="col-md-3">
                         <div class="card-counter success">
-                            <div class="text-xs text-success">Doanh thu (COD)</div>
-                            <div class="h5" th:text="${#numbers.formatCurrency(totalRevenue)}">0 ₫</div>
-                            <i class="fas fa-dollar-sign icon text-success"></i>
+                            <div class="h5" th:text="${#numbers.formatCurrency(totalRevenue)}">0</div>
+                            <div class="small text-success">Doanh thu</div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6">
+                    <div class="col-md-3">
                         <div class="card-counter info">
-                            <div class="text-xs text-info">Nhân sự (Shipper)</div>
                             <div class="h5" th:text="${totalShippers}">0</div>
-                            <i class="fas fa-users icon text-info"></i>
+                            <div class="small text-info">Shipper</div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-md-6">
+                    <div class="col-md-3">
                         <div class="card-counter warning">
-                            <div class="text-xs text-warning">Chờ phân công</div>
                             <div class="h5" th:text="${waitingOrders}">0</div>
-                            <i class="fas fa-clock icon text-warning"></i>
+                            <div class="small text-warning">Chờ xử lý</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
-                    <div class="col-lg-12">
-                        <div class="card shadow mb-4">
-                            <div class="card-header py-3 bg-light">
-                                <h6 class="m-0 font-weight-bold text-primary">Biểu đồ tăng trưởng (Demo)</h6>
-                            </div>
+                <div class="row mt-3">
+                    <div class="col-md-8">
+                        <div class="card" style="height: 400px;">
+                            <div class="card-header">Thống kê Đơn hàng</div>
                             <div class="card-body">
-                                <div class="chart-area" style="height: 300px; background: #f8f9fc; display:flex; align-items:center; justify-content:center; border: 1px dashed #ccc;">
-                                    <p class="text-secondary">
-                                        <i class="fas fa-chart-line fa-3x mb-3"></i><br>
-                                        Khu vực hiển thị Chart.js<br>
-                                        (Dữ liệu đang được cập nhật từ DB Oracle...)
-                                    </p>
-                                </div>
+                                <canvas id="orderChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card" style="height: 400px;">
+                            <div class="card-header">Ghi chú</div>
+                            <div class="card-body">
+                                <p>Dữ liệu được cập nhật thời gian thực.</p>
                             </div>
                         </div>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>
     <script th:src="@{/js/main.js}"></script>
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            var ctx = document.getElementById("orderChart");
+            if(ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: /*[[${chartLabels}]]*/ [],
+                        datasets: [{
+                            label: 'Số lượng',
+                            data: /*[[${chartData}]]*/ [],
+                            backgroundColor: '#4e73df'
+                        }]
+                    },
+                    options: { maintainAspectRatio: false }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

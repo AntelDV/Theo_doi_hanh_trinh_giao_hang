@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{layout :: head(pageTitle='Quản lý Nhân viên')}"></head>
-
 <body>
     <div class="app-wrapper">
         <nav th:replace="~{layout :: sidebar}"></nav>
@@ -12,27 +10,20 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="page-header mb-0">Quản lý Nhân viên</h1>
                     <button class="btn btn-primary" onclick="openModal('taoNhanVienModal')"> 
-                        <i class="fas fa-plus"></i> Tạo Nhân viên Mới
+                        <i class="fas fa-plus"></i> Tạo Nhân viên
                     </button>
                 </div>
                 
                 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
                 <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-                <div class="card shadow mb-4">
-                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">Danh sách Nhân viên</h6>
-                    </div>
+                <div class="card">
+                     <div class="card-header">Danh sách Nhân viên</div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered" width="100%" cellspacing="0">
+                            <table class="table table-bordered">
                                 <thead>
-                                    <tr>
-                                        <th>Mã NV</th>
-                                        <th>Họ Tên</th> <th>Email</th> <th>SĐT</th> <th>Vai trò</th>
-                                        <th>Trạng thái</th>
-                                        <th>Hành động</th>
-                                    </tr>
+                                    <tr><th>Mã NV</th><th>Họ Tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Trạng thái</th><th>Hành động</th></tr>
                                 </thead>
                                 <tbody>
                                     <tr th:each="nv : ${nhanVienList}">
@@ -42,24 +33,15 @@
                                         <td th:text="${nv.soDienThoai}"></td>
                                         <td th:text="${nv.taiKhoan?.vaiTro?.tenVaiTro}"></td>
                                         <td>
-                                            <span th:if="${nv.taiKhoan?.trangThai}" class="badge badge-success p-2">Hoạt động</span>
-                                            <span th:unless="${nv.taiKhoan?.trangThai}" class="badge badge-danger p-2">Bị khóa</span>
+                                            <span th:if="${nv.taiKhoan?.trangThai}" class="badge badge-success">Hoạt động</span>
+                                            <span th:unless="${nv.taiKhoan?.trangThai}" class="badge badge-danger">Bị khóa</span>
                                         </td>
-                                        <td class="table-actions">
-                                            <form th:if="${nv.taiKhoan != null and nv.taiKhoan.trangThai}" 
-                                                  th:action="@{/quan-ly/nhan-vien/khoa/{id}(id=${nv.id})}" 
-                                                  method="post" style="display: inline-block;">
-                                                <button type="submit" class="btn btn-sm btn-warning" title="Khóa tài khoản" 
-                                                        onclick="return confirm('Xác nhận khóa tài khoản?');">
-                                                    <i class="fas fa-lock"></i>
-                                                </button>
+                                        <td>
+                                            <form th:if="${nv.taiKhoan != null and nv.taiKhoan.trangThai}" th:action="@{/quan-ly/nhan-vien/khoa/{id}(id=${nv.id})}" method="post" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Khóa?');"><i class="fas fa-lock"></i></button>
                                             </form>
-                                            <form th:if="${nv.taiKhoan != null and !nv.taiKhoan.trangThai}" 
-                                                   th:action="@{/quan-ly/nhan-vien/mo-khoa/{id}(id=${nv.id})}" 
-                                                   method="post" style="display: inline-block;">
-                                                <button type="submit" class="btn btn-sm btn-success" title="Mở khóa">
-                                                    <i class="fas fa-unlock"></i>
-                                                </button>
+                                            <form th:if="${nv.taiKhoan != null and !nv.taiKhoan.trangThai}" th:action="@{/quan-ly/nhan-vien/mo-khoa/{id}(id=${nv.id})}" method="post" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-unlock"></i></button>
                                             </form>
                                         </td>
                                     </tr>
@@ -72,70 +54,47 @@
         </div>
     </div>
 
-    <div class="modal" id="taoNhanVienModal" tabindex="-1">
-        <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal" id="taoNhanVienModal">
         <div class="modal-dialog">
             <div class="modal-content">
                  <form th:action="@{/quan-ly/nhan-vien/them}" th:object="${nhanVienForm}" method="post">
                     <div class="modal-header">
-                        <h5 class="modal-title">Tạo Tài khoản Nhân viên Mới</h5>
-                        <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Tạo Nhân viên Mới</h5>
+                        <button type="button" class="close" onclick="closeModal('taoNhanVienModal')">&times;</button>
                     </div>
                     <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 form-group"><label>Mã NV (*)</label><input type="text" class="form-control" th:field="*{maNV}" required></div>
+                            <div class="col-md-6 form-group"><label>Họ Tên (*)</label><input type="text" class="form-control" th:field="*{hoTen}" required></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group"><label>Email (*)</label><input type="email" class="form-control" th:field="*{email}" required></div>
+                            <div class="col-md-6 form-group"><label>SĐT (*)</label><input type="tel" class="form-control" th:field="*{soDienThoai}" required></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group"><label>Username (*)</label><input type="text" class="form-control" th:field="*{tenDangNhap}" required></div>
+                            <div class="col-md-6 form-group"><label>Mật khẩu (*)</label><input type="password" class="form-control" th:field="*{matKhau}" required></div>
+                        </div>
                         <div class="form-group">
-                            <label class="form-label">Mã Nhân viên: (*)</label>
-                            <input type="text" class="form-control" th:field="*{maNV}" placeholder="VD: NV001">
-                        </div>
-                        
-                        <div class="row-grid-2">
-                            <div class="form-group">
-                                <label class="form-label">Họ Tên: (*)</label>
-                                <input type="text" class="form-control" th:field="*{hoTen}">
-                            </div>
-                             <div class="form-group">
-                                <label class="form-label">Email: (*)</label>
-                                <input type="email" class="form-control" th:field="*{email}">
-                            </div>
-                        </div>
-                        
-                        <div class="row-grid-2">
-                             <div class="form-group">
-                                <label class="form-label">Số Điện thoại: (*)</label>
-                                <input type="tel" class="form-control" th:field="*{soDienThoai}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Tên Đăng nhập: (*)</label>
-                                <input type="text" class="form-control" th:field="*{tenDangNhap}">
-                            </div>
-                        </div>
-                        
-                        <div class="row-grid-2">
-                            <div class="form-group">
-                                <label class="form-label">Mật khẩu: (*)</label>
-                                <input type="password" class="form-control" th:field="*{matKhau}">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Vai trò: (*)</label>
-                                <select class="form-control" th:field="*{idVaiTro}" style="height: 45px;">
-                                    <option value="1">Quản lý</option>
-                                    <option value="2">Shipper</option>
-                                </select>
-                            </div>
+                            <label>Vai trò (*)</label>
+                            <select class="form-control" th:field="*{idVaiTro}">
+                                <option value="1">Quản lý</option>
+                                <option value="2">Shipper</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('taoNhanVienModal')">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    
     <script th:src="@{/js/main.js}"></script>
-     <script th:inline="javascript">
-        var showThemModalNV = /*[[${showThemModalNV}]]*/ false;
-        if (showThemModalNV) openModal('taoNhanVienModal');
+    <script th:inline="javascript">
+        var show = /*[[${showThemModalNV}]]*/ false;
+        if(show) openModal('taoNhanVienModal');
     </script>
 </body>
 </html>
