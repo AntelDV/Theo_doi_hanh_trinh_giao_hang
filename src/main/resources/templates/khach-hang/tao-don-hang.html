@@ -37,11 +37,11 @@
 
                                     <div class="form-group mt-3 p-3 border border-danger rounded bg-white shadow-sm">
                                         <label for="moTaHangHoa" class="form-label text-danger font-weight-bold">
-                                            <i class="fas fa-file-contract"></i> Khai báo Hàng Giá trị cao (Riêng tư):
+                                            <i class="fas fa-file-contract"></i> Khai báo Hàng Giá trị cao (Bảo Mật):
                                         </label>
                                         <textarea id="moTaHangHoa" th:field="*{moTaHangHoa}" class="form-control border-danger" rows="3" 
-                                                  placeholder="Nhập mô tả chi tiết (Seri, Model...). Nội dung này được bảo mật tuyệt đối, Shipper không thể xem."></textarea>
-                                        <small class="text-muted"><i class="fas fa-shield-alt"></i> Chỉ Quản trị viên cấp cao mới có quyền truy cập thông tin này.</small>
+                                                  placeholder="Nhập mô tả chi tiết (Seri, Model...). Hệ thống sẽ dùng Mã hóa Lai (AES+RSA) để bảo vệ. Shipper KHÔNG THỂ ĐỌC."></textarea>
+                                        <small class="text-muted"><i class="fas fa-shield-alt"></i> Chỉ Quản lý cấp cao mới có khóa để giải mã.</small>
                                     </div>
                                     </div>
                             </div>
@@ -77,7 +77,7 @@
 
                     <div class="text-center mb-5">
                         <button type="submit" class="btn btn-primary btn-lg px-5 shadow"> 
-                            <i class="fas fa-check-circle"></i> Xác nhận Tạo đơn
+                            <i class="fas fa-check-circle"></i> Xác nhận & Ký số (RSA)
                         </button>
                     </div>
                 </form>

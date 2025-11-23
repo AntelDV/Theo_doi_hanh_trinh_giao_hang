@@ -45,7 +45,9 @@
                                         <td>
                                             <span th:if="${dh.getTrangThaiHienTai() != null}" 
                                                   th:text="${dh.getTrangThaiHienTai().tenTrangThai}"
-                                                  class="badge badge-info p-2">
+                                                  class="badge" 
+                                                  th:classappend="${#strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'thất bại') ? 'badge-danger' : 
+                                                                   #strings.containsIgnoreCase(dh.getTrangThaiHienTai().tenTrangThai, 'Chờ lấy') ? 'badge-warning' : 'badge-info'}">
                                             </span>
                                         </td>
                                         <td class="table-actions">
@@ -67,22 +69,24 @@
         </div>
     </div>
 
-    <div class="modal" id="capNhatTrangThaiModal" tabindex="-1">
+    <div class="modal fade" id="capNhatTrangThaiModal" tabindex="-1">
         <div class="modal-backdrop" data-dismiss="modal"></div>
         <div class="modal-dialog">
             <div class="modal-content">
                  <form th:action="@{/shipper/don-hang/cap-nhat}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title"><i class="fas fa-edit"></i> Cập nhật: <span id="maVanDonCapNhat"></span></h5>
-                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal">&times;</button>
+                        <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close">&times;</button>
                     </div>
                     
                     <div class="modal-body">
                          <input type="hidden" name="idDonHang" id="idDonHangCapNhat">
                         
                         <div class="form-group">
-                            <label class="form-label">Chọn Trạng thái Mới:</label>
-                            <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" style="height: 50px;" required onchange="toggleCodSection(this.value)">
+                            <label for="selectTrangThai" class="form-label font-weight-bold">Chọn Trạng thái Mới:</label>
+                            <select id="selectTrangThai" name="idTrangThaiMoi" class="form-control" required onchange="toggleCodSection(this.value)">
                                  <option value="">-- Chọn trạng thái --</option>
                                 <option th:each="tt : ${trangThaiList}"
                                         th:value="${tt.idTrangThai}"
@@ -94,27 +98,27 @@
                             <p class="font-weight-bold mb-2"><i class="fas fa-money-bill-wave text-success"></i> Số tiền thu hộ (COD): <span id="soTienCod" class="text-danger h5"></span></p>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="daThanhToanCod" name="daThanhToanCod" value="true">
-                                <label class="form-check-label font-weight-bold" for="daThanhToanCod">
-                                    Tôi xác nhận ĐÃ THU ĐỦ số tiền này từ khách.
+                                <label class="form-check-label" for="daThanhToanCod">
+                                    Tôi xác nhận <b>ĐÃ THU ĐỦ</b> số tiền này từ khách.
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group mt-3">
-                             <label class="form-label">Ghi chú / Báo cáo sự cố:</label>
+                             <label for="ghiChuShipper" class="form-label font-weight-bold">Ghi chú / Báo cáo sự cố:</label>
                              <textarea id="ghiChuShipper" name="ghiChu" class="form-control" rows="3" 
-                                       placeholder="Nhập ghi chú hoặc mô tả sự cố..." onkeyup="checkSecureReport(this)"></textarea>
+                                       placeholder="Ghi chú thường..." onkeyup="checkSecureReport(this)"></textarea>
                              
                              <small class="text-muted" id="normalNoteHint">Nhập ghi chú ngắn gọn.</small>
                              <div id="secureReportHint" class="mt-2 p-2 bg-light border border-danger rounded text-danger animate__animated animate__fadeIn" style="display: none;">
-                                <i class="fas fa-shield-alt"></i> <b>Bảo mật:</b> Nội dung này sẽ được gửi an toàn trực tiếp cho Quản trị viên.
+                                <i class="fas fa-lock"></i> <b>Chế độ Báo cáo Mật:</b> Nội dung này sẽ được Mã hóa Lai (AES+RSA) và gửi trực tiếp cho Admin.
                              </div>
                         </div>
                     </div>
                     
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Xác nhận</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận & Ký số</button>
                     </div>
                  </form>
             </div>
@@ -136,6 +140,8 @@
             document.getElementById('selectTrangThai').value = '';
             document.getElementById('ghiChuShipper').value = '';
             document.getElementById('ghiChuShipper').required = false;
+            
+            // Reset hint
             document.getElementById('normalNoteHint').style.display = 'block';
             document.getElementById('secureReportHint').style.display = 'none';
 
@@ -144,6 +150,7 @@
             const daThanhToanCodCheckbox = document.getElementById('daThanhToanCod');
             
             const tienCodNum = parseFloat(tienCod) || 0;
+            
             if (tienCodNum > 0) {
                 soTienCodSpan.innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(tienCodNum);
                 daThanhToanCodCheckbox.checked = false;
@@ -159,12 +166,14 @@
             const soTienCodSpan = document.getElementById('soTienCod');
             const ghiChuTextarea = document.getElementById('ghiChuShipper'); 
             
+            // Hiện COD nếu Giao thành công (ID 5)
             if (selectedTrangThaiId == '5' && soTienCodSpan.innerText !== '' && soTienCodSpan.innerText !== '0 ₫') {
                 codSection.style.display = 'block';
             } else {
                 codSection.style.display = 'none';
             }
             
+            // Bắt buộc ghi chú nếu Thất bại (ID 6)
             if (selectedTrangThaiId == '6') { 
                 ghiChuTextarea.required = true;
                 ghiChuTextarea.placeholder = "Bắt buộc nhập lý do thất bại...";
@@ -174,11 +183,13 @@
             }
         }
         
+        // Logic hiển thị thông báo "Chế độ mật" khi nhập dài
         function checkSecureReport(textarea) {
             const len = textarea.value.length;
             const secureHint = document.getElementById('secureReportHint');
             const normalHint = document.getElementById('normalNoteHint');
-            if (len > 10) { 
+            
+            if (len > 10) { // Giả định > 10 ký tự là báo cáo chi tiết
                 secureHint.style.display = 'block';
                 normalHint.style.display = 'none';
             } else {
