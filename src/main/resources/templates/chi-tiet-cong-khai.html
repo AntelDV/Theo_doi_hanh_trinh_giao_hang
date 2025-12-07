@@ -6,49 +6,96 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        body { background-color: #f8f9fc; }
-        .tracking-container { max-width: 900px; margin: 2.5rem auto; padding: 0 1.5rem; }
+        body { background-color: #f8f9fa; }
+        /* Style riêng cho trang này nếu cần */
     </style>
 </head>
 <body>
-    <div class="tracking-container">
+    <div class="mz-container">
         <div class="mb-4">
-             <a th:href="@{/tra-cuu}" class="btn btn-secondary"> <i class="fas fa-arrow-left"></i> Tra cứu khác</a>
+             <a th:href="@{/tra-cuu}" class="btn btn-secondary btn-sm" style="border-radius: 20px; padding: 5px 15px;"> 
+                <i class="fas fa-arrow-left mr-2"></i> Tra cứu khác
+             </a>
         </div>
 
-        <h1 class="page-header text-center" th:text="'Hành trình: ' + ${donHang.maVanDon}"></h1>
+        <div class="mz-header">
+            <h1 class="mz-title"><i class="fas fa-shipping-fast text-success mr-2"></i> TRA CỨU VẬN ĐƠN</h1>
+            <p class="text-muted">Thông tin vận chuyển và trạng thái xử lý đơn hàng</p>
+        </div>
 
         <div class="row">
-            <div class="col-md-5">
-                <div class="card">
-                    <div class="card-header">Thông tin</div>
-                    <div class="card-body">
-                        <p><strong>Mã VĐ:</strong> <span th:text="${donHang.maVanDon}"></span></p>
-                        <p><strong>Ngày gửi:</strong> <span th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></span></p>
-                        <hr>
-                        <p><strong>Người gửi:</strong> <span th:text="${donHang.khachHangGui.hoTen}"></span></p>
-                        <p><strong>Từ:</strong> <span th:text="${donHang.diaChiLayHang.quanHuyen} + ', ' + ${donHang.diaChiLayHang.tinhTp}"></span></p>
-                        <hr>
-                        <p><strong>Đến:</strong> <span th:text="${#strings.substring(donHang.diaChiGiaoHang, 0, 5) + '...'}"></span> (Đã ẩn)</p>
+            
+            <div class="col-md-5 mb-4">
+                <div class="mz-card h-100">
+                    <div class="mb-4 border-bottom pb-3">
+                        <div class="mz-label">MÃ VẬN ĐƠN</div>
+                        <div class="mz-value-lg" th:text="${donHang.maVanDon}"></div>
+                        <div class="small text-muted mt-1">Đơn vị vận chuyển: <strong class="text-dark">Giao Hàng 12</strong></div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="mz-label">NGÀY GỬI</div>
+                            <div class="mz-value" th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mz-label">DỊCH VỤ</div>
+                            <div class="mz-value">Chuẩn (COD)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="mz-label">NGƯỜI NHẬN</div>
+                        <div class="mz-value">
+                            <i class="fas fa-user-circle text-muted mr-1"></i>
+                            ****** <span th:text="${#strings.arraySplit(donHang.tenNguoiNhan, ' ')[#strings.arraySplit(donHang.tenNguoiNhan, ' ').length - 1]}"></span>
+                        </div>
+                        <div class="text-muted mt-1 ml-4">
+                            <i class="fas fa-phone-alt" style="font-size: 0.8rem;"></i> *******<span th:text="${#strings.substring(donHang.sdtNguoiNhan, #strings.length(donHang.sdtNguoiNhan) - 3)}"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <div class="mz-label">ĐỊA CHỈ GIAO HÀNG</div>
+                        <div class="mz-value" style="font-size: 1rem;">
+                            <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                            ****, ****, 
+                            <span th:text="${donHang.diaChiLayHang.quanHuyen} + ', ' + ${donHang.diaChiLayHang.tinhTp}"></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-7">
-                <div class="card">
-                    <div class="card-header">Trạng thái</div>
-                    <div class="card-body">
-                        <ul class="timeline">
-                            <li th:each="ht : ${donHang.hanhTrinh}" class="timeline-item">
-                                <div class="timeline-content">
-                                    <span class="timeline-time" th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy HH:mm')}"></span>
-                                    <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="col-md-7 mb-4">
+                <div class="mz-card h-100">
+                    <h5 class="font-weight-bold mb-4 text-dark border-bottom pb-3">
+                        <i class="fas fa-history mr-2 text-success"></i> HÀNH TRÌNH CHI TIẾT
+                    </h5>
+                    
+                    <ul class="timeline-mz">
+                        <li th:each="ht, iter : ${donHang.hanhTrinh}" class="timeline-mz-item"
+                            th:classappend="${iter.first ? 'active' : ''}">
+                            
+                            <div class="mz-time">
+                                <span th:text="${#dates.format(ht.thoiGianCapNhat, 'HH:mm')}"></span> - 
+                                <span th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy')}"></span>
+                            </div>
+
+                            <div class="mz-status" th:text="${ht.trangThai.tenTrangThai}"></div>
+                            
+                            <div th:if="${ht.ghiChuNhanVien != null and ht.ghiChuNhanVien != '' and !#strings.containsIgnoreCase(ht.ghiChuNhanVien, 'mật')}" 
+                                 class="small text-muted mt-1" 
+                                 style="background: #f8f9fa; padding: 5px 10px; border-radius: 4px; display: inline-block;">
+                                 <i class="fas fa-info-circle mr-1"></i> <span th:text="${ht.ghiChuNhanVien}"></span>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <div class="small text-muted">Hệ thống theo dõi vận đơn bảo mật - Nhóm 12</div>
         </div>
     </div>
 </body>

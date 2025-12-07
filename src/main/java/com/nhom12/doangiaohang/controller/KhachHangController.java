@@ -23,13 +23,10 @@ public class KhachHangController {
     @Autowired private DonHangService donHangService;
     @Autowired private DiaChiService diaChiService;
 
-    // --- DASHBOARD MỚI (ĐÃ CÓ LOGIC TÍNH TOÁN) ---
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
-        // Lấy danh sách đơn hàng của khách
         List<DonHang> list = donHangService.getDonHangCuaKhachHangHienTai(authentication);
         
-        // Tính toán số liệu
         long choLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
         long dangGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
         long hoanThanh = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5).count();
@@ -43,7 +40,6 @@ public class KhachHangController {
         model.addAttribute("countHoanThanh", hoanThanh);
         model.addAttribute("tongTien", tongTien);
         
-        // Đơn mới nhất để hiện timeline
         if(!list.isEmpty()) {
             model.addAttribute("donMoiNhat", list.get(0));
         }
@@ -51,7 +47,6 @@ public class KhachHangController {
         return "khach-hang/dashboard";
     }
 
-    // Luồng Tạo đơn hàng - GET
     @GetMapping("/tao-don-hang")
     public String taoDonHangForm(Authentication authentication, Model model) {
         try {
@@ -67,7 +62,6 @@ public class KhachHangController {
         }
     }
 
-    // Luồng Tạo đơn hàng - POST
     @PostMapping("/tao-don-hang")
     public String processTaoDonHang(@ModelAttribute("donHang") DonHang donHang, 
                                    @RequestParam("idDiaChiLayHang") Integer idDiaChiLayHang,
@@ -102,7 +96,6 @@ public class KhachHangController {
         }
     }
     
-    // Luồng Xem danh sách đơn hàng
     @GetMapping("/danh-sach-don-hang")
     public String danhSachDonHang(Authentication authentication, Model model) {
         List<DonHang> donHangList = donHangService.getDonHangCuaKhachHangHienTai(authentication);
@@ -110,7 +103,6 @@ public class KhachHangController {
         return "khach-hang/danh-sach-don-hang";
     }
 
-    // Luồng Xem chi tiết đơn hàng
     @GetMapping("/chi-tiet-don-hang/{maVanDon}")
     public String chiTietDonHang(@PathVariable("maVanDon") String maVanDon, Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
          try {
@@ -123,19 +115,37 @@ public class KhachHangController {
          }
     }
     
-    // === CÁC HÀM XỬ LÝ SỔ ĐỊA CHỈ ===
+    // === TÍNH NĂNG MỚI: XỬ LÝ HỦY ĐƠN ===
+    @PostMapping("/don-hang/huy/{id}")
+    public String huyDonHang(@PathVariable("id") Integer idDonHang,
+                             Authentication authentication,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            donHangService.huyDonHang(idDonHang, authentication);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng thành công.");
+        } catch (IllegalStateException | SecurityException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
+            e.printStackTrace();
+        }
+        // Quay lại trang chi tiết đơn hàng đó
+        // (Cần truy vấn lại để lấy Mã Vận Đơn redirect, nhưng đơn giản thì về danh sách hoặc redirect dựa trên Referer)
+        // Ở đây ta về danh sách cho an toàn
+        return "redirect:/khach-hang/danh-sach-don-hang";
+    }
+
+    // === CÁC HÀM XỬ LÝ SỔ ĐỊA CHỈ (Giữ nguyên) ===
     @GetMapping("/so-dia-chi")
     public String soDiaChi(Authentication authentication, Model model) {
          List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);
          model.addAttribute("diaChiList", diaChiList);
-         
          if (!model.containsAttribute("diaChiMoi")) {
              model.addAttribute("diaChiMoi", new DiaChi());
          }
           if (!model.containsAttribute("diaChiSua")) {
              model.addAttribute("diaChiSua", new DiaChi());
          }
-         
         return "khach-hang/so-dia-chi";
     }
     
@@ -150,7 +160,6 @@ public class KhachHangController {
             redirectAttributes.addFlashAttribute("showThemModal", true); 
             return "redirect:/khach-hang/so-dia-chi";
         }
-        
         try {
             diaChiService.themDiaChiMoi(diaChiMoi, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm địa chỉ mới thành công!");
@@ -188,13 +197,10 @@ public class KhachHangController {
         try {
             diaChiService.capNhatDiaChi(diaChiSua, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật địa chỉ thành công!");
-        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật: " + e.getMessage());
-             // Giữ lại form lỗi để hiển thị lại
+        } catch (Exception e) {
+             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi: " + e.getMessage());
              redirectAttributes.addFlashAttribute("diaChiSua", diaChiSua);
              redirectAttributes.addFlashAttribute("showSuaModal", true);
-        } catch (Exception e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
         }
          return "redirect:/khach-hang/so-dia-chi";
     }
@@ -206,10 +212,8 @@ public class KhachHangController {
         try {
             diaChiService.xoaDiaChi(idDiaChi, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Xóa địa chỉ thành công!");
-        } catch (IllegalArgumentException | SecurityException | IllegalStateException e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa: " + e.getMessage());
         } catch (Exception e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra khi xóa.");
+             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa: " + e.getMessage());
         }
         return "redirect:/khach-hang/so-dia-chi";
     }
@@ -221,8 +225,6 @@ public class KhachHangController {
          try {
             diaChiService.datLamMacDinh(idDiaChi, authentication);
             redirectAttributes.addFlashAttribute("successMessage", "Đặt làm địa chỉ mặc định thành công!");
-        } catch (IllegalArgumentException | SecurityException e) {
-             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         } catch (Exception e) {
              redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi hệ thống xảy ra.");
         }

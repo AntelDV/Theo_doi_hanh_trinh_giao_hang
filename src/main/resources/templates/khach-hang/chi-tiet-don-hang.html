@@ -9,63 +9,70 @@
             <main class="page-content">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="page-header mb-0" th:text="'Mã vận đơn: ' + ${donHang.maVanDon}"></h1>
-                    <a th:href="@{/khach-hang/danh-sach-don-hang}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left"></i> Quay lại
-                    </a>
+                    <div>
+                        <form th:if="${donHang.getTrangThaiHienTai().idTrangThai == 1}" 
+                              th:action="@{'/khach-hang/don-hang/huy/' + ${donHang.idDonHang}}" 
+                              method="post" 
+                              style="display:inline-block; margin-right: 10px;"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn HỦY đơn hàng này không?');">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times"></i> Hủy Đơn
+                            </button>
+                        </form>
+                        <a th:href="@{/khach-hang/danh-sach-don-hang}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-5 mb-4">
+                    <div class="col-md-4 mb-4">
                         <div class="card h-100">
-                             <div class="card-header">Thông tin Đơn hàng</div>
+                             <div class="card-header">Thông tin</div>
                             <div class="card-body">
-                                <p><strong>Ngày tạo:</strong> <span th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></span></p>
-                                <hr>
                                 <div class="mb-3">
-                                    <div class="form-label" style="color: #888;">Người gửi</div>
-                                    <div class="font-weight-bold" th:text="${donHang.khachHangGui.hoTen}"></div>
-                                    <div style="color: #666;" th:text="${donHang.diaChiLayHang.getFullAddress()}"></div>
+                                    <div class="form-label" style="color: #888; font-size: 0.85rem;">NGÀY TẠO</div>
+                                    <div class="font-weight-bold" th:text="${#dates.format(donHang.ngayTao, 'dd/MM/yyyy')}"></div>
                                 </div>
-                                <hr>
+                                <hr class="my-3">
                                 <div class="mb-3">
-                                    <div class="form-label" style="color: #888;">Người nhận</div>
-                                    <div class="font-weight-bold" th:text="${donHang.tenNguoiNhan}"></div>
-                                    <div style="color: #666;" th:text="${donHang.sdtNguoiNhan}"></div>
-                                    <div class="mt-1" th:text="${donHang.diaChiGiaoHang}"></div>
+                                    <div class="form-label" style="color: #888; font-size: 0.85rem;">NGƯỜI GỬI</div>
+                                    <div class="font-weight-bold text-primary" th:text="${donHang.khachHangGui.hoTen}"></div>
                                 </div>
-                                <hr>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong>Thu hộ (COD):</strong>
-                                    <span class="badge badge-danger" style="font-size: 1em;" th:text="${#numbers.formatCurrency(donHang.thanhToan.tongTienCod)}"></span>
+                                <hr class="my-3">
+                                <div class="mb-3">
+                                    <div class="form-label" style="color: #888; font-size: 0.85rem;">NGƯỜI NHẬN</div>
+                                    <div class="font-weight-bold text-primary" th:text="${donHang.tenNguoiNhan}"></div>
+                                    <div class="small font-weight-bold" th:text="${donHang.sdtNguoiNhan}"></div>
+                                    <div class="small text-muted mt-1" th:text="${donHang.diaChiGiaoHang}"></div>
+                                </div>
+                                <hr class="my-3">
+                                <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                                    <strong class="text-dark">Thu hộ (COD):</strong>
+                                    <span class="badge badge-danger" style="font-size: 1rem;" th:text="${#numbers.formatCurrency(donHang.thanhToan.tongTienCod)}"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-7 mb-4">
+                    <div class="col-md-8 mb-4">
                          <div class="card h-100">
                              <div class="card-header">Lịch sử Hành trình</div>
                              <div class="card-body">
                                 <ul class="timeline">
-                                    <li th:if="${#lists.isEmpty(donHang.hanhTrinh)}" class="text-center text-muted">Chưa có thông tin.</li>
+                                    <li th:if="${#lists.isEmpty(donHang.hanhTrinh)}" class="text-center text-muted p-4">Đơn hàng mới tạo.</li>
+                                    
                                     <li th:each="ht, iter : ${donHang.hanhTrinh}" class="timeline-item"
                                         th:classappend="${iter.first ? 'status-current' : ''} + 
-                                                        (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thành công')} ? 'status-success' : '') +
-                                                        (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại')} ? 'status-danger' : '')">
+                                                        (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'hủy')} ? 'status-danger' : '')">
                                         
                                         <div class="timeline-content">
-                                            <span class="timeline-time" th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy HH:mm')}"></span>
-                                            <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
-                                            
-                                            <div th:if="${ht.ghiChuNhanVien != null and !#strings.containsIgnoreCase(ht.ghiChuNhanVien, 'mật')}" 
-                                                 class="text-muted" th:text="${ht.ghiChuNhanVien}"></div>
-                                            
-                                            <div th:if="${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại')}" class="text-danger small mt-1">
-                                                <i class="fas fa-exclamation-circle"></i> Đang chờ xử lý lại.
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
+                                                <span class="timeline-time badge badge-light border" th:text="${#dates.format(ht.thoiGianCapNhat, 'HH:mm dd/MM/yyyy')}"></span>
                                             </div>
-
-                                            <div th:if="${ht.nhanVienThucHien}" class="mt-2 pt-2 border-top" style="font-size: 0.85rem; color: var(--primary);">
-                                                <i class="fas fa-truck"></i> Shipper: <span th:text="${ht.nhanVienThucHien.hoTen}"></span>
+                                            <div th:if="${ht.nhanVienThucHien}" class="mt-2 pt-2 border-top small text-primary">
+                                                Shipper: <span th:text="${ht.nhanVienThucHien.hoTen}"></span>
                                             </div>
                                         </div>
                                     </li>

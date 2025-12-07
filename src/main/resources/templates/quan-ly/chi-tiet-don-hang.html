@@ -13,7 +13,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-5 mb-4">
+                    <div class="col-md-4 mb-4">
                         <div class="card h-100">
                              <div class="card-header">Thông tin Đơn hàng</div>
                             <div class="card-body">
@@ -32,14 +32,14 @@
                                 </div>
                                 <hr>
                                 <div th:if="${donHang.moTaHangHoa != null}" class="mb-3 p-3 bg-warning-light border border-warning rounded">
-                                    <div class="text-danger font-weight-bold mb-1"><i class="fas fa-shield-alt"></i> Hàng Giá trị cao:</div>
+                                    <div class="text-danger font-weight-bold mb-1"><i class="fas fa-shield-alt"></i> Hàng Giá trị cao (Đã giải mã):</div>
                                     <div class="text-dark bg-white p-2 rounded" th:text="${donHang.moTaHangHoa}"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-7 mb-4">
+                    <div class="col-md-8 mb-4">
                          <div class="card h-100">
                              <div class="card-header">Lịch sử Hành trình</div>
                              <div class="card-body">
@@ -48,17 +48,22 @@
                                         th:classappend="${iter.first ? 'status-current' : ''} + 
                                                         (${#strings.containsIgnoreCase(ht.trangThai.tenTrangThai, 'thất bại')} ? 'status-danger' : '')">
                                         <div class="timeline-content">
-                                            <span class="timeline-time" th:text="${#dates.format(ht.thoiGianCapNhat, 'dd/MM/yyyy HH:mm')}"></span>
-                                            <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
-                                            <div th:text="${ht.ghiChuNhanVien}"></div>
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <div class="timeline-status" th:text="${ht.trangThai.tenTrangThai}"></div>
+                                                <span class="timeline-time badge badge-light border" th:text="${#dates.format(ht.thoiGianCapNhat, 'HH:mm dd/MM/yyyy')}"></span>
+                                            </div>
+                                            
+                                            <div th:if="${ht.ghiChuNhanVien != null and ht.ghiChuNhanVien != ''}" class="text-muted small mt-1">
+                                                <i class="fas fa-comment-alt mr-1"></i> <span th:text="${ht.ghiChuNhanVien}"></span>
+                                            </div>
                                             
                                             <div th:if="${ht.chiTietSuCo != null}" class="mt-2 p-2 bg-light border border-danger rounded text-danger">
-                                                <strong><i class="fas fa-lock-open"></i> Báo cáo mật:</strong> 
+                                                <strong><i class="fas fa-lock-open"></i> Báo cáo mật (Đã giải mã):</strong> 
                                                 <span th:text="${ht.chiTietSuCo}"></span>
                                             </div>
 
                                             <div th:if="${ht.nhanVienThucHien}" class="mt-2 pt-2 border-top small text-primary">
-                                                Thực hiện: <span th:text="${ht.nhanVienThucHien.hoTen}"></span>
+                                                Thực hiện bởi: <strong><span th:text="${ht.nhanVienThucHien.hoTen}"></span></strong>
                                             </div>
                                         </div>
                                     </li>
