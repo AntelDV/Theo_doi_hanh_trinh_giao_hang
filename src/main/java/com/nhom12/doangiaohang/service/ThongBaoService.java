@@ -75,15 +75,16 @@ public class ThongBaoService {
     
     public List<ThongBaoMat> getThongBaoCuaToi(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
-        List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhan_IdOrderByNgayTaoDesc(toi.getId());
+        List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhanNative(toi.getId());
+        
         decryptList(list, toi, true);
         return list;
     }
 
-
     public List<ThongBaoMat> getThongBaoDaGui(Authentication auth) {
-        TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
-        List<ThongBaoMat> list = thongBaoRepository.findByNguoiGui_IdOrderByNgayTaoDesc(toi.getId());
+        TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);        
+        List<ThongBaoMat> list = thongBaoRepository.findByNguoiGuiNative(toi.getId());
+        
         decryptList(list, toi, false);
         return list;
     }

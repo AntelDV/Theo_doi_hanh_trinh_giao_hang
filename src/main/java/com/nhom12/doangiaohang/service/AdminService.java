@@ -152,6 +152,10 @@ public class AdminService {
     @Transactional
     public void restoreData(Integer minutes) {
         entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;")
-                .setParameter("minutes", minutes).executeUpdate();
+                .setParameter("minutes", minutes)
+                .executeUpdate();
+        
+        
+        entityManager.clear(); 
     }
 }

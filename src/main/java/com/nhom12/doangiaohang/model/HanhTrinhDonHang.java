@@ -6,6 +6,10 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
+
 @Data
 @Entity
 @Table(name = "HANH_TRINH_DON_HANG")
@@ -22,10 +26,12 @@ public class HanhTrinhDonHang {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_DON_HANG", nullable = false)
+    @JsonIgnore
     private DonHang donHang;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_NHAN_VIEN_THUC_HIEN")
+    @JsonIgnore
     private NhanVien nhanVienThucHien;
 
     @ManyToOne(fetch = FetchType.EAGER)

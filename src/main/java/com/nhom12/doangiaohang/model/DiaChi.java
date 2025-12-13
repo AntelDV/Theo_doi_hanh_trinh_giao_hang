@@ -1,13 +1,16 @@
 package com.nhom12.doangiaohang.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.Formula; // Import quan trọng
+import org.hibernate.annotations.Formula;
 import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+
 @Data
 @Entity
 @Table(name = "DIA_CHI")
@@ -23,6 +26,7 @@ public class DiaChi {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_KHACH_HANG_SO_HUU", nullable = false)
+    @JsonIgnore
     private KhachHang khachHangSoHuu;
 
     // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
@@ -44,7 +48,7 @@ public class DiaChi {
     /**
      * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên.
      */
-    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(QUAN_HUYEN))")
+    @Formula("UTL_I18N.RAW_TO_CHAR(encryption_pkg.decrypt_data(QUAN_HUYEN), 'AL32UTF8')")
     private String quanHuyen;
 
     public void setQuanHuyen(String quanHuyen) {

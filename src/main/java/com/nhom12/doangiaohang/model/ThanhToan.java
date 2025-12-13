@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Data
 @Entity
 @Table(name = "THANH_TOAN")
@@ -20,6 +22,7 @@ public class ThanhToan {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_DON_HANG", nullable = false, unique = true)
+    @JsonIgnore
     private DonHang donHang;
 
     @Column(name = "TONG_TIEN_COD", columnDefinition = "NUMBER DEFAULT 0")

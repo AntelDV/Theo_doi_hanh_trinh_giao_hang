@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 
 @Data
 @Entity
@@ -28,6 +31,7 @@ public class DonHang {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_KHACH_HANG_GUI", nullable = false)
+    @JsonIgnore
     private KhachHang khachHangGui;
 
     @ManyToOne(fetch = FetchType.LAZY)
