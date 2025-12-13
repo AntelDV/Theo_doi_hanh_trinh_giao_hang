@@ -17,11 +17,13 @@
             <li th:classappend="${currentURI == '/' or #strings.endsWith(currentURI, '/dashboard')} ? 'active' : ''"> 
                 <a th:href="@{/}"> <i class="fas fa-tachometer-alt"></i> <span>Tổng quan</span> </a>
             </li>
+
             <div sec:authorize="hasAnyRole('ROLE_QUANLY', 'ROLE_SHIPPER')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/thong-bao')} ? 'active' : ''">
-                    <a th:href="@{/thong-bao}"> <i class="fas fa-user-secret"></i> <span>Hộp thư Bảo mật</span> </a>
+                    <a th:href="@{/thong-bao}"> <i class="fas fa-comments"></i> <span>Tin nhắn Nội bộ</span> </a>
                 </li>
             </div>
+
             <div sec:authorize="hasRole('ROLE_KHACHHANG')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/khach-hang/tao-don-hang')} ? 'active' : ''">
                     <a th:href="@{/khach-hang/tao-don-hang}"> <i class="fas fa-plus-circle"></i> <span>Tạo Đơn hàng</span> </a>
@@ -33,11 +35,13 @@
                     <a th:href="@{/khach-hang/so-dia-chi}"> <i class="fas fa-map-marked-alt"></i> <span>Sổ Địa chỉ</span> </a>
                 </li>
             </div>
+
             <div sec:authorize="hasRole('ROLE_SHIPPER')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/shipper/don-hang')} ? 'active' : ''">
                     <a th:href="@{/shipper/don-hang}"> <i class="fas fa-truck-loading"></i> <span>Đơn hàng Cần xử lý</span> </a>
                 </li>
             </div>
+
             <div sec:authorize="hasRole('ROLE_QUANLY')">
                 <li th:classappend="${#strings.startsWith(currentURI, '/quan-ly/don-hang')} ? 'active' : ''">
                     <a th:href="@{/quan-ly/don-hang}"> <i class="fas fa-boxes"></i> <span>Quản lý Đơn hàng</span> </a>
@@ -46,7 +50,10 @@
                     <a th:href="@{/quan-ly/nhan-vien}"> <i class="fas fa-users-cog"></i> <span>Quản lý Nhân viên</span> </a>
                 </li>
                 <li th:classappend="${#strings.startsWith(currentURI, '/quan-ly/nhat-ky')} ? 'active' : ''">
-                    <a th:href="@{/quan-ly/nhat-ky}"> <i class="fas fa-clipboard-list"></i> <span>Nhật ký Vận hành</span> </a>
+                    <a th:href="@{/quan-ly/nhat-ky}"> <i class="fas fa-history"></i> <span>Lịch sử Hoạt động</span> </a>
+                </li>
+                <li th:classappend="${#strings.startsWith(currentURI, '/quan-ly/giam-sat')} ? 'active' : ''">
+                    <a th:href="@{/quan-ly/giam-sat}"> <i class="fas fa-desktop"></i> <span>Trung tâm Giám sát</span> </a>
                 </li>
             </div>
         </ul>
@@ -55,12 +62,12 @@
     <header class="topbar" th:fragment="topbar">
         <div class="user-info" id="userInfoDropdown">
              <span class="username">
-                Xin chào, <span sec:authorize="isAuthenticated()" sec:authentication="name">User</span>
+                Xin chào, <strong th:text="${userFullName != null ? userFullName : 'User'}">User</strong>
              </span>
              <i class="fas fa-caret-down"></i>
              
              <ul class="dropdown-menu">
-                <li><button type="button"><i class="fas fa-user"></i> Hồ sơ cá nhân</button></li>
+                <li><button type="button"><i class="fas fa-user-circle"></i> Hồ sơ cá nhân</button></li>
                 <li>
                     <form th:action="@{/logout}" method="post">
                         <button type="submit"> <i class="fas fa-sign-out-alt"></i> Đăng xuất </button>

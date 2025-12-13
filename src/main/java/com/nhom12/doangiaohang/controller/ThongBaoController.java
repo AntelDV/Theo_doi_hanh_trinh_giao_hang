@@ -1,5 +1,6 @@
 package com.nhom12.doangiaohang.controller;
 
+import com.nhom12.doangiaohang.model.TaiKhoan;
 import com.nhom12.doangiaohang.model.ThongBaoMat;
 import com.nhom12.doangiaohang.service.ThongBaoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,17 @@ public class ThongBaoController {
     @GetMapping
     public String xemThongBao(Model model, Authentication authentication) {
         try {
-            List<ThongBaoMat> list = thongBaoService.getThongBaoCuaToi(authentication);
-            model.addAttribute("danhSachThongBao", list);
+            // 1. Lấy danh sách tin nhắn đến
+            List<ThongBaoMat> listTinNhan = thongBaoService.getThongBaoCuaToi(authentication);
+            model.addAttribute("danhSachThongBao", listTinNhan);
+            
+            // 2. Lấy danh sách người nhận khả dụng (Cho ComboBox gửi tin)
+            List<TaiKhoan> listNguoiNhan = thongBaoService.getDanhSachNguoiNhan(authentication);
+            model.addAttribute("listNguoiNhan", listNguoiNhan);
+            
             return "thong-bao"; 
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Lỗi giải mã: " + e.getMessage());
+            model.addAttribute("errorMessage", "Lỗi tải dữ liệu: " + e.getMessage());
             return "thong-bao";
         }
     }
@@ -39,7 +46,7 @@ public class ThongBaoController {
                               RedirectAttributes redirectAttributes) {
         try {
             thongBaoService.guiThongBaoMat(usernameNguoiNhan, noiDung, authentication);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi thông báo mật thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi tin nhắn bảo mật thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Gửi thất bại: " + e.getMessage());
         }

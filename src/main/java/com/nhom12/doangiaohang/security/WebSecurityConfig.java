@@ -16,6 +16,9 @@ public class WebSecurityConfig {
     @Autowired
     private CustomLoginSuccessHandler loginSuccessHandler;
 
+    @Autowired
+    private CustomLogoutHandler logoutHandler;
+    
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -33,7 +36,6 @@ public class WebSecurityConfig {
                     "/forgot-password",
                     "/reset-password",
                     "/login",
-                    // Thêm các đường dẫn tra cứu công khai
                     "/tra-cuu",
                     "/tra-cuu/don-hang",
                     "/setup", 
@@ -53,6 +55,7 @@ public class WebSecurityConfig {
                 .permitAll()
             )
             .logout((logout) -> logout
+                .addLogoutHandler(logoutHandler)
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
             )

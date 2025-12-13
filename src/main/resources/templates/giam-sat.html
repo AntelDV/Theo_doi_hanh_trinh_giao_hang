@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head(pageTitle='Giám sát & An ninh')}"></head>
+<body>
+    <div class="app-wrapper">
+        <nav th:replace="~{layout :: sidebar}"></nav>
+        <div class="main-content">
+            <header th:replace="~{layout :: topbar}"></header>
+            <main class="page-content">
+                <h1 class="page-header"><i class="fas fa-shield-alt text-primary"></i> Trung tâm Giám sát & An ninh</h1>
+                
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-header bg-info text-white font-weight-bold">
+                                <i class="fas fa-users-cog mr-1"></i> Người dùng đang Online
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>User Web</th>
+                                                <th>Thời gian vào</th>
+                                                <th>Trạng thái</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:if="${#lists.isEmpty(sessions)}">
+                                                <td colspan="4" class="text-center text-muted">Không có phiên làm việc nào khác.</td>
+                                            </tr>
+                                            <tr th:each="s : ${sessions}">
+                                                <td class="font-weight-bold text-primary" th:text="${s[2]}"></td>
+                                                <td th:text="${#dates.format(s[3], 'HH:mm:ss dd/MM/yyyy')}"></td>
+                                                <td>
+                                                    <span th:if="${s[4] == 'ACTIVE'}" class="badge badge-success">Đang thao tác</span>
+                                                    <span th:if="${s[4] != 'ACTIVE'}" class="badge badge-secondary">Treo máy</span>
+                                                </td>
+                                                <td>
+                                                    <form th:action="@{/quan-ly/giam-sat/kill}" method="post" style="display:inline;"
+                                                          onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn đá người dùng này ra khỏi hệ thống?');">
+                                                        <input type="hidden" name="sid" th:value="${s[0]}">
+                                                        <input type="hidden" name="serial" th:value="${s[1]}">
+                                                        <button class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-ban"></i> Ngắt kết nối
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-2 text-right">
+                                    <a th:href="@{/quan-ly/giam-sat}" class="btn btn-sm btn-secondary"><i class="fas fa-sync-alt"></i> Làm mới</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100 border-warning">
+                            <div class="card-header bg-warning text-dark font-weight-bold">
+                                <i class="fas fa-history mr-1"></i> Khôi phục Dữ liệu
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">
+                                    Sử dụng công nghệ <strong>Flashback</strong> để hoàn tác các thay đổi sai lầm hoặc bị tấn công xóa dữ liệu trong bảng Đơn hàng & Thanh toán.
+                                </p>
+                                <form th:action="@{/quan-ly/giam-sat/restore}" method="post" 
+                                      onsubmit="return confirm('CẢNH BÁO QUAN TRỌNG:\n\nDữ liệu sẽ quay ngược thời gian về quá khứ.\nMọi đơn hàng mới tạo trong khoảng thời gian này sẽ bị mất.\n\nBạn có chắc chắn không?');">
+                                    <div class="form-group">
+                                        <label class="font-weight-bold">Quay về thời điểm:</label>
+                                        <select name="minutes" class="form-control">
+                                            <option value="5">5 phút trước</option>
+                                            <option value="15">15 phút trước</option>
+                                            <option value="30">30 phút trước</option>
+                                            <option value="60">1 giờ trước</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning btn-block font-weight-bold">
+                                        <i class="fas fa-undo"></i> Thực hiện Khôi phục
+                                    </button>
+                                </form>
+                                <hr>
+                                <div class="alert alert-info small mb-0">
+                                    <i class="fas fa-info-circle"></i> Hệ thống cũng tự động sao lưu toàn bộ dữ liệu vào <strong>23:00</strong> hàng ngày.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>
