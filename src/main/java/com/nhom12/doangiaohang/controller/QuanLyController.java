@@ -3,10 +3,12 @@ package com.nhom12.doangiaohang.controller;
 import com.nhom12.doangiaohang.dto.NhanVienDangKyForm; 
 import com.nhom12.doangiaohang.model.DonHang;
 import com.nhom12.doangiaohang.model.NhanVien;
+import com.nhom12.doangiaohang.model.NhatKyVanHanh; 
 import com.nhom12.doangiaohang.model.TaiKhoan; 
-import com.nhom12.doangiaohang.service.AdminService;
+import com.nhom12.doangiaohang.service.AdminService; 
 import com.nhom12.doangiaohang.service.DonHangService;
 import com.nhom12.doangiaohang.service.NhanVienService;
+import com.nhom12.doangiaohang.service.NhatKyVanHanhService; 
 import com.nhom12.doangiaohang.service.TaiKhoanService; 
 
 import jakarta.validation.Valid; 
@@ -31,7 +33,8 @@ public class QuanLyController {
     @Autowired private DonHangService donHangService;
     @Autowired private NhanVienService nhanVienService; 
     @Autowired private TaiKhoanService taiKhoanService; 
-    @Autowired private AdminService adminService; // Inject AdminService
+    @Autowired private NhatKyVanHanhService nhatKyVanHanhService; 
+    @Autowired private AdminService adminService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -154,22 +157,11 @@ public class QuanLyController {
     
     @GetMapping("/nhat-ky")
     public String quanLyNhatKy(Model model) {
-        // Lấy log từ View Audit Hợp nhất
         List<Object[]> logs = adminService.getUnifiedAuditLog();
         model.addAttribute("auditLogs", logs);
         return "quan-ly/nhat-ky"; 
     }
     
-    @PostMapping("/sinh-du-lieu")
-    public String sinhDuLieu(RedirectAttributes redirectAttributes) {
-        try {
-            adminService.generateDummyData();
-            redirectAttributes.addFlashAttribute("successMessage", "Đã sinh thành công 20 đơn hàng mẫu!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi sinh dữ liệu: " + e.getMessage());
-        }
-        return "redirect:/quan-ly/dashboard";
-    }
     
     @GetMapping("/don-hang/chi-tiet/{id}")
     public String xemChiTietDonHang(@PathVariable("id") Integer idDonHang, Model model, RedirectAttributes redirectAttributes) {

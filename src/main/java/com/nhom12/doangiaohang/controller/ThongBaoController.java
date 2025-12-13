@@ -24,13 +24,13 @@ public class ThongBaoController {
     @GetMapping
     public String xemThongBao(Model model, Authentication authentication) {
         try {
-            // Hộp thư đến
-            List<ThongBaoMat> listTinDen = thongBaoService.getThongBaoCuaToi(authentication);
-            model.addAttribute("danhSachThongBao", listTinDen);
+            // Tin đến
+            List<ThongBaoMat> listDen = thongBaoService.getThongBaoCuaToi(authentication);
+            model.addAttribute("danhSachThongBao", listDen);
             
-            // Hộp thư đi 
-            List<ThongBaoMat> listTinDi = thongBaoService.getThongBaoDaGui(authentication);
-            model.addAttribute("danhSachDaGui", listTinDi);
+            // . Tin đi 
+            List<ThongBaoMat> listDi = thongBaoService.getThongBaoDaGui(authentication);
+            model.addAttribute("danhSachDaGui", listDi);
 
             // Danh sách người nhận
             List<TaiKhoan> listNguoiNhan = thongBaoService.getDanhSachNguoiNhan(authentication);
@@ -38,7 +38,7 @@ public class ThongBaoController {
             
             return "thong-bao"; 
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Lỗi tải dữ liệu: " + e.getMessage());
+            model.addAttribute("errorMessage", "Lỗi: " + e.getMessage());
             return "thong-bao";
         }
     }
@@ -50,7 +50,7 @@ public class ThongBaoController {
                               RedirectAttributes redirectAttributes) {
         try {
             thongBaoService.guiThongBaoMat(usernameNguoiNhan, noiDung, authentication);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã gửi tin nhắn bảo mật thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Gửi thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Gửi thất bại: " + e.getMessage());
         }

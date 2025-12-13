@@ -35,10 +35,11 @@
                                         <input type="text" name="noiDung" class="form-control" placeholder="Nhập nội dung cần bảo mật..." required>
                                         <div class="input-group-append">
                                             <button class="btn btn-success" type="submit">
-                                                <i class="fas fa-lock mr-1"></i>
+                                                <i class="fas fa-lock mr-1"></i> Gửi Bảo Mật
                                             </button>
                                         </div>
                                     </div>
+                                    <small class="text-muted">Nội dung sẽ được mã hóa tự động trước khi lưu.</small>
                                 </div>
                             </div>
                         </form>
@@ -56,7 +57,7 @@
                                     <table class="table table-hover mb-0">
                                         <thead><tr><th>Từ</th><th>Nội dung</th><th>Ngày</th></tr></thead>
                                         <tbody>
-                                            <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted">Trống.</td></tr>
+                                            <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted py-3">Trống.</td></tr>
                                             <tr th:each="tb : ${danhSachThongBao}">
                                                 <td th:text="${tb.nguoiGui.tenDangNhap}" class="font-weight-bold"></td>
                                                 <td class="text-success"><i class="fas fa-unlock-alt"></i> <span th:text="${tb.noiDung}"></span></td>
@@ -72,17 +73,17 @@
                     <div class="col-md-6">
                         <div class="card h-100">
                             <div class="card-header font-weight-bold text-secondary">
-                                <i class="fas fa-share-square mr-2"></i> Tin đã gửi
+                                <i class="fas fa-share-square mr-2"></i> Tin đã gửi 
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0">
                                         <thead><tr><th>Đến</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
                                         <tbody>
-                                            <tr th:if="${#lists.isEmpty(danhSachDaGui)}"><td colspan="3" class="text-center text-muted">Chưa gửi tin nào.</td></tr>
+                                            <tr th:if="${#lists.isEmpty(danhSachDaGui)}"><td colspan="3" class="text-center text-muted py-3">Chưa gửi tin nào.</td></tr>
                                             <tr th:each="td : ${danhSachDaGui}">
                                                 <td th:text="${td.nguoiNhan.tenDangNhap}"></td>
-                                                <td><span class="badge badge-dark"><i class="fas fa-lock"></i> </span></td>
+                                                <td><span class="badge badge-dark" title="Bạn không thể xem lại nội dung vì không có khóa riêng của người nhận"><i class="fas fa-lock"></i> </span></td>
                                                 <td th:text="${#dates.format(td.ngayTao, 'dd/MM HH:mm')}"></td>
                                             </tr>
                                         </tbody>

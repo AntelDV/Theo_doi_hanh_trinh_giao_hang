@@ -34,10 +34,9 @@ public class ThongBaoService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận: " + usernameNguoiNhan));
 
         if (nguoiNhan.getPublicKey() == null || nguoiNhan.getPublicKey().isEmpty()) {
-            throw new IllegalArgumentException("Người nhận chưa kích hoạt tính năng bảo mật (Thiếu Public Key).");
+            throw new IllegalArgumentException("Người nhận chưa có khóa RSA.");
         }
 
-        // Mã hóa lai
         HybridResult res = hybridService.encrypt(noiDung, nguoiNhan.getPublicKey());
 
         ThongBaoMat tb = new ThongBaoMat();
@@ -49,19 +48,19 @@ public class ThongBaoService {
         thongBaoRepository.save(tb);
     }
 
+    // Hộp thư đến 
     public List<ThongBaoMat> getThongBaoCuaToi(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhan_IdOrderByNgayTaoDesc(toi.getId());
         
-        // Giải mã nội dung
         if (toi.getPrivateKey() != null) {
             try {
                 String myPrivateKey = encryptionUtil.decrypt(toi.getPrivateKey());
                 for (ThongBaoMat tb : list) {
                     String content = hybridService.decrypt(tb.getNoiDung(), tb.getMaKhoaPhien(), myPrivateKey);
-                    tb.setNoiDung(content); 
+                    tb.setNoiDung(content);
                 }
-            } catch (Exception e) { }
+            } catch (Exception e) {}
         }
         return list;
     }
