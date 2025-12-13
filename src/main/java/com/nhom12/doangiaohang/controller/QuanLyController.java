@@ -1,27 +1,21 @@
 package com.nhom12.doangiaohang.controller;
 
-import com.nhom12.doangiaohang.dto.NhanVienDangKyForm; 
+import com.nhom12.doangiaohang.dto.NhanVienDangKyForm;
 import com.nhom12.doangiaohang.model.DonHang;
 import com.nhom12.doangiaohang.model.NhanVien;
-import com.nhom12.doangiaohang.model.NhatKyVanHanh; 
-import com.nhom12.doangiaohang.model.TaiKhoan; 
-import com.nhom12.doangiaohang.service.AdminService; 
+import com.nhom12.doangiaohang.service.AdminService;
 import com.nhom12.doangiaohang.service.DonHangService;
 import com.nhom12.doangiaohang.service.NhanVienService;
-import com.nhom12.doangiaohang.service.NhatKyVanHanhService; 
-import com.nhom12.doangiaohang.service.TaiKhoanService; 
-
-import jakarta.validation.Valid; 
+import com.nhom12.doangiaohang.service.TaiKhoanService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat; 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult; 
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Date; 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,29 +25,33 @@ import java.util.stream.Collectors;
 public class QuanLyController {
 
     @Autowired private DonHangService donHangService;
-    @Autowired private NhanVienService nhanVienService; 
-    @Autowired private TaiKhoanService taiKhoanService; 
-    @Autowired private NhatKyVanHanhService nhatKyVanHanhService; 
+    @Autowired private NhanVienService nhanVienService;
+    @Autowired private TaiKhoanService taiKhoanService;
     @Autowired private AdminService adminService;
 
+    // --- DASHBOARD ---
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         List<DonHang> all = donHangService.getAllDonHangForQuanLy();
         long totalOrders = all.size();
         double totalRevenue = all.stream()
-             .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
-             .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen()!=null?d.getThanhToan().getPhiVanChuyen():0))
+             .filter(d -> d.getTrangThaiHienTai() != null && d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
+             .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen() != null ? d.getThanhToan().getPhiVanChuyen() : 0))
              .sum();
         long totalShippers = nhanVienService.getAllShippers().size();
-        long waitingOrders = all.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
+        long waitingOrders = all.stream()
+                .filter(d -> d.getTrangThaiHienTai() != null && d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
 
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("totalRevenue", totalRevenue);
         model.addAttribute("totalShippers", totalShippers);
         model.addAttribute("waitingOrders", waitingOrders);
 
+        // Biểu đồ
         Map<String, Long> statusCounts = all.stream()
+            .filter(d -> d.getTrangThaiHienTai() != null)
             .collect(Collectors.groupingBy(d -> d.getTrangThaiHienTai().getTenTrangThai(), Collectors.counting()));
+        
         List<String> chartLabels = statusCounts.keySet().stream().collect(Collectors.toList());
         List<Long> chartData = statusCounts.values().stream().collect(Collectors.toList());
         model.addAttribute("chartLabels", chartLabels);
@@ -62,6 +60,7 @@ public class QuanLyController {
         return "quan-ly/dashboard"; 
     }
 
+    // --- QUẢN LÝ ĐƠN HÀNG ---
     @GetMapping("/don-hang")
     public String quanLyDonHang(Model model) {
         List<DonHang> allDonHang = donHangService.getAllDonHangForQuanLy();
@@ -98,6 +97,19 @@ public class QuanLyController {
         return "redirect:/quan-ly/don-hang"; 
     }
 
+    @GetMapping("/don-hang/chi-tiet/{id}")
+    public String xemChiTietDonHang(@PathVariable("id") Integer idDonHang, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            DonHang donHang = donHangService.getChiTietDonHangChoQuanLy(idDonHang);
+            model.addAttribute("donHang", donHang);
+            return "quan-ly/chi-tiet-don-hang";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xem chi tiết: " + e.getMessage());
+            return "redirect:/quan-ly/don-hang";
+        }
+    }
+
+    // --- QUẢN LÝ NHÂN VIÊN ---
     @GetMapping("/nhan-vien")
     public String quanLyNhanVien(Model model) {
         List<NhanVien> nhanVienList = nhanVienService.getAllNhanVien(); 
@@ -155,23 +167,12 @@ public class QuanLyController {
          return "redirect:/quan-ly/nhan-vien"; 
     }
     
+    // --- NHẬT KÝ VẬN HÀNH  ---
     @GetMapping("/nhat-ky")
     public String quanLyNhatKy(Model model) {
-        List<Object[]> logs = adminService.getUnifiedAuditLog();
-        model.addAttribute("auditLogs", logs);
+        // Sử dụng hàm getUnifiedLogs() mới để lấy cả log Web và log Database
+        List<AdminService.SystemLogDTO> logs = adminService.getUnifiedLogs();
+        model.addAttribute("systemLogs", logs); 
         return "quan-ly/nhat-ky"; 
-    }
-    
-    
-    @GetMapping("/don-hang/chi-tiet/{id}")
-    public String xemChiTietDonHang(@PathVariable("id") Integer idDonHang, Model model, RedirectAttributes redirectAttributes) {
-        try {
-            DonHang donHang = donHangService.getChiTietDonHangChoQuanLy(idDonHang);
-            model.addAttribute("donHang", donHang);
-            return "quan-ly/chi-tiet-don-hang";
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không thể xem chi tiết: " + e.getMessage());
-            return "redirect:/quan-ly/don-hang";
-        }
     }
 }

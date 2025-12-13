@@ -6,12 +6,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.util.Date;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "TAI_KHOAN")
 @EqualsAndHashCode(of = "id") // Dùng ID để so sánh, tránh lỗi vòng lặp
 @ToString(exclude = "vaiTro") // Tránh lỗi vòng lặp khi log
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TaiKhoan {
     
     @Id

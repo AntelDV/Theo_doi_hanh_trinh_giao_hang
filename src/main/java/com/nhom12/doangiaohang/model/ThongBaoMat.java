@@ -24,11 +24,14 @@ public class ThongBaoMat {
 
     @Column(name = "NOI_DUNG_MA_HOA", columnDefinition = "CLOB") 
     @Lob 
-    private String noiDung; // Dữ liệu mã hóa (AES)
-
+    private String noiDung; 
     @Column(name = "MA_KHOA_PHIEN", columnDefinition = "CLOB")
     @Lob 
-    private String maKhoaPhien; // Khóa phiên (RSA)
+    private String maKhoaPhien; 
+
+    @Column(name = "MA_KHOA_PHIEN_GUI", columnDefinition = "CLOB")
+    @Lob
+    private String maKhoaPhienGui;
 
     @Column(name = "NGAY_TAO") 
     @Temporal(TemporalType.TIMESTAMP)

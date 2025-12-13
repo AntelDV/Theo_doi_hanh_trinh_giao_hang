@@ -4,10 +4,10 @@ import com.nhom12.doangiaohang.model.TaiKhoan;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,7 +25,7 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
     private TaiKhoanRepository taiKhoanRepository;
 
     @PersistenceContext
-    private EntityManager entityManager; 
+    private EntityManager entityManager;
 
     @Override
     @Transactional 
@@ -33,37 +33,47 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException, ServletException {
         
         String username = authentication.getName();
-        
-        // Lấy thông tin tài khoản từ DB
         TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(username).orElse(null);
         
         if (tk != null) {
             try {
-                // CHUYỂN ĐỔI ROLE ID SANG CHUỖI (Khớp với logic DB)
+                // Set Context Oracle
                 String dbRole = "KHACHHANG"; 
-                int roleId = tk.getVaiTro().getIdVaiTro();
-                
-                if (roleId == 1) dbRole = "QUANLY";
-                else if (roleId == 2) dbRole = "SHIPPER";
+                if (tk.getVaiTro().getIdVaiTro() == 1) dbRole = "QUANLY";
+                else if (tk.getVaiTro().getIdVaiTro() == 2) dbRole = "SHIPPER";
 
-                // GỌI THỦ TỤC ORACLE ĐỂ THIẾT LẬP CONTEXT
-                String sql = "BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;";
-                Query query = entityManager.createNativeQuery(sql);
-                query.setParameter("uid", tk.getId());
-                query.setParameter("uname", username);
-                query.setParameter("urole", dbRole);
-                
-                query.executeUpdate();
+                String sqlCtx = "BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;";
+                entityManager.createNativeQuery(sqlCtx)
+                        .setParameter("uid", tk.getId())
+                        .setParameter("uname", username)
+                        .setParameter("urole", dbRole)
+                        .executeUpdate();
 
-                System.out.println(">> [ORACLE CONTEXT SET] User: " + username + " | Role: " + dbRole);
+                //  Ghi nhận User Online vào bảng riêng 
+                HttpSession session = request.getSession();
+                String sessionId = session.getId();
+                String ip = request.getRemoteAddr();
+                
+                String sqlOnline = "MERGE INTO THEO_DOI_ONLINE t USING DUAL ON (t.USERNAME = :u) " +
+                                   "WHEN MATCHED THEN UPDATE SET SESSION_ID = :sid, THOI_GIAN_LOGIN = CURRENT_TIMESTAMP, IP_ADDRESS = :ip " +
+                                   "WHEN NOT MATCHED THEN INSERT (SESSION_ID, USERNAME, HO_TEN, IP_ADDRESS) VALUES (:sid, :u, :name, :ip)";
+                
+                entityManager.createNativeQuery(sqlOnline)
+                        .setParameter("sid", sessionId)
+                        .setParameter("u", username)
+                        .setParameter("name", username) 
+                        .setParameter("ip", ip)
+                        .executeUpdate();
+
+                System.out.println(">> [LOGIN SUCCESS] User: " + username + " | Session: " + sessionId);
 
             } catch (Exception e) {
-                System.err.println(">> [ERROR] Lỗi thiết lập Context Oracle: " + e.getMessage());
+                System.err.println(">> [ERROR] Lỗi thiết lập Context/Online: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 
-        // 4. Chuyển hướng trang như cũ
+        // Chuyển hướng trang
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         for (GrantedAuthority grantedAuthority : authorities) {
             String authorityName = grantedAuthority.getAuthority();

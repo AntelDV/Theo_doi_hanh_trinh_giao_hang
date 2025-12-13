@@ -4,69 +4,109 @@ import com.nhom12.doangiaohang.model.TaiKhoan;
 import com.nhom12.doangiaohang.model.ThongBaoMat;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
 import com.nhom12.doangiaohang.repository.ThongBaoMatRepository;
-import com.nhom12.doangiaohang.service.HybridEncryptionService.HybridResult;
 import com.nhom12.doangiaohang.utils.EncryptionUtil;
+import com.nhom12.doangiaohang.utils.RSAUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
 import java.util.List;
-
 @Service
 public class ThongBaoService {
 
     @Autowired private ThongBaoMatRepository thongBaoRepository;
     @Autowired private TaiKhoanRepository taiKhoanRepository;
-    @Autowired private HybridEncryptionService hybridService;
     @Autowired private CustomUserHelper userHelper;
     @Autowired private EncryptionUtil encryptionUtil;
-
+    @Autowired private RSAUtil rsaUtil;
+    @Autowired private NhatKyVanHanhService nhatKyService; 
+    @PersistenceContext 
+    private EntityManager entityManager;
+    
     public List<TaiKhoan> getDanhSachNguoiNhan(Authentication auth) {
-        String currentUsername = auth.getName();
-        return taiKhoanRepository.findNguoiNhanKhaDung(currentUsername);
+        return taiKhoanRepository.findNguoiNhanKhaDung(auth.getName());
     }
 
     @Transactional
     public void guiThongBaoMat(String usernameNguoiNhan, String noiDung, Authentication auth) {
         TaiKhoan nguoiGui = userHelper.getTaiKhoanHienTai(auth);
         TaiKhoan nguoiNhan = taiKhoanRepository.findByTenDangNhap(usernameNguoiNhan)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận: " + usernameNguoiNhan));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận"));
 
-        if (nguoiNhan.getPublicKey() == null || nguoiNhan.getPublicKey().isEmpty()) {
-            throw new IllegalArgumentException("Người nhận chưa có khóa RSA.");
+        if (nguoiNhan.getPublicKey() == null) throw new IllegalArgumentException("Người nhận chưa có Key RSA.");
+        if (nguoiGui.getPublicKey() == null) throw new IllegalArgumentException("Bạn chưa có Key RSA.");
+
+        try {
+            // Mã hóa (Giữ nguyên logic mã hóa kép)
+            SecretKey sessionKey = encryptionUtil.generateSessionKey();
+            String sessionKeyStr = encryptionUtil.keyToString(sessionKey);
+            String encryptedContent = encryptionUtil.encryptAES(noiDung, sessionKey);
+            String encryptedKeyForReceiver = rsaUtil.encrypt(sessionKeyStr, nguoiNhan.getPublicKey());
+            String encryptedKeyForSender = rsaUtil.encrypt(sessionKeyStr, nguoiGui.getPublicKey());
+
+            // THAY ĐỔI QUAN TRỌNG: Dùng Native Query để Insert và ÉP OLS LABEL
+            // Chú ý: Cột OLS_LABEL (tên cột tùy bạn đặt trong SQL policy, thường là OLS_LABEL hoặc ROW_LABEL)
+            // Giả sử tên cột chính sách là OLS_LABEL (do Policy tên OLS_THONGBAO_POL)
+            
+            String sql = "INSERT INTO THONG_BAO_MAT " +
+                         "(ID_THONG_BAO, ID_NGUOI_GUI, ID_NGUOI_NHAN, NOI_DUNG_MA_HOA, MA_KHOA_PHIEN, MA_KHOA_PHIEN_GUI, NGAY_TAO, OLS_LABEL) " +
+                         "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP, CHAR_TO_LABEL('OLS_THONGBAO_POL', 'PUB'))";
+
+            entityManager.createNativeQuery(sql)
+                    .setParameter("gui", nguoiGui.getId())
+                    .setParameter("nhan", nguoiNhan.getId())
+                    .setParameter("noidung", encryptedContent)
+                    .setParameter("khoaNhan", encryptedKeyForReceiver)
+                    .setParameter("khoaGui", encryptedKeyForSender)
+                    .executeUpdate();
+            
+            // Ghi Log
+            nhatKyService.logAction(nguoiGui, "GUI_THONG_BAO_MAT", "THONG_BAO_MAT", 0, "Đã gửi tin nhắn cho " + usernameNguoiNhan);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi gửi tin: " + e.getMessage());
         }
-
-        HybridResult res = hybridService.encrypt(noiDung, nguoiNhan.getPublicKey());
-
-        ThongBaoMat tb = new ThongBaoMat();
-        tb.setNguoiGui(nguoiGui);
-        tb.setNguoiNhan(nguoiNhan);
-        tb.setNoiDung(res.encryptedData);
-        tb.setMaKhoaPhien(res.encryptedSessionKey);
-        
-        thongBaoRepository.save(tb);
     }
 
-    // Hộp thư đến 
+    
     public List<ThongBaoMat> getThongBaoCuaToi(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhan_IdOrderByNgayTaoDesc(toi.getId());
-        
-        if (toi.getPrivateKey() != null) {
-            try {
-                String myPrivateKey = encryptionUtil.decrypt(toi.getPrivateKey());
-                for (ThongBaoMat tb : list) {
-                    String content = hybridService.decrypt(tb.getNoiDung(), tb.getMaKhoaPhien(), myPrivateKey);
-                    tb.setNoiDung(content);
-                }
-            } catch (Exception e) {}
-        }
+        decryptList(list, toi, true);
         return list;
     }
 
+
     public List<ThongBaoMat> getThongBaoDaGui(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
-        return thongBaoRepository.findByNguoiGui_IdOrderByNgayTaoDesc(toi.getId());
+        List<ThongBaoMat> list = thongBaoRepository.findByNguoiGui_IdOrderByNgayTaoDesc(toi.getId());
+        decryptList(list, toi, false);
+        return list;
+    }
+
+    private void decryptList(List<ThongBaoMat> list, TaiKhoan user, boolean isInbox) {
+        if (user.getPrivateKey() == null) return;
+        try {
+            String myPrivKey = encryptionUtil.decrypt(user.getPrivateKey());
+            for (ThongBaoMat tb : list) {
+                try {
+                    String encryptedKey = isInbox ? tb.getMaKhoaPhien() : tb.getMaKhoaPhienGui();
+                    if (encryptedKey == null) {
+                        tb.setNoiDung("[Không thể giải mã - Thiếu khóa]");
+                        continue;
+                    }
+                    String sessionKeyStr = rsaUtil.decrypt(encryptedKey, myPrivKey);
+                    SecretKey key = encryptionUtil.stringToKey(sessionKeyStr);
+                    String plainText = encryptionUtil.decryptAES(tb.getNoiDung(), key);
+                    tb.setNoiDung(plainText);
+                } catch (Exception e) {
+                    tb.setNoiDung("[Nội dung được bảo mật]");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }

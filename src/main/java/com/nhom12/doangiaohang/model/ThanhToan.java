@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "THANH_TOAN")
 @EqualsAndHashCode(of = "idThanhToan")
 @ToString(exclude = "donHang")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ThanhToan {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "thanh_toan_seq")

@@ -12,7 +12,7 @@
                 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
                 <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
                 
-                <div class="card mb-4">
+                <div class="card mb-4 shadow-sm">
                     <div class="card-header bg-primary text-white font-weight-bold">
                         <i class="fas fa-paper-plane mr-2"></i> Soạn tin nhắn mới
                     </div>
@@ -35,11 +35,11 @@
                                         <input type="text" name="noiDung" class="form-control" placeholder="Nhập nội dung cần bảo mật..." required>
                                         <div class="input-group-append">
                                             <button class="btn btn-success" type="submit">
-                                                <i class="fas fa-lock mr-1"></i> Gửi Bảo Mật
+                                                <i class="fas fa-lock mr-1"></i> Gửi 
                                             </button>
                                         </div>
                                     </div>
-                                    <small class="text-muted">Nội dung sẽ được mã hóa tự động trước khi lưu.</small>
+                                    <small class="text-muted"><i class="fas fa-shield-alt"></i> Nội dung sẽ được mã hóa đầu cuối.</small>
                                 </div>
                             </div>
                         </form>
@@ -47,20 +47,22 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header font-weight-bold text-success">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header font-weight-bold text-success border-bottom-success">
                                 <i class="fas fa-inbox mr-2"></i> Hộp thư đến 
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0">
-                                        <thead><tr><th>Từ</th><th>Nội dung</th><th>Ngày</th></tr></thead>
+                                        <thead class="bg-light"><tr><th>Từ</th><th>Nội dung</th><th>Ngày</th></tr></thead>
                                         <tbody>
-                                            <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted py-3">Trống.</td></tr>
+                                            <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted py-4">Hộp thư trống.</td></tr>
                                             <tr th:each="tb : ${danhSachThongBao}">
                                                 <td th:text="${tb.nguoiGui.tenDangNhap}" class="font-weight-bold"></td>
-                                                <td class="text-success"><i class="fas fa-unlock-alt"></i> <span th:text="${tb.noiDung}"></span></td>
+                                                <td class="text-success">
+                                                    <i class="fas fa-unlock-alt mr-1"></i> <span th:text="${tb.noiDung}"></span>
+                                                </td>
                                                 <td th:text="${#dates.format(tb.ngayTao, 'dd/MM HH:mm')}"></td>
                                             </tr>
                                         </tbody>
@@ -70,20 +72,22 @@
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header font-weight-bold text-secondary">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header font-weight-bold text-secondary border-bottom-secondary">
                                 <i class="fas fa-share-square mr-2"></i> Tin đã gửi 
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0">
-                                        <thead><tr><th>Đến</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                                        <thead class="bg-light"><tr><th>Đến</th><th>Nội dung (Decrypted)</th><th>Ngày</th></tr></thead>
                                         <tbody>
-                                            <tr th:if="${#lists.isEmpty(danhSachDaGui)}"><td colspan="3" class="text-center text-muted py-3">Chưa gửi tin nào.</td></tr>
+                                            <tr th:if="${#lists.isEmpty(danhSachDaGui)}"><td colspan="3" class="text-center text-muted py-4">Chưa gửi tin nào.</td></tr>
                                             <tr th:each="td : ${danhSachDaGui}">
                                                 <td th:text="${td.nguoiNhan.tenDangNhap}"></td>
-                                                <td><span class="badge badge-dark" title="Bạn không thể xem lại nội dung vì không có khóa riêng của người nhận"><i class="fas fa-lock"></i> </span></td>
+                                                <td class="text-secondary">
+                                                    <i class="fas fa-check-double mr-1"></i> <span th:text="${td.noiDung}"></span>
+                                                </td>
                                                 <td th:text="${#dates.format(td.ngayTao, 'dd/MM HH:mm')}"></td>
                                             </tr>
                                         </tbody>

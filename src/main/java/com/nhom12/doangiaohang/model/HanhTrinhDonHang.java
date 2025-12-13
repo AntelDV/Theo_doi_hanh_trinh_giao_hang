@@ -5,12 +5,13 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.Date;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "HANH_TRINH_DON_HANG")
 @EqualsAndHashCode(of = "idHanhTrinh")
 @ToString(exclude = {"donHang", "nhanVienThucHien"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class HanhTrinhDonHang {
     
     @Id

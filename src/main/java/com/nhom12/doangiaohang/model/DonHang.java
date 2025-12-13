@@ -8,12 +8,14 @@ import org.hibernate.annotations.Formula;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
 @Entity
 @Table(name = "DON_HANG")
 @EqualsAndHashCode(of = "idDonHang")
 @ToString(exclude = {"khachHangGui", "diaChiLayHang", "hanhTrinh", "thanhToan"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DonHang {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "don_hang_seq")

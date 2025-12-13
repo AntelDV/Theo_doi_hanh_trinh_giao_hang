@@ -5,18 +5,19 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.util.Date;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
-@Table(name = "LICH_SU_HOAT_DONG") // Đã sửa tên bảng cho khớp SQL
+@Table(name = "LICH_SU_HOAT_DONG")
 @EqualsAndHashCode(of = "idHoatDong")
 @ToString(exclude = "taiKhoanThucHien")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class NhatKyVanHanh {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "lich_su_seq")
     @SequenceGenerator(name = "lich_su_seq", sequenceName = "LICH_SU_HOAT_DONG_SEQ", allocationSize = 1)
-    @Column(name = "ID_HOAT_DONG") // Đã sửa tên cột
+    @Column(name = "ID_HOAT_DONG") 
     private Integer idHoatDong;
 
     @ManyToOne(fetch = FetchType.LAZY)

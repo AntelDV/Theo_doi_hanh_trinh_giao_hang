@@ -7,12 +7,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.Formula; // Import quan trọng
 import java.nio.charset.StandardCharsets;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "DIA_CHI")
 @EqualsAndHashCode(of = "idDiaChi")
 @ToString(exclude = "khachHangSoHuu")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DiaChi {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dia_chi_seq")

@@ -12,12 +12,13 @@ import lombok.ToString;
 
 import java.util.Date;
 import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "KHACH_HANG")
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"taiKhoan", "diaChis", "donHangsGui"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class KhachHang {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "khach_hang_seq")
