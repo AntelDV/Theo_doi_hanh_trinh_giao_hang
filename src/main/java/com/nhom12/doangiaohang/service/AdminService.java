@@ -15,12 +15,41 @@ public class AdminService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // Lấy danh sách Session đang online (Từ View V_GIAM_SAT_SESSION đã có trong SQL)
+    // Lấy Session Online
     @SuppressWarnings("unchecked")
     public List<Object[]> getActiveSessions() {
         try {
-            // Lấy các cột: SID, SERIAL#, USER_WEB (Tên App), LOGON_TIME, STATUS
             String sql = "SELECT SID, SERIAL#, USER_WEB, LOGON_TIME, STATUS FROM CSDL_NHOM12.V_GIAM_SAT_SESSION";
+            Query query = entityManager.createNativeQuery(sql);
+            return query.getResultList();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    // Kill Session
+    @Transactional
+    public void killSession(Integer sid, Integer serial) {
+        String sql = "BEGIN CSDL_NHOM12.PR_KILL_SESSION(:sid, :serial); END;";
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter("sid", sid);
+        query.setParameter("serial", serial);
+        query.executeUpdate();
+    }
+
+    // Restore Data
+    @Transactional
+    public void restoreData(Integer minutes) {
+        String sql = "BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;";
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter("minutes", minutes);
+        query.executeUpdate();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public List<Object[]> getUnifiedAuditLog() {
+        try {
+            String sql = "SELECT THOI_GIAN, USER_WEB, HANH_DONG, DOI_TUONG, CHI_TIET FROM CSDL_NHOM12.V_AUDIT_LOG_FULL FETCH FIRST 100 ROWS ONLY";
             Query query = entityManager.createNativeQuery(sql);
             return query.getResultList();
         } catch (Exception e) {
@@ -29,24 +58,10 @@ public class AdminService {
         }
     }
 
-    // Chức năng: Đá user (Kill Session)
     @Transactional
-    public void killSession(Integer sid, Integer serial) {
-        // Gọi thủ tục PR_KILL_SESSION đã có trong SQL của bạn
-        String sql = "BEGIN CSDL_NHOM12.PR_KILL_SESSION(:sid, :serial); END;";
+    public void generateDummyData() {
+        String sql = "BEGIN CSDL_NHOM12.PR_GENERATE_DUMMY_DATA; END;";
         Query query = entityManager.createNativeQuery(sql);
-        query.setParameter("sid", sid);
-        query.setParameter("serial", serial);
-        query.executeUpdate();
-    }
-
-    // Chức năng: Khôi phục dữ liệu (Flashback)
-    @Transactional
-    public void restoreData(Integer minutes) {
-        // Gọi thủ tục PR_FLASHBACK_DATA đã có trong SQL của bạn
-        String sql = "BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;";
-        Query query = entityManager.createNativeQuery(sql);
-        query.setParameter("minutes", minutes);
         query.executeUpdate();
     }
 }

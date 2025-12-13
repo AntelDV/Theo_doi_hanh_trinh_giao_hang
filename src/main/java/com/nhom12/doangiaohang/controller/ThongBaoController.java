@@ -24,11 +24,15 @@ public class ThongBaoController {
     @GetMapping
     public String xemThongBao(Model model, Authentication authentication) {
         try {
-            // 1. Lấy danh sách tin nhắn đến
-            List<ThongBaoMat> listTinNhan = thongBaoService.getThongBaoCuaToi(authentication);
-            model.addAttribute("danhSachThongBao", listTinNhan);
+            // Hộp thư đến
+            List<ThongBaoMat> listTinDen = thongBaoService.getThongBaoCuaToi(authentication);
+            model.addAttribute("danhSachThongBao", listTinDen);
             
-            // 2. Lấy danh sách người nhận khả dụng (Cho ComboBox gửi tin)
+            // Hộp thư đi 
+            List<ThongBaoMat> listTinDi = thongBaoService.getThongBaoDaGui(authentication);
+            model.addAttribute("danhSachDaGui", listTinDi);
+
+            // Danh sách người nhận
             List<TaiKhoan> listNguoiNhan = thongBaoService.getDanhSachNguoiNhan(authentication);
             model.addAttribute("listNguoiNhan", listNguoiNhan);
             

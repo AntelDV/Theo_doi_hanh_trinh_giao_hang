@@ -7,5 +7,9 @@ import java.util.List;
 
 @Repository
 public interface ThongBaoMatRepository extends JpaRepository<ThongBaoMat, Integer> {
+    // Tin nhận được (Hộp thư đến)
     List<ThongBaoMat> findByNguoiNhan_IdOrderByNgayTaoDesc(Integer idNguoiNhan);
+    
+    // Tin đã gửi (Hộp thư đi)
+    List<ThongBaoMat> findByNguoiGui_IdOrderByNgayTaoDesc(Integer idNguoiGui);
 }

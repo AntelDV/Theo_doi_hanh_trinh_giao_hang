@@ -22,7 +22,6 @@ public class ThongBaoService {
     @Autowired private CustomUserHelper userHelper;
     @Autowired private EncryptionUtil encryptionUtil;
 
-    // HÀM MỚI: Lấy danh sách người có thể nhận tin nhắn (cho ComboBox)
     public List<TaiKhoan> getDanhSachNguoiNhan(Authentication auth) {
         String currentUsername = auth.getName();
         return taiKhoanRepository.findNguoiNhanKhaDung(currentUsername);
@@ -31,8 +30,6 @@ public class ThongBaoService {
     @Transactional
     public void guiThongBaoMat(String usernameNguoiNhan, String noiDung, Authentication auth) {
         TaiKhoan nguoiGui = userHelper.getTaiKhoanHienTai(auth);
-        
-        // Tìm người nhận (Đã kiểm tra tồn tại từ form, nhưng check lại cho chắc)
         TaiKhoan nguoiNhan = taiKhoanRepository.findByTenDangNhap(usernameNguoiNhan)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận: " + usernameNguoiNhan));
 
@@ -40,14 +37,14 @@ public class ThongBaoService {
             throw new IllegalArgumentException("Người nhận chưa kích hoạt tính năng bảo mật (Thiếu Public Key).");
         }
 
-        // Thực hiện Mã hóa Lai (Hybrid Encryption)
+        // Mã hóa lai
         HybridResult res = hybridService.encrypt(noiDung, nguoiNhan.getPublicKey());
 
         ThongBaoMat tb = new ThongBaoMat();
         tb.setNguoiGui(nguoiGui);
         tb.setNguoiNhan(nguoiNhan);
-        tb.setNoiDung(res.encryptedData);       // Nội dung đã mã hóa
-        tb.setMaKhoaPhien(res.encryptedSessionKey); // Khóa phiên đã mã hóa
+        tb.setNoiDung(res.encryptedData);
+        tb.setMaKhoaPhien(res.encryptedSessionKey);
         
         thongBaoRepository.save(tb);
     }
@@ -56,18 +53,21 @@ public class ThongBaoService {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhan_IdOrderByNgayTaoDesc(toi.getId());
         
-        // Giải mã nội dung để hiển thị ra View
+        // Giải mã nội dung
         if (toi.getPrivateKey() != null) {
             try {
                 String myPrivateKey = encryptionUtil.decrypt(toi.getPrivateKey());
                 for (ThongBaoMat tb : list) {
                     String content = hybridService.decrypt(tb.getNoiDung(), tb.getMaKhoaPhien(), myPrivateKey);
-                    tb.setNoiDung(content); // Gán lại nội dung đã giải mã vào object tạm
+                    tb.setNoiDung(content); 
                 }
-            } catch (Exception e) {
-                System.err.println("Lỗi giải mã danh sách thông báo: " + e.getMessage());
-            }
+            } catch (Exception e) { }
         }
         return list;
+    }
+
+    public List<ThongBaoMat> getThongBaoDaGui(Authentication auth) {
+        TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
+        return thongBaoRepository.findByNguoiGui_IdOrderByNgayTaoDesc(toi.getId());
     }
 }

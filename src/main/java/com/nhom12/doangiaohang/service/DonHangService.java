@@ -284,16 +284,22 @@ public class DonHangService {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();
         NhanVien ship = nhanVienRepository.findById(idShip).orElseThrow();
         
+        String tenShipperRo = ship.getHoTen(); 
+        try {
+            tenShipperRo = encryptionUtil.decrypt(ship.getHoTen());
+        } catch (Exception e) {
+        }
+        
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(dh); 
         ht.setNhanVienThucHien(ship);
         ht.setTrangThai(trangThaiDonHangRepository.findById(1).orElseThrow()); 
-        ht.setGhiChuNhanVien("Quản lý đã phân công cho Shipper: " + ship.getHoTen());
+        
+        ht.setGhiChuNhanVien("Quản lý đã phân công cho Shipper: " + tenShipperRo);
         ht.setThoiGianCapNhat(new Date());
         
         hanhTrinhDonHangRepository.save(ht);
     }
-    
     @Transactional
     public void hoanKhoDonHang(Integer idDon, Authentication auth) {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();

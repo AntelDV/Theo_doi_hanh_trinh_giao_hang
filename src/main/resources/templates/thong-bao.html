@@ -28,57 +28,67 @@
                                                 th:text="${u.tenDangNhap} + ' (' + ${u.vaiTro.tenVaiTro} + ')'">
                                         </option>
                                     </select>
-                                    <small class="text-muted">Chỉ hiển thị Quản lý và Shipper đang hoạt động.</small>
                                 </div>
                                 <div class="col-md-8 form-group">
-                                    <label class="font-weight-bold">Nội dung tin nhắn:</label>
+                                    <label class="font-weight-bold">Nội dung:</label>
                                     <div class="input-group">
                                         <input type="text" name="noiDung" class="form-control" placeholder="Nhập nội dung cần bảo mật..." required>
                                         <div class="input-group-append">
                                             <button class="btn btn-success" type="submit">
-                                                <i class="fas fa-lock mr-1"></i> Gửi Bảo Mật
+                                                <i class="fas fa-lock mr-1"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <small class="text-muted">Nội dung sẽ được mã hóa tự động trước khi lưu vào CSDL.</small>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header font-weight-bold">
-                        <i class="fas fa-inbox mr-2"></i> Hộp thư đến
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header font-weight-bold text-success">
+                                <i class="fas fa-inbox mr-2"></i> Hộp thư đến 
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead><tr><th>Từ</th><th>Nội dung</th><th>Ngày</th></tr></thead>
+                                        <tbody>
+                                            <tr th:if="${#lists.isEmpty(danhSachThongBao)}"><td colspan="3" class="text-center text-muted">Trống.</td></tr>
+                                            <tr th:each="tb : ${danhSachThongBao}">
+                                                <td th:text="${tb.nguoiGui.tenDangNhap}" class="font-weight-bold"></td>
+                                                <td class="text-success"><i class="fas fa-unlock-alt"></i> <span th:text="${tb.noiDung}"></span></td>
+                                                <td th:text="${#dates.format(tb.ngayTao, 'dd/MM HH:mm')}"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th style="width: 20%;">Thời gian</th>
-                                        <th style="width: 20%;">Người gửi</th>
-                                        <th>Nội dung (Đã giải mã)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:if="${#lists.isEmpty(danhSachThongBao)}">
-                                        <td colspan="3" class="text-center py-4 text-muted">Hộp thư trống.</td>
-                                    </tr>
-                                    <tr th:each="tb : ${danhSachThongBao}">
-                                        <td th:text="${#dates.format(tb.ngayTao, 'HH:mm dd/MM/yyyy')}"></td>
-                                        <td>
-                                            <span class="font-weight-bold text-primary" th:text="${tb.nguoiGui.tenDangNhap}"></span>
-                                            <br>
-                                            <small class="text-muted" th:text="${tb.nguoiGui.vaiTro.tenVaiTro}"></small>
-                                        </td>
-                                        <td class="text-success">
-                                            <i class="fas fa-unlock-alt mr-2"></i>
-                                            <span th:text="${tb.noiDung}" class="font-weight-bold"></span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header font-weight-bold text-secondary">
+                                <i class="fas fa-share-square mr-2"></i> Tin đã gửi
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead><tr><th>Đến</th><th>Trạng thái</th><th>Ngày</th></tr></thead>
+                                        <tbody>
+                                            <tr th:if="${#lists.isEmpty(danhSachDaGui)}"><td colspan="3" class="text-center text-muted">Chưa gửi tin nào.</td></tr>
+                                            <tr th:each="td : ${danhSachDaGui}">
+                                                <td th:text="${td.nguoiNhan.tenDangNhap}"></td>
+                                                <td><span class="badge badge-dark"><i class="fas fa-lock"></i> </span></td>
+                                                <td th:text="${#dates.format(td.ngayTao, 'dd/MM HH:mm')}"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
