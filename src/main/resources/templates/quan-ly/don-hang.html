@@ -15,7 +15,17 @@
                     <div class="card-header">Danh sách Tất cả Đơn hàng</div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered"> <thead><tr><th>Mã VĐ</th><th>Người gửi</th><th>Người nhận</th><th>Trạng thái</th><th>Shipper</th><th>Hành động</th></tr></thead>
+                            <table class="table table-bordered"> 
+                                <thead>
+                                    <tr>
+                                        <th>Mã VĐ</th>
+                                        <th>Người gửi</th>
+                                        <th>Người nhận</th>
+                                        <th>Trạng thái</th>
+                                        <th>Shipper</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     <tr th:if="${#lists.isEmpty(donHangList)}"><td colspan="6" class="text-center">Chưa có đơn hàng nào.</td></tr>
                                     <tr th:each="dh : ${donHangList}">
@@ -23,18 +33,22 @@
                                         <td th:text="${dh.khachHangGui.hoTen}"></td>
                                         <td th:text="${dh.tenNguoiNhan}"></td>
                                         <td>
-                                            <span th:if="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-danger">CẦN XỬ LÝ</span>
-                                            <span th:unless="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-info" th:text="${dh.getTrangThaiHienTai().tenTrangThai}"></span>
+                                            <span th:if="${dh.getTrangThaiHienTai() == null}" class="badge badge-secondary">Lỗi Dữ Liệu</span>
+                                            
+                                            <th:block th:if="${dh.getTrangThaiHienTai() != null}">
+                                                <span th:if="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-danger">CẦN XỬ LÝ</span>
+                                                <span th:unless="${dh.getTrangThaiHienTai().idTrangThai == 7}" class="badge badge-info" th:text="${dh.getTrangThaiHienTai().tenTrangThai}"></span>
+                                            </th:block>
                                         </td>
                                         <td th:text="${dh.getShipperHienTai() != null ? dh.getShipperHienTai().hoTen : '---'}"></td>
                                         <td>
-                                            <button th:if="${dh.getTrangThaiHienTai().idTrangThai == 1 || dh.getTrangThaiHienTai().idTrangThai == 7}" 
+                                            <button th:if="${dh.getTrangThaiHienTai() != null && (dh.getTrangThaiHienTai().idTrangThai == 1 || dh.getTrangThaiHienTai().idTrangThai == 7)}" 
                                                     class="btn btn-sm btn-info" 
                                                     th:attr="onclick='openPhanCong(\'' + ${dh.idDonHang} + '\', \'' + ${dh.maVanDon} + '\')'">
                                                 <i class="fas fa-user-plus"></i>
                                             </button>
                                             
-                                            <form th:if="${dh.getTrangThaiHienTai().idTrangThai == 8}" th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display:inline;">
+                                            <form th:if="${dh.getTrangThaiHienTai() != null && dh.getTrangThaiHienTai().idTrangThai == 8}" th:action="@{/quan-ly/don-hang/hoan-kho}" method="post" style="display:inline;">
                                                 <input type="hidden" name="idDonHang" th:value="${dh.idDonHang}">
                                                 <button class="btn btn-sm btn-warning"><i class="fas fa-warehouse"></i></button>
                                             </form>

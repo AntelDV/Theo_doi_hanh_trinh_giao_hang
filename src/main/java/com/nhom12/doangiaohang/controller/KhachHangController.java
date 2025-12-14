@@ -27,11 +27,20 @@ public class KhachHangController {
     public String dashboard(Authentication authentication, Model model) {
         List<DonHang> list = donHangService.getDonHangCuaKhachHangHienTai(authentication);
         
-        long choLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1).count();
-        long dangGiao = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4).count();
-        long hoanThanh = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5).count();
+        long choLay = list.stream()
+                .filter(d -> d.getTrangThaiHienTai() != null && d.getTrangThaiHienTai().getIdTrangThai() == 1)
+                .count();
+                
+        long dangGiao = list.stream()
+                .filter(d -> d.getTrangThaiHienTai() != null && (d.getTrangThaiHienTai().getIdTrangThai() == 3 || d.getTrangThaiHienTai().getIdTrangThai() == 4))
+                .count();
+                
+        long hoanThanh = list.stream()
+                .filter(d -> d.getTrangThaiHienTai() != null && d.getTrangThaiHienTai().getIdTrangThai() == 5)
+                .count();
+                
         double tongTien = list.stream()
-                .filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
+                .filter(d -> d.getTrangThaiHienTai() != null && d.getTrangThaiHienTai().getIdTrangThai() == 5 && d.getThanhToan() != null)
                 .mapToDouble(d -> d.getThanhToan().getTongTienCod() + (d.getThanhToan().getPhiVanChuyen() != null ? d.getThanhToan().getPhiVanChuyen() : 0))
                 .sum();
 
@@ -115,7 +124,6 @@ public class KhachHangController {
          }
     }
     
-    // === TÍNH NĂNG MỚI: XỬ LÝ HỦY ĐƠN ===
     @PostMapping("/don-hang/huy/{id}")
     public String huyDonHang(@PathVariable("id") Integer idDonHang,
                              Authentication authentication,
@@ -129,13 +137,9 @@ public class KhachHangController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
             e.printStackTrace();
         }
-        // Quay lại trang chi tiết đơn hàng đó
-        // (Cần truy vấn lại để lấy Mã Vận Đơn redirect, nhưng đơn giản thì về danh sách hoặc redirect dựa trên Referer)
-        // Ở đây ta về danh sách cho an toàn
         return "redirect:/khach-hang/danh-sach-don-hang";
     }
 
-    // === CÁC HÀM XỬ LÝ SỔ ĐỊA CHỈ (Giữ nguyên) ===
     @GetMapping("/so-dia-chi")
     public String soDiaChi(Authentication authentication, Model model) {
          List<DiaChi> diaChiList = diaChiService.getDiaChiByCurrentUser(authentication);

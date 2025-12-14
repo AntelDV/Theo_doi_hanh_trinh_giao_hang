@@ -13,7 +13,6 @@ import java.util.Properties;
 @Configuration
 public class DataSourceConfig {
 
-    // Đặt tên file rõ ràng
     public static final String CONFIG_FILE = "db-config.properties";
 
     @Bean
