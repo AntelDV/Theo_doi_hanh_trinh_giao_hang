@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class RSAUtil {
 
     private static final String ALGORITHM = "RSA";
-    private static final String SIGNATURE_ALGORITHM = "SHA256withRSA"; // Khớp với Oracle
+    private static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
     private static final int KEY_SIZE = 1024;
 
     public KeyPair generateKeyPair() {
@@ -26,7 +26,6 @@ public class RSAUtil {
     }
 
     public String keyToString(Key key) {
-        // QUAN TRỌNG: Dùng getEncoder() (Basic) thay vì MIME để tránh xuống dòng
         return Base64.getEncoder().encodeToString(key.getEncoded());
     }
 
@@ -73,10 +72,8 @@ public class RSAUtil {
             PrivateKey privateKey = stringToPrivateKey(privateKeyStr);
             Signature signature = Signature.getInstance(SIGNATURE_ALGORITHM);
             signature.initSign(privateKey);
-            // Ép kiểu UTF-8 để đồng bộ với Oracle AL32UTF8
             signature.update(data.getBytes(StandardCharsets.UTF_8));
             byte[] signatureBytes = signature.sign();
-            // Dùng Basic Encoder để chuỗi ký liền mạch, không có \r\n
             return Base64.getEncoder().encodeToString(signatureBytes);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi tạo chữ ký số: " + e.getMessage(), e);

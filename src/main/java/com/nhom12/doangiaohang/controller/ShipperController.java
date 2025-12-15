@@ -68,7 +68,6 @@ public class ShipperController {
         } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật: " + e.getMessage());
         } catch (Exception e) {
-             // Nếu lỗi ORA-20002 xảy ra, nó sẽ rơi vào đây.
              redirectAttributes.addFlashAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
              e.printStackTrace(); 
         }

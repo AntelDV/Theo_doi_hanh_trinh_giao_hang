@@ -4,6 +4,8 @@ import com.nhom12.doangiaohang.model.DiaChi;
 import com.nhom12.doangiaohang.model.KhachHang;
 import com.nhom12.doangiaohang.repository.DiaChiRepository;
 import com.nhom12.doangiaohang.utils.EncryptionUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -17,13 +19,14 @@ public class DiaChiService {
     @Autowired private DiaChiRepository diaChiRepository;
     @Autowired private CustomUserHelper userHelper; 
     @Autowired private EncryptionUtil encryptionUtil;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private void decryptDiaChi(DiaChi dc) {
         if (dc != null) {
             try {
-                // Giải mã Số nhà (App Level)
                 dc.setSoNhaDuong(encryptionUtil.decrypt(dc.getSoNhaDuong()));
-                // Quận huyện (DB Level) đã được @Formula tự giải mã vào tenQuanHuyen
             } catch (Exception e) {
                 dc.setSoNhaDuong("[Lỗi hiển thị]");
             }
@@ -58,16 +61,15 @@ public class DiaChiService {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
         diaChi.setKhachHangSoHuu(kh); 
         
-        // 1. Mã hóa App (Số nhà)
         diaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChi.getSoNhaDuong()));
-        
-        // 2. Quận huyện: Set vào tenQuanHuyen -> Model chuyển thành quanHuyenRaw -> DB Trigger mã hóa
-        
         if (diaChi.isLaMacDinh()) {
             unsetDefaultOtherAddresses(authentication, null); 
         }
         
-        diaChiRepository.save(diaChi);
+        DiaChi saved = diaChiRepository.save(diaChi);
+        
+        diaChiRepository.flush();
+        entityManager.refresh(saved); 
     }
     
     @Transactional
@@ -82,8 +84,9 @@ public class DiaChiService {
         
         existingDiaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChiForm.getSoNhaDuong()));
         
-        // Cập nhật Quận Huyện
-        existingDiaChi.setTenQuanHuyen(diaChiForm.getTenQuanHuyen());
+        if (diaChiForm.getTenQuanHuyen() != null && !diaChiForm.getTenQuanHuyen().equals(existingDiaChi.getTenQuanHuyen())) {
+            existingDiaChi.setTenQuanHuyen(diaChiForm.getTenQuanHuyen());
+        }
         
         existingDiaChi.setPhuongXa(diaChiForm.getPhuongXa());
         existingDiaChi.setTinhTp(diaChiForm.getTinhTp());
@@ -100,7 +103,10 @@ public class DiaChiService {
             existingDiaChi.setLaMacDinh(false);
         }
 
-        diaChiRepository.save(existingDiaChi);
+        DiaChi saved = diaChiRepository.save(existingDiaChi);
+        
+        diaChiRepository.flush();
+        entityManager.refresh(saved);
     }
 
     @Transactional

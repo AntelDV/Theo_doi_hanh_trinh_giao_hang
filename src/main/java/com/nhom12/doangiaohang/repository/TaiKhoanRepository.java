@@ -15,7 +15,6 @@ public interface TaiKhoanRepository extends JpaRepository<TaiKhoan, Integer> {
     
     Optional<TaiKhoan> findByMaDatLaiMk(String maDatLaiMk);
 
-    // Loại trừ chính người đang đăng nhập (để không gửi tin cho chính mình)
     @Query("SELECT t FROM TaiKhoan t " +
            "WHERE t.trangThai = true " +
            "AND t.tenDangNhap <> :currentUsername " +

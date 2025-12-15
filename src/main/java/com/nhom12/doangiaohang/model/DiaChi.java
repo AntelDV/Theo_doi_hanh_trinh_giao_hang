@@ -28,7 +28,7 @@ public class DiaChi {
     @JsonIgnore
     private KhachHang khachHangSoHuu;
 
-    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
+    // --- MÃ HÓA MỨC ỨNG DỤNG  ---
     @NotBlank(message = "Số nhà, đường không được để trống")
     @Column(name = "SO_NHA_DUONG", nullable = false)
     private String soNhaDuong;
@@ -38,20 +38,18 @@ public class DiaChi {
 
     // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
     
-    // 1. Cột vật lý (RAW): Dùng để lưu trữ (Write)
+    // Java chỉ ghi vào cột này, không bao giờ đọc trực tiếp để hiển thị
     @Column(name = "QUAN_HUYEN", nullable = false)
     @JsonIgnore
     private byte[] quanHuyenRaw;
 
-    // 2. Trường ảo (String): Dùng để hiển thị (Read)
-    // Đổi tên biến khác với tên cột để tránh xung đột mapping
+    // Trigger đã mã hóa trong DB, Formula này sẽ giải mã khi SELECT lên
     @Formula("UTL_I18N.RAW_TO_CHAR(encryption_pkg.decrypt_data(QUAN_HUYEN), 'AL32UTF8')")
     private String tenQuanHuyen;
 
-    // Getter/Setter tùy chỉnh để map giữa String và RAW
+    // Setter nhận String từ Form -> Chuyển thành byte[] để lưu xuống DB
     public void setTenQuanHuyen(String tenQuanHuyen) {
         this.tenQuanHuyen = tenQuanHuyen;
-        // Chuyển sang byte[] để Hibernate lưu xuống cột QUAN_HUYEN
         if (tenQuanHuyen != null) {
             this.quanHuyenRaw = tenQuanHuyen.getBytes(StandardCharsets.UTF_8);
         } else {
@@ -63,15 +61,14 @@ public class DiaChi {
         return tenQuanHuyen;
     }
 
-    // Getter giả để tương thích với code cũ nếu có gọi getQuanHuyen()
     public String getQuanHuyen() {
         return getTenQuanHuyen();
     }
+    
     public void setQuanHuyen(String qh) {
         setTenQuanHuyen(qh);
     }
 
-    // ---------------------------------
 
     @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     @Column(name = "TINH_TP", nullable = false)
@@ -81,7 +78,7 @@ public class DiaChi {
     private boolean laMacDinh = false;
 
     public String getFullAddress() {
-        String qh = (tenQuanHuyen != null) ? tenQuanHuyen : "[Đang xử lý...]";
+        String qh = (tenQuanHuyen != null) ? tenQuanHuyen : "Đang cập nhật...";
         return soNhaDuong + (phuongXa != null && !phuongXa.isEmpty() ? ", " + phuongXa : "") + ", " + qh + ", " + tinhTp;
     }
 }

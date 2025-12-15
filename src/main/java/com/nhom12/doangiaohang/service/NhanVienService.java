@@ -37,22 +37,26 @@ public class NhanVienService {
         return nv;
     }
     
-    /**
-     * GIẢI MÃ PII (CHỈ MỨC ỨNG DỤNG)
-     * Lưu ý: Không giải mã Email vì DB đã dùng @Formula
-     */
+
     private void decryptNhanVien(NhanVien nv) {
         if (nv != null) {
             try {
-                // Họ tên và SĐT được mã hóa bởi Java -> Cần giải mã
-                nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
-                nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));
-                
-                // Email được mã hóa bởi Oracle (Trigger) và giải mã bởi @Formula
-                // -> KHÔNG được giải mã ở đây nữa (nếu không sẽ lỗi BadPadding)
+                if (nv.getHoTen() != null && !nv.getHoTen().isEmpty()) {
+                    nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("WARN: Lỗi giải mã tên NV ID " + nv.getId() + " - " + e.getMessage());
             }
+
+
+            try {
+                if (nv.getSoDienThoai() != null && !nv.getSoDienThoai().isEmpty()) {
+                    nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));
+                }
+            } catch (Exception e) {
+                System.err.println("WARN: Lỗi giải mã SĐT NV ID " + nv.getId() + " - " + e.getMessage());
+            }
+            
         }
     }
 }

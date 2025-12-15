@@ -13,7 +13,6 @@ public class HybridEncryptionService {
     @Autowired private EncryptionUtil encryptionUtil;
     @Autowired private RSAUtil rsaUtil;
 
-    // Class chứa kết quả trả về (Dữ liệu + Khóa)
     public static class HybridResult {
         public String encryptedData;      // Dữ liệu đã mã hóa AES
         public String encryptedSessionKey; // Khóa AES đã mã hóa RSA
@@ -31,13 +30,13 @@ public class HybridEncryptionService {
      */
     public HybridResult encrypt(String originalData, String receiverPublicKey) {
         try {
-            // 1. Sinh khóa phiên ngẫu nhiên (AES)
+            // Sinh khóa phiên ngẫu nhiên (AES)
             SecretKey sessionKey = encryptionUtil.generateSessionKey();
             
-            // 2. Dùng khóa phiên mã hóa dữ liệu lớn
+            // Dùng khóa phiên mã hóa dữ liệu lớn
             String encryptedData = encryptionUtil.encryptAES(originalData, sessionKey);
             
-            // 3. Dùng Public Key (RSA) mã hóa khóa phiên
+            // Dùng Public Key (RSA) mã hóa khóa phiên
             String sessionKeyStr = encryptionUtil.keyToString(sessionKey);
             String encryptedSessionKey = rsaUtil.encrypt(sessionKeyStr, receiverPublicKey);
             
@@ -56,11 +55,11 @@ public class HybridEncryptionService {
         try {
             if (encryptedData == null || encryptedSessionKey == null) return null;
 
-            // 1. Dùng Private Key (RSA) giải mã lấy lại Khóa phiên
+            //  Dùng Private Key (RSA) giải mã lấy lại Khóa phiên
             String sessionKeyStr = rsaUtil.decrypt(encryptedSessionKey, myPrivateKey);
             SecretKey sessionKey = encryptionUtil.stringToKey(sessionKeyStr);
             
-            // 2. Dùng Khóa phiên (AES) giải mã dữ liệu gốc
+            //  Dùng Khóa phiên (AES) giải mã dữ liệu gốc
             return encryptionUtil.decryptAES(encryptedData, sessionKey);
         } catch (Exception e) {
             System.err.println("Lỗi giải mã lai: " + e.getMessage());

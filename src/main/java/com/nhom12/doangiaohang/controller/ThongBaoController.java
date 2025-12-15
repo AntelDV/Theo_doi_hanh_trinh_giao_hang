@@ -28,7 +28,7 @@ public class ThongBaoController {
             List<ThongBaoMat> listDen = thongBaoService.getThongBaoCuaToi(authentication);
             model.addAttribute("danhSachThongBao", listDen);
             
-            // . Tin đi 
+            //  Tin đi 
             List<ThongBaoMat> listDi = thongBaoService.getThongBaoDaGui(authentication);
             model.addAttribute("danhSachDaGui", listDi);
 

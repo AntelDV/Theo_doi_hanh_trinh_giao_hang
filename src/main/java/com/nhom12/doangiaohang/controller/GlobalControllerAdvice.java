@@ -10,28 +10,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
-/**
- * Lớp "Global Helper" (Trình trợ giúp Toàn cục).
- * Tự động cung cấp dữ liệu chung (URL, Họ tên user) cho TẤT CẢ các trang giao diện.
- */
 @ControllerAdvice
 public class GlobalControllerAdvice {
 
     @Autowired
     private CustomUserHelper userHelper;
 
-    /**
-     * Hàm lấy URL hiện tại (để tô màu menu active).
-     */
+ 
     @ModelAttribute("currentURI")
     public String getCurrentURI(HttpServletRequest request) {
         return request.getRequestURI();
     }
 
-    /**
-     * Hàm lấy HỌ TÊN NGƯỜI DÙNG (Thay vì hiện username).
-     * Tự động chạy mỗi khi user load trang.
-     */
     @ModelAttribute("userFullName")
     public String getUserFullName() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

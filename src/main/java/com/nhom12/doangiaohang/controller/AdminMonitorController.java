@@ -25,7 +25,6 @@ public class AdminMonitorController {
 
     @GetMapping
     public String showMonitorPage(Model model) {
-        // Lấy danh sách user đang online từ bảng THEO_DOI_ONLINE
         model.addAttribute("sessions", adminService.getActiveSessions());
         return "quan-ly/giam-sat";
     }
@@ -54,7 +53,6 @@ public class AdminMonitorController {
         return "redirect:/quan-ly/giam-sat";
     }
     
-    // TÍNH NĂNG MỚI: Tải Backup JSON
     @GetMapping("/backup-json")
     public ResponseEntity<ByteArrayResource> downloadBackup() {
         try {

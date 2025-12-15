@@ -24,14 +24,13 @@ public class TrackingController {
     @PostMapping("/tra-cuu/don-hang")
     public String trackDonHang(@RequestParam("maVanDon") String maVanDon, Model model, RedirectAttributes redirectAttributes) {
         try {
-            // Xóa khoảng trắng thừa nếu user copy paste lỗi
             String maChuan = maVanDon.trim();
             DonHang donHang = donHangService.getDonHangByMaVanDon(maChuan);
             
             model.addAttribute("donHang", donHang);
             return "chi-tiet-cong-khai"; 
         } catch (Exception e) {
-            // Bắt mọi lỗi (Không tìm thấy, Lỗi DB...) để không bị trang trắng
+        	
             redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng với mã: " + maVanDon);
             return "redirect:/tra-cuu";
         }

@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Data
 @Entity
 @Table(name = "TAI_KHOAN")
-@EqualsAndHashCode(of = "id") // Dùng ID để so sánh, tránh lỗi vòng lặp
-@ToString(exclude = "vaiTro") // Tránh lỗi vòng lặp khi log
+@EqualsAndHashCode(of = "id") 
+@ToString(exclude = "vaiTro") 
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TaiKhoan {
     
@@ -21,7 +21,7 @@ public class TaiKhoan {
     @Column(name = "ID_TAI_KHOAN")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER) // Lấy vai trò ngay lập tức khi tải tài khoản
+    @ManyToOne(fetch = FetchType.EAGER) 
     @JoinColumn(name = "ID_VAI_TRO", nullable = false)
     private VaiTro vaiTro;
 
@@ -32,13 +32,13 @@ public class TaiKhoan {
     private String matKhau;
 
     @Column(name = "TRANG_THAI", columnDefinition = "NUMBER(1,0) DEFAULT 1")
-    private boolean trangThai = true; // true = 1 (Hoạt động), false = 0 (Bị khóa)
+    private boolean trangThai = true; 
 
     @Column(name = "MA_DAT_LAI_MK", length = 100)
     private String maDatLaiMk;
 
     @Column(name = "THOI_HAN_MA")
-    @Temporal(TemporalType.DATE) // Khớp với CSDL của bạn
+    @Temporal(TemporalType.DATE) 
     private Date thoiHanMa;
     
     @Column(name = "PUBLIC_KEY", columnDefinition = "CLOB")

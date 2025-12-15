@@ -17,7 +17,7 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 public class WebSecurityConfig {
 
     @Autowired private CustomLoginSuccessHandler loginSuccessHandler;
-    @Autowired private CustomLoginFailureHandler loginFailureHandler; // Autowired cái mới
+    @Autowired private CustomLoginFailureHandler loginFailureHandler; 
     @Autowired private CustomLogoutHandler logoutHandler;
     
     @Bean

@@ -30,12 +30,12 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
         String username = authentication.getName();
         
         try {
-            // 1. GỌI THỦ TỤC RESET SỐ LẦN SAI (DB Logic)
+            //  GỌI THỦ TỤC RESET SỐ LẦN SAI (DB Logic)
             entityManager.createNativeQuery("BEGIN CSDL_NHOM12.SP_LOGIN_SUCCESS(:u); END;")
                     .setParameter("u", username)
                     .executeUpdate();
 
-            // 2. THIẾT LẬP CONTEXT VPD & OLS (Như cũ)
+            //  THIẾT LẬP CONTEXT VPD & OLS 
             TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(username).orElse(null);
             if (tk != null) {
                 String dbRole = "KHACHHANG"; 
@@ -48,7 +48,7 @@ public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
                         .setParameter("urole", dbRole)
                         .executeUpdate();
 
-                // 3. Ghi Session Online
+                //  Ghi Session Online
                 String sqlOnline = "MERGE INTO THEO_DOI_ONLINE t USING DUAL ON (t.USERNAME = :u) " +
                                    "WHEN MATCHED THEN UPDATE SET SESSION_ID = :sid, THOI_GIAN_LOGIN = CURRENT_TIMESTAMP, IP_ADDRESS = :ip " +
                                    "WHEN NOT MATCHED THEN INSERT (SESSION_ID, USERNAME, HO_TEN, IP_ADDRESS) VALUES (:sid, :u, :name, :ip)";

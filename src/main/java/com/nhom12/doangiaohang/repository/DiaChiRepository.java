@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface DiaChiRepository extends JpaRepository<DiaChi, Integer> {
     
-    // Tìm tất cả địa chỉ thuộc về một khách hàng
     List<DiaChi> findByKhachHangSoHuu_Id(Integer idKhachHang);
 }

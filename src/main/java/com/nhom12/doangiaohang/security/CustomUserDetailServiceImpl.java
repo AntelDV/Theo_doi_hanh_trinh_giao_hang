@@ -27,7 +27,7 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String tenDangNhap) throws UsernameNotFoundException {
         
-        // 1. GỌI THỦ TỤC DB ĐỂ KIỂM TRA TRẠNG THÁI KHÓA (Logic DB)
+        // GỌI THỦ TỤC DB ĐỂ KIỂM TRA TRẠNG THÁI KHÓA (Logic DB)
         try {
             StoredProcedureQuery query = entityManager.createStoredProcedureQuery("CSDL_NHOM12.SP_CHECK_LOGIN");
             query.registerStoredProcedureParameter("p_username", String.class, ParameterMode.IN);
@@ -41,13 +41,12 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
             if ("LOCKED".equals(result)) {
                 throw new UsernameNotFoundException("Tài khoản đã bị khóa do nhập sai nhiều lần.");
             }
-            // Nếu "FAIL" (Không tồn tại), ta vẫn để code dưới chạy để Spring xử lý chuẩn
+            // Nếu "FAIL" (Không tồn tại), ta vẫn để code dưới chạy để Spring xử lý 
         } catch (Exception e) {
-            // Log lỗi nếu cần, nhưng không chặn luồng đăng nhập nếu DB lỗi nhẹ
             System.err.println("Lỗi gọi SP_CHECK_LOGIN: " + e.getMessage());
         }
 
-        // 2. Tải thông tin user để Spring Security kiểm tra mật khẩu
+        // Tải thông tin user để Spring Security kiểm tra mật khẩu
         TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new UsernameNotFoundException("Sai thông tin đăng nhập."));
 

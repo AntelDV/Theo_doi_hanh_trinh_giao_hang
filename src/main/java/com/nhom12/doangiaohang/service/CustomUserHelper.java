@@ -34,7 +34,6 @@ public class CustomUserHelper {
         KhachHang kh = khachHangRepository.findByTaiKhoan_Id(taiKhoan.getId())
              .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng."));
         
-        // GIẢI MÃ: Chỉ giải mã các trường APP-LEVEL (chưa có @Formula)
         try {
             kh.setHoTen(encryptionUtil.decrypt(kh.getHoTen()));
             kh.setEmail(encryptionUtil.decrypt(kh.getEmail())); 
@@ -51,11 +50,9 @@ public class CustomUserHelper {
         NhanVien nv = nhanVienRepository.findByTaiKhoan_Id(taiKhoan.getId())
               .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên."));
               
-        // GIẢI MÃ: Lưu ý EMAIL của Nhân viên dùng @Formula (DB-Level) nên KHÔNG giải mã ở đây
         try {
             nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
             nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));
-            // nv.setEmail(...) -> KHÔNG CẦN, vì @Formula đã trả về Plaintext rồi
         } catch (Exception e) { e.printStackTrace(); }
         
         return nv;

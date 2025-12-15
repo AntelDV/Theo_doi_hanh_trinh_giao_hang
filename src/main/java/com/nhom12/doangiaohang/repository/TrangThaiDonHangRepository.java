@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TrangThaiDonHangRepository extends JpaRepository<TrangThaiDonHang, Integer> {
-    // Không cần thêm phương thức tùy chỉnh, JpaRepository là đủ
+
 }

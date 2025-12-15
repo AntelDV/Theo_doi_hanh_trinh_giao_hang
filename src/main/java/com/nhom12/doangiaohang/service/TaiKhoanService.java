@@ -72,7 +72,6 @@ public class TaiKhoanService {
         taiKhoan.setMatKhau(passwordEncoder.encode(form.getMatKhau()));
         taiKhoan.setTrangThai(true); 
         
-        // SINH KHÓA RSA MỚI (CHUẨN BASE64 CƠ BẢN)
         try {
             KeyPair keyPair = rsaUtil.generateKeyPair();
             taiKhoan.setPublicKey(rsaUtil.keyToString(keyPair.getPublic()));
@@ -144,7 +143,8 @@ public class TaiKhoanService {
         taiKhoan.setTrangThai(false);
         taiKhoanRepository.save(taiKhoan);
         
-        ghiLogHeThong("KHOA_TAI_KHOAN", "TAI_KHOAN", idTaiKhoan, "Đã khóa tài khoản ID: " + idTaiKhoan);
+        String tenDoiTuong = layTenNguoiDung(taiKhoan);
+        ghiLogHeThong("KHOA_TAI_KHOAN", "TAI_KHOAN", idTaiKhoan, "Đã khóa tài khoản: " + tenDoiTuong + " (" + taiKhoan.getTenDangNhap() + ")");
     }
 
     @Transactional
@@ -154,7 +154,26 @@ public class TaiKhoanService {
         taiKhoan.setTrangThai(true);
         taiKhoanRepository.save(taiKhoan);
         
-        ghiLogHeThong("MO_KHOA_TAI_KHOAN", "TAI_KHOAN", idTaiKhoan, "Đã mở khóa tài khoản ID: " + idTaiKhoan);
+        String tenDoiTuong = layTenNguoiDung(taiKhoan);
+        ghiLogHeThong("MO_KHOA_TAI_KHOAN", "TAI_KHOAN", idTaiKhoan, "Đã mở khóa tài khoản: " + tenDoiTuong + " (" + taiKhoan.getTenDangNhap() + ")");
+    }
+    
+    private String layTenNguoiDung(TaiKhoan tk) {
+        try {
+            if (tk.getVaiTro().getIdVaiTro() == 3) { // Khách hàng
+                return khachHangRepository.findByTaiKhoan_Id(tk.getId())
+                        .map(kh -> {
+                            try { return encryptionUtil.decrypt(kh.getHoTen()); } catch (Exception e) { return kh.getHoTen(); }
+                        }).orElse("Unknown");
+            } else { // Nhân viên
+                return nhanVienRepository.findByTaiKhoan_Id(tk.getId())
+                        .map(nv -> {
+                            try { return encryptionUtil.decrypt(nv.getHoTen()); } catch (Exception e) { return nv.getHoTen(); }
+                        }).orElse("Unknown");
+            }
+        } catch (Exception e) {
+            return tk.getTenDangNhap();
+        }
     }
     
     private void ghiLogHeThong(String hanhDong, String doiTuong, Integer idDoiTuong, String moTa) {

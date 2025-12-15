@@ -170,7 +170,6 @@ public class QuanLyController {
     // --- NHẬT KÝ VẬN HÀNH  ---
     @GetMapping("/nhat-ky")
     public String quanLyNhatKy(Model model) {
-        // Sử dụng hàm getUnifiedLogs() mới để lấy cả log Web và log Database
         List<AdminService.SystemLogDTO> logs = adminService.getUnifiedLogs();
         model.addAttribute("systemLogs", logs); 
         return "quan-ly/nhat-ky"; 

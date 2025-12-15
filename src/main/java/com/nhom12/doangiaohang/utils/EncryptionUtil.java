@@ -92,8 +92,7 @@ public class EncryptionUtil {
     public String decryptAES(String encryptedData, SecretKey key) {
         if (encryptedData == null) return null;
         try {
-            // FIX WARNING: Kiểm tra xem chuỗi có phải Base64 hợp lệ không trước khi decode
-            // Nếu không phải (có thể là plaintext cũ), trả về nguyên gốc
+            
             if (!encryptedData.matches("^[A-Za-z0-9+/=]+$") || encryptedData.contains(" ")) {
                 return encryptedData; 
             }
@@ -115,7 +114,6 @@ public class EncryptionUtil {
 
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            // Tắt log warning để console sạch đẹp
             return encryptedData;
         }
     }

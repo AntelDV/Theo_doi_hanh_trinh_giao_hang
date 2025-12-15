@@ -22,7 +22,7 @@ public class CustomLogoutHandler implements LogoutHandler {
         if (authentication != null && authentication.isAuthenticated()) {
             try {
                 // Gọi thủ tục Oracle để xóa Context bảo mật
-                // Điều này ngăn chặn lỗi Connection Pool (Người sau dùng lại kết nối của người trước)
+                // Ngăn chặn lỗi Connection Pool (Người sau dùng lại kết nối của người trước)
                 String sql = "BEGIN CSDL_NHOM12.PKG_SECURITY.CLEAR_CONTEXT; END;";
                 Query query = entityManager.createNativeQuery(sql);
                 query.executeUpdate();

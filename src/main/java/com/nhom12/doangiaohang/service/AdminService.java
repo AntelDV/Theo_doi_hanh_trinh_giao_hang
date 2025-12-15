@@ -19,6 +19,7 @@ import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation; // Import quan trọng
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -42,14 +43,11 @@ public class AdminService {
         private Date thoiGian;
         private String user;
         private String hanhDong;
-        private String nguon; 
         private String chiTiet;
         private String styleClass;
     }
 
-    // --- CHỨC NĂNG LẤY LOG GỘP (WEB APP + DB AUDIT) ---
     public List<SystemLogDTO> getUnifiedLogs() {
-
         List<SystemLogDTO> unifiedList = new ArrayList<>();
         String adminPrivateKey = null;
         try {
@@ -58,52 +56,40 @@ public class AdminService {
                 adminPrivateKey = encryptionUtil.decrypt(me.getPrivateKey());
         } catch (Exception e) {}
 
-        // 1. LẤY LOG TỪ APP (Bảng LICH_SU_HOAT_DONG)
+        // APP LOGS
         List<NhatKyVanHanh> appLogs = nhatKyRepository.findAll(Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
         for (NhatKyVanHanh log : appLogs) {
             SystemLogDTO dto = new SystemLogDTO();
             dto.setThoiGian(log.getThoiGianThucHien());
             dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown");
             dto.setHanhDong(log.getHanhDong());
-            dto.setNguon("WEB APP");
             
-            // Giải mã log RSA nếu có
             String chiTiet = log.getMoTaChiTiet();
             if (chiTiet != null && chiTiet.length() > 50 && adminPrivateKey != null) {
-                try { 
-                    // Thử giải mã nếu là log mã hóa RSA
-                    chiTiet = rsaUtil.decrypt(chiTiet, adminPrivateKey); 
-                } catch (Exception e) {
-                    // Nếu không phải mã hóa thì giữ nguyên
-                }
+                try { chiTiet = rsaUtil.decrypt(chiTiet, adminPrivateKey); } catch (Exception e) { }
             }
             dto.setChiTiet(chiTiet);
             dto.setStyleClass("text-primary");
             unifiedList.add(dto);
         }
         
-        // 2. LẤY LOG TỪ DB VIEW (AUDIT + FGA)
+        // DB AUDIT LOGS
         try {
-            // View V_AUDIT_LOG_FULL được tạo ở Tuần 13
-            Query query = entityManager.createNativeQuery(
-                "SELECT THOI_GIAN, USER_DB, HANH_DONG, CHI_TIET FROM V_AUDIT_LOG_FULL FETCH FIRST 50 ROWS ONLY"
-            );
+            Query query = entityManager.createNativeQuery("SELECT THOI_GIAN, USER_DB, HANH_DONG, CHI_TIET FROM V_AUDIT_LOG_FULL FETCH FIRST 50 ROWS ONLY");
             List<Object[]> dbLogs = query.getResultList();
             for (Object[] row : dbLogs) {
                 SystemLogDTO dto = new SystemLogDTO();
                 dto.setThoiGian((Date) row[0]);
-                dto.setUser((String) row[1]); // DB Username (CSDL_NHOM12 hoặc SYS)
+                dto.setUser((String) row[1]);
                 dto.setHanhDong((String) row[2]);
-                dto.setNguon("ORACLE DB");
-                dto.setChiTiet((String) row[3]); // SQL Text
+                dto.setChiTiet((String) row[3]);
                 dto.setStyleClass("text-danger font-weight-bold");
                 unifiedList.add(dto);
             }
         } catch (Exception e) {
-            System.err.println("Lỗi lấy Audit Log từ DB: " + e.getMessage());
+            System.err.println("Lỗi Audit DB: " + e.getMessage());
         }
         
-        // Sắp xếp lại theo thời gian giảm dần
         unifiedList.sort((o1, o2) -> {
             if (o1.getThoiGian() == null || o2.getThoiGian() == null) return 0;
             return o2.getThoiGian().compareTo(o1.getThoiGian());
@@ -111,7 +97,6 @@ public class AdminService {
         return unifiedList;
     }
 
-    // --- GIÁM SÁT & KICK SESSION ---
     @SuppressWarnings("unchecked")
     public List<Object[]> getActiveSessions() {
         try {
@@ -122,38 +107,27 @@ public class AdminService {
 
     @Transactional
     public void killSession(String sessionId) {
-        // 1. Xóa khỏi DB
-        entityManager.createNativeQuery("DELETE FROM THEO_DOI_ONLINE WHERE SESSION_ID = :sid")
-                .setParameter("sid", sessionId)
-                .executeUpdate();
-
-        // 2. Xóa khỏi bộ nhớ Spring Security
+        entityManager.createNativeQuery("DELETE FROM THEO_DOI_ONLINE WHERE SESSION_ID = :sid").setParameter("sid", sessionId).executeUpdate();
         List<Object> principals = sessionRegistry.getAllPrincipals();
         for (Object principal : principals) {
             if (principal instanceof User) {
                 List<SessionInformation> sessions = sessionRegistry.getAllSessions(principal, false);
                 for (SessionInformation sessionInfo : sessions) {
-                    if (sessionInfo.getSessionId().equals(sessionId)) {
-                        sessionInfo.expireNow(); // Đánh dấu hết hạn để logout user
-                    }
+                    if (sessionInfo.getSessionId().equals(sessionId)) sessionInfo.expireNow(); 
                 }
             }
         }
-        
-        // 3. Ghi log
-        try {
-            TaiKhoan admin = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
-            nhatKyService.logAction(admin, "KICK_USER", "SESSION", 0, "Đã ngắt kết nối session: " + sessionId);
-        } catch (Exception e) {}
     }
 
     @Transactional
     public void backupData() {
         try {
-            // Gọi thủ tục Backup Data Pump "Thật"
-            entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_BACKUP_DATABASE; END;").executeUpdate();
+            TaiKhoan admin = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
+            Integer adminId = (admin != null) ? admin.getId() : 1; 
+            entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_BACKUP_DATABASE(:uid); END;")
+                    .setParameter("uid", adminId).executeUpdate();
         } catch (Exception e) { 
-            throw new RuntimeException("Lỗi gọi thủ tục backup DB: " + e.getMessage()); 
+            throw new RuntimeException("Lỗi backup: " + e.getMessage()); 
         }
     }
 
@@ -165,15 +139,22 @@ public class AdminService {
         } catch (Exception e) { return "{\"error\": \"" + e.getMessage() + "\"}"; }
     }
     
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void restoreData(Integer minutes) {
-        // Gọi thủ tục Flashback Table
-        entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;")
-                .setParameter("minutes", minutes)
-                .executeUpdate();
-        
-        // QUAN TRỌNG: Xóa Cache Hibernate để dữ liệu cũ không còn hiển thị
-        entityManager.clear(); 
-        entityManager.getEntityManagerFactory().getCache().evictAll();
+        try {
+            // Tự quản lý Transaction
+            entityManager.getTransaction().begin();
+            entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;")
+                    .setParameter("minutes", minutes)
+                    .executeUpdate();
+            entityManager.getTransaction().commit();
+            
+            // Xóa cache
+            entityManager.clear(); 
+            entityManager.getEntityManagerFactory().getCache().evictAll();
+        } catch (Exception e) {
+            if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();
+            throw new RuntimeException("Lỗi khôi phục (DB): " + e.getMessage());
+        }
     }
 }

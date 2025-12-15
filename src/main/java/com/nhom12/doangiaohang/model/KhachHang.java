@@ -30,11 +30,9 @@ public class KhachHang {
     @JoinColumn(name = "ID_TAI_KHOAN", nullable = false, unique = true)
     private TaiKhoan taiKhoan;
 
-    // GỠ BỎ VALIDATION
     @Column(name = "HO_TEN", nullable = false)
     private String hoTen;
 
-    // GỠ BỎ VALIDATION
     @Column(name = "EMAIL", unique = true)
     private String email;
 

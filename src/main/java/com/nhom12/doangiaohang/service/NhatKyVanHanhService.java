@@ -31,7 +31,6 @@ public class NhatKyVanHanhService {
 
     @Transactional
     public void logAction(TaiKhoan taiKhoanThucHien, String hanhDong, String doiTuongBiAnhHuong, Integer idDoiTuong, String moTaChiTiet) {
-        // Hàm này dùng cho các log thường (không qua RSA trigger)
         NhatKyVanHanh log = new NhatKyVanHanh();
         log.setTaiKhoanThucHien(taiKhoanThucHien);
         log.setHanhDong(hanhDong);
@@ -43,7 +42,6 @@ public class NhatKyVanHanhService {
         nhatKyVanHanhRepository.save(log);
     }
     
-    // --- LOGIC QUAN TRỌNG: Đọc và Giải mã RSA (SV3) ---
     public List<NhatKyVanHanh> findNhatKy(String tenDangNhap, String hanhDong, Date tuNgay, Date denNgay) {
         List<NhatKyVanHanh> logs = nhatKyVanHanhRepository.findAll(Specification.where((root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -73,9 +71,9 @@ public class NhatKyVanHanhService {
                 String myPrivateKey = encryptionUtil.decrypt(myAccount.getPrivateKey());
                 
                 for (NhatKyVanHanh log : logs) {
-                    // Chỉ giải mã nếu log đó được mã hóa bởi Trigger (dấu hiệu nhận biết tùy chọn, hoặc thử giải mã hết)
+                    // Chỉ giải mã nếu log đó được mã hóa bởi Trigger 
                     // Ở đây ta thử giải mã tất cả, nếu lỗi thì giữ nguyên text gốc
-                    if (log.getMoTaChiTiet() != null && log.getMoTaChiTiet().length() > 50) { // Base64 thường dài
+                    if (log.getMoTaChiTiet() != null && log.getMoTaChiTiet().length() > 50) { 
                         String decryptedContent = rsaUtil.decrypt(log.getMoTaChiTiet(), myPrivateKey);
                         log.setMoTaChiTiet(decryptedContent);
                     }

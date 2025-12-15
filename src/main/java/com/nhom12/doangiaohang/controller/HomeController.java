@@ -33,6 +33,6 @@ public class HomeController {
     // Trang truy cập bị từ chối (Lỗi 403)
     @GetMapping("/access-denied")
     public String accessDenied() {
-        return "access-denied"; // Bạn cần tạo file templates/access-denied.html
+        return "access-denied"; 
     }
 }

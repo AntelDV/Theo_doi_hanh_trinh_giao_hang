@@ -9,6 +9,5 @@ import java.util.Optional;
 @Repository
 public interface ThanhToanRepository extends JpaRepository<ThanhToan, Integer> {
     
-    // Tự động tìm bản ghi ThanhToan dựa trên ID của DonHang
     Optional<ThanhToan> findByDonHang_IdDonHang(Integer idDonHang);
 }

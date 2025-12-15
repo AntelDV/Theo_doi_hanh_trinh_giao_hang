@@ -6,7 +6,7 @@
     --secondary: #858796; --success: #1cc88a;
     --info: #36b9cc; --warning: #f6c23e; --danger: #e74a3b;
     --light: #f8f9fc; --dark: #5a5c69; --white: #fff; --border: #e3e6f0;
-    --mz-green: #28a745; /* Màu xanh lá thương hiệu */
+    --mz-green: #28a745; 
     --mz-bg: #f0f2f5;
     --sidebar-width: 250px;
 }
@@ -116,10 +116,10 @@ a:hover { color: var(--primary-dark); }
 .timeline-status { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 5px; }
 .timeline-content { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #f0f0f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
-/* ---- TIMELINE STYLE MEMORYZONE (Dành cho Tra cứu công khai) ---- */
+/* ---- TIMELINE   ---- */
 /* Điều chỉnh độ rộng container cho Web */
 .mz-container { 
-    max-width: 1100px; /* Rộng hơn cho PC */
+    max-width: 1100px; 
     margin: 3rem auto; 
     padding: 0 15px;
     font-family: 'Be Vietnam Pro', sans-serif; 
@@ -134,7 +134,7 @@ a:hover { color: var(--primary-dark); }
     padding: 2rem; 
     margin-bottom: 1.5rem; 
     border: 1px solid #eee;
-    height: 100%; /* Để 2 cột bằng nhau */
+    height: 100%; 
 }
 
 .mz-label { font-size: 0.85rem; color: #888; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.5px; }

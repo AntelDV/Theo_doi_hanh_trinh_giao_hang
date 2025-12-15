@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class DangKyForm {
     
-    // Thuộc tính của KHACH_HANG
     @NotBlank(message = "Họ tên không được để trống")
     private String hoTen;
 
@@ -19,7 +18,6 @@ public class DangKyForm {
     @NotBlank(message = "Số điện thoại không được để trống")
     private String soDienThoai;
     
-    // Thuộc tính của TAI_KHOAN
     @NotBlank(message = "Tên đăng nhập không được để trống")
     @Size(min = 3, max = 50, message = "Tên đăng nhập phải có từ 3 đến 50 ký tự")
     private String tenDangNhap;

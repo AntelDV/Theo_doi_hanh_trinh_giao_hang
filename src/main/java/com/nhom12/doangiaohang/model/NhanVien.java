@@ -30,7 +30,7 @@ public class NhanVien {
     @Column(name = "MA_NV", nullable = false, unique = true)
     private String maNV;
 
-    // --- MÃ HÓA MỨC ỨNG DỤNG (JAVA) ---
+    // --- MÃ HÓA MỨC ỨNG DỤNG  ---
     // Java sẽ mã hóa HoTen và SĐT trước khi lưu vào đây
     @Column(name = "HO_TEN", nullable = false)
     private String hoTen;
@@ -40,10 +40,7 @@ public class NhanVien {
 
     // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
     
-    /**
-     * Cột vật lý: EMAIL (Kiểu RAW)
-     * Java ghi byte[] plaintext vào đây, Trigger sẽ bắt và mã hóa.
-     */
+     // Java ghi byte[] plaintext vào đây, Trigger sẽ bắt và mã hóa.
     @Column(name = "EMAIL", unique = true)
     private byte[] emailRaw;
 
@@ -53,9 +50,7 @@ public class NhanVien {
     @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(EMAIL))")
     private String email;
 
-    /**
-     * Setter đặc biệt: Chuyển String Email thành byte[] để gửi xuống DB.
-     */
+   
     public void setEmail(String email) {
         this.email = email;
         if (email != null) {
@@ -69,7 +64,6 @@ public class NhanVien {
         return email;
     }
 
-    // ---------------------------------
 
     @Column(name = "NGAY_VAO_LAM")
     @Temporal(TemporalType.DATE)

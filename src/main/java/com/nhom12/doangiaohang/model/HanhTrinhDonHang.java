@@ -45,15 +45,13 @@ public class HanhTrinhDonHang {
     @Lob
     private String chKySo;
     
-    // === TUẦN 7 (SV2): MÃ HÓA LAI - BÁO CÁO SỰ CỐ ===
     @Column(name = "CHI_TIET_SU_CO", columnDefinition = "CLOB")
     @Lob
-    private String chiTietSuCo; // Dữ liệu
+    private String chiTietSuCo; 
 
     @Column(name = "MA_KHOA_SU_CO", columnDefinition = "CLOB")
     @Lob
-    private String maKhoaSuCo; // Khóa
-    // ================================================
+    private String maKhoaSuCo; 
 
     @Column(name = "THOI_GIAN_CAP_NHAT", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Temporal(TemporalType.TIMESTAMP)

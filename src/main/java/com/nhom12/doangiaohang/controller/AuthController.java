@@ -21,9 +21,7 @@ public class AuthController {
     @Autowired
     private TaiKhoanService taiKhoanService;
 
-    // ============================================================
-    // 1. ĐĂNG KÝ KHÁCH HÀNG
-    // ============================================================
+    
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         if (!model.containsAttribute("dangKyForm")) {
@@ -50,17 +48,14 @@ public class AuthController {
         }
     }
 
-    // ============================================================
-    // 2. ĐĂNG NHẬP
+    
     // ============================================================
     @GetMapping("/login")
     public String showLoginForm() {
         return "login";
     }
 
-    // ============================================================
-    // 3. ĐĂNG KÝ NHÂN VIÊN (Trang Admin ẩn)
-    // ============================================================
+
     @GetMapping("/register-admin")
     public String showRegisterAdminForm(Model model) {
         if (!model.containsAttribute("nhanVienForm")) {
@@ -87,17 +82,12 @@ public class AuthController {
         }
     }
 
-    // ============================================================
-    // 4. QUÊN MẬT KHẨU (MỚI THÊM)
-    // ============================================================
-
-    // Bước 1: Hiển thị form nhập Username
+    
     @GetMapping("/forgot-password")
     public String showForgotPasswordForm() {
         return "forgot-password";
     }
 
-    // Bước 2: Xử lý gửi mã (Giả lập in ra Console)
     @PostMapping("/forgot-password")
     public String processForgotPassword(@RequestParam("username") String username, Model model) {
         try {
@@ -110,14 +100,13 @@ public class AuthController {
         }
     }
 
-    // Bước 3: Hiển thị form nhập Token và Mật khẩu mới
+    // Hiển thị form nhập Token và Mật khẩu mới
     @GetMapping("/reset-password")
     public String showResetPasswordForm(@RequestParam(value = "username", required = false) String username, Model model) {
         model.addAttribute("username", username);
         return "reset-password";
     }
 
-    // Bước 4: Xử lý đổi mật khẩu
     @PostMapping("/reset-password")
     public String processResetPassword(@RequestParam("token") String token,
                                        @RequestParam("password") String password,

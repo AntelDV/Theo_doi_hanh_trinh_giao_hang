@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. Dropdown User
+    // Dropdown User
     const userInfo = document.getElementById('userInfoDropdown');
     if (userInfo) {
         userInfo.addEventListener('click', function(e) {
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         menus.forEach(m => m.classList.remove('show'));
     });
 
-    // 2. Xử lý đóng Modal (Nút X hoặc nút Hủy)
+    // Xử lý đóng Modal (Nút X hoặc nút Hủy)
     const closeButtons = document.querySelectorAll('.close, .btn-secondary[data-dismiss="modal"]');
     closeButtons.forEach(btn => {
         btn.addEventListener('click', function() {

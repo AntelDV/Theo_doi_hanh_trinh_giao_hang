@@ -11,10 +11,6 @@
                     <h1 class="page-header mb-0"><i class="fas fa-history text-primary"></i> Nhật ký Toàn Hệ thống</h1>
                 </div>
 
-                <div class="alert alert-info shadow-sm">
-                    <i class="fas fa-sync"></i> Dữ liệu được tổng hợp
-                </div>
-
                 <div class="card shadow">
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -22,22 +18,16 @@
                                 <thead class="thead-dark">
                                     <tr>
                                         <th>Thời gian</th>
-                                        <th>Nguồn</th>
                                         <th>Người dùng</th>
                                         <th>Hành động</th>
                                         <th>Chi tiết</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:if="${#lists.isEmpty(systemLogs)}"><td colspan="5" class="text-center p-4 text-muted">Chưa có dữ liệu nhật ký.</td></tr>
+                                    <tr th:if="${#lists.isEmpty(systemLogs)}"><td colspan="4" class="text-center p-4 text-muted">Chưa có dữ liệu nhật ký.</td></tr>
                                     
                                     <tr th:each="log : ${systemLogs}">
                                         <td th:text="${#dates.format(log.thoiGian, 'dd/MM/yyyy HH:mm:ss')}" style="font-size: 0.9rem; width: 160px;"></td>
-                                        
-                                        <td class="font-weight-bold" style="width: 100px;">
-                                            <span th:if="${log.nguon == 'WEB APP'}" class="text-primary">WEB</span>
-                                            <span th:if="${log.nguon == 'ORACLE DB'}" class="text-danger">DB AUDIT</span>
-                                        </td>
                                         
                                         <td th:text="${log.user}" style="font-weight: 500;"></td>
                                         

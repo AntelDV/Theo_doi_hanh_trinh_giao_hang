@@ -33,7 +33,6 @@ public class NhatKyVanHanh {
     @Column(name = "ID_DOI_TUONG")
     private Integer idDoiTuong;
 
-    // Cột này chứa dữ liệu MÃ HÓA RSA từ Trigger
     @Column(name = "MO_TA_CHI_TIET", length = 4000) 
     private String moTaChiTiet;
 

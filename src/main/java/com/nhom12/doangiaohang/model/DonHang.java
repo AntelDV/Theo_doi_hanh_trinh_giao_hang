@@ -74,15 +74,13 @@ public class DonHang {
     @Lob
     private String chKyKhachHang;
     
-    // === TUẦN 7 (SV3): MÃ HÓA LAI - MÔ TẢ HÀNG HÓA ===
     @Column(name = "MO_TA_HANG_HOA", columnDefinition = "CLOB")
     @Lob
-    private String moTaHangHoa; // Dữ liệu
+    private String moTaHangHoa; 
 
     @Column(name = "MA_KHOA_HANG_HOA", columnDefinition = "CLOB")
     @Lob
-    private String maKhoaHangHoa; // Khóa
-    // =================================================
+    private String maKhoaHangHoa; 
 
     @OneToMany(mappedBy = "donHang", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderBy("thoiGianCapNhat DESC")

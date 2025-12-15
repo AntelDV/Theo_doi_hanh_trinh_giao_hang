@@ -37,24 +37,19 @@ public class ThongBaoService {
         TaiKhoan nguoiNhan = taiKhoanRepository.findByTenDangNhap(usernameNguoiNhan)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận"));
 
-        if (nguoiNhan.getPublicKey() == null) throw new IllegalArgumentException("Người nhận chưa có Key RSA.");
-        if (nguoiGui.getPublicKey() == null) throw new IllegalArgumentException("Bạn chưa có Key RSA.");
+        if (nguoiNhan.getPublicKey() == null || nguoiGui.getPublicKey() == null) 
+            throw new IllegalArgumentException("Chưa có Key RSA.");
 
         try {
-            // Logic Mã hóa khóa phiên (AES + RSA)
             SecretKey sessionKey = encryptionUtil.generateSessionKey();
             String sessionKeyStr = encryptionUtil.keyToString(sessionKey);
-            
             String encryptedContent = encryptionUtil.encryptAES(noiDung, sessionKey);
             String encryptedKeyForReceiver = rsaUtil.encrypt(sessionKeyStr, nguoiNhan.getPublicKey());
             String encryptedKeyForSender = rsaUtil.encrypt(sessionKeyStr, nguoiGui.getPublicKey());
 
-            // LOGIC OLS: XÁC ĐỊNH NHÃN BẢO MẬT
-            // Quản lý (ID 1) -> Tin MẬT (CONF)
-            // Shipper (ID 2) -> Tin CÔNG KHAI (PUB)
-            String labelName = (nguoiGui.getVaiTro().getIdVaiTro() == 1) ? "CONF" : "PUB";
+            
+            String labelName = (nguoiNhan.getVaiTro().getIdVaiTro() == 1) ? "CONF" : "PUB";
 
-            // Dùng Native Query để ép nhãn OLS_LABEL vào câu Insert
             String sql = "INSERT INTO THONG_BAO_MAT " +
                          "(ID_THONG_BAO, ID_NGUOI_GUI, ID_NGUOI_NHAN, NOI_DUNG_MA_HOA, MA_KHOA_PHIEN, MA_KHOA_PHIEN_GUI, NGAY_TAO, OLS_LABEL) " +
                          "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP, CHAR_TO_LABEL('OLS_THONGBAO_POL', :label))";
@@ -68,7 +63,6 @@ public class ThongBaoService {
                     .setParameter("label", labelName) 
                     .executeUpdate();
             
-            // Ghi Log (Trigger DB cũng sẽ bắt nhưng ghi thêm ở App cho chắc)
             nhatKyService.logAction(nguoiGui, "GUI_THONG_BAO_MAT", "THONG_BAO_MAT", 0, "Đã gửi tin nhắn cho " + usernameNguoiNhan);
 
         } catch (Exception e) {
@@ -76,11 +70,9 @@ public class ThongBaoService {
         }
     }
 
-    
     public List<ThongBaoMat> getThongBaoCuaToi(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiNhanNative(toi.getId());
-        
         decryptList(list, toi, true);
         return list;
     }
@@ -88,7 +80,6 @@ public class ThongBaoService {
     public List<ThongBaoMat> getThongBaoDaGui(Authentication auth) {
         TaiKhoan toi = userHelper.getTaiKhoanHienTai(auth);        
         List<ThongBaoMat> list = thongBaoRepository.findByNguoiGuiNative(toi.getId());
-        
         decryptList(list, toi, false);
         return list;
     }
@@ -101,17 +92,15 @@ public class ThongBaoService {
                 try {
                     String encryptedKey = isInbox ? tb.getMaKhoaPhien() : tb.getMaKhoaPhienGui();
                     if (encryptedKey == null) {
-                        tb.setNoiDung("[Không thể giải mã - Thiếu khóa]");
-                        continue;
+                        tb.setNoiDung("[Lỗi khóa]"); continue;
                     }
                     String sessionKeyStr = rsaUtil.decrypt(encryptedKey, myPrivKey);
                     SecretKey key = encryptionUtil.stringToKey(sessionKeyStr);
-                    String plainText = encryptionUtil.decryptAES(tb.getNoiDung(), key);
-                    tb.setNoiDung(plainText);
+                    tb.setNoiDung(encryptionUtil.decryptAES(tb.getNoiDung(), key));
                 } catch (Exception e) {
                     tb.setNoiDung("[Nội dung được bảo mật]");
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { }
     }
 }
