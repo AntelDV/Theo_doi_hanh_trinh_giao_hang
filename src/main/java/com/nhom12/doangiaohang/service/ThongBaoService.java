@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 import java.util.List;
+
 @Service
 public class ThongBaoService {
 
@@ -24,8 +25,7 @@ public class ThongBaoService {
     @Autowired private EncryptionUtil encryptionUtil;
     @Autowired private RSAUtil rsaUtil;
     @Autowired private NhatKyVanHanhService nhatKyService; 
-    @PersistenceContext 
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
     
     public List<TaiKhoan> getDanhSachNguoiNhan(Authentication auth) {
         return taiKhoanRepository.findNguoiNhanKhaDung(auth.getName());
@@ -41,20 +41,23 @@ public class ThongBaoService {
         if (nguoiGui.getPublicKey() == null) throw new IllegalArgumentException("Bạn chưa có Key RSA.");
 
         try {
-            // Mã hóa (Giữ nguyên logic mã hóa kép)
+            // Logic Mã hóa khóa phiên (AES + RSA)
             SecretKey sessionKey = encryptionUtil.generateSessionKey();
             String sessionKeyStr = encryptionUtil.keyToString(sessionKey);
+            
             String encryptedContent = encryptionUtil.encryptAES(noiDung, sessionKey);
             String encryptedKeyForReceiver = rsaUtil.encrypt(sessionKeyStr, nguoiNhan.getPublicKey());
             String encryptedKeyForSender = rsaUtil.encrypt(sessionKeyStr, nguoiGui.getPublicKey());
 
-            // THAY ĐỔI QUAN TRỌNG: Dùng Native Query để Insert và ÉP OLS LABEL
-            // Chú ý: Cột OLS_LABEL (tên cột tùy bạn đặt trong SQL policy, thường là OLS_LABEL hoặc ROW_LABEL)
-            // Giả sử tên cột chính sách là OLS_LABEL (do Policy tên OLS_THONGBAO_POL)
-            
+            // LOGIC OLS: XÁC ĐỊNH NHÃN BẢO MẬT
+            // Quản lý (ID 1) -> Tin MẬT (CONF)
+            // Shipper (ID 2) -> Tin CÔNG KHAI (PUB)
+            String labelName = (nguoiGui.getVaiTro().getIdVaiTro() == 1) ? "CONF" : "PUB";
+
+            // Dùng Native Query để ép nhãn OLS_LABEL vào câu Insert
             String sql = "INSERT INTO THONG_BAO_MAT " +
                          "(ID_THONG_BAO, ID_NGUOI_GUI, ID_NGUOI_NHAN, NOI_DUNG_MA_HOA, MA_KHOA_PHIEN, MA_KHOA_PHIEN_GUI, NGAY_TAO, OLS_LABEL) " +
-                         "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP, CHAR_TO_LABEL('OLS_THONGBAO_POL', 'PUB'))";
+                         "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP, CHAR_TO_LABEL('OLS_THONGBAO_POL', :label))";
 
             entityManager.createNativeQuery(sql)
                     .setParameter("gui", nguoiGui.getId())
@@ -62,9 +65,10 @@ public class ThongBaoService {
                     .setParameter("noidung", encryptedContent)
                     .setParameter("khoaNhan", encryptedKeyForReceiver)
                     .setParameter("khoaGui", encryptedKeyForSender)
+                    .setParameter("label", labelName) 
                     .executeUpdate();
             
-            // Ghi Log
+            // Ghi Log (Trigger DB cũng sẽ bắt nhưng ghi thêm ở App cho chắc)
             nhatKyService.logAction(nguoiGui, "GUI_THONG_BAO_MAT", "THONG_BAO_MAT", 0, "Đã gửi tin nhắn cho " + usernameNguoiNhan);
 
         } catch (Exception e) {

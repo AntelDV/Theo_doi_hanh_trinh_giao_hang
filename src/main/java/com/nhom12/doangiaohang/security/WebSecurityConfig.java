@@ -17,24 +17,17 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 public class WebSecurityConfig {
 
     @Autowired private CustomLoginSuccessHandler loginSuccessHandler;
+    @Autowired private CustomLoginFailureHandler loginFailureHandler; // Autowired cái mới
     @Autowired private CustomLogoutHandler logoutHandler;
     
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
-    // Bean quan trọng để theo dõi Session
     @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }
+    public SessionRegistry sessionRegistry() { return new SessionRegistryImpl(); }
 
-    // Bean để lắng nghe sự kiện tạo/hủy session
     @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
-    }
+    public HttpSessionEventPublisher httpSessionEventPublisher() { return new HttpSessionEventPublisher(); }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,6 +42,7 @@ public class WebSecurityConfig {
             .formLogin((form) -> form
                 .loginPage("/login")
                 .successHandler(loginSuccessHandler)
+                .failureHandler(loginFailureHandler) 
                 .permitAll()
             )
             .logout((logout) -> logout
@@ -56,14 +50,11 @@ public class WebSecurityConfig {
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
             )
-            // Cấu hình quản lý Session tối đa 
             .sessionManagement(session -> session
                 .maximumSessions(10) 
                 .sessionRegistry(sessionRegistry()) 
             )
-            .exceptionHandling((exceptions) -> exceptions
-                .accessDeniedPage("/access-denied")
-            );
+            .exceptionHandling((exceptions) -> exceptions.accessDeniedPage("/access-denied"));
 
         return http.build();
     }

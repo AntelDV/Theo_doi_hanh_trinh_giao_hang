@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional; 
 
 @Service
 public class DiaChiService {
@@ -19,26 +18,22 @@ public class DiaChiService {
     @Autowired private CustomUserHelper userHelper; 
     @Autowired private EncryptionUtil encryptionUtil;
 
-    // --- HÀM TIỆN ÍCH GIẢI MÃ ---
-    
     private void decryptDiaChi(DiaChi dc) {
         if (dc != null) {
             try {
-                // Giải mã Số nhà đường (App Level)
+                // Giải mã Số nhà (App Level)
                 dc.setSoNhaDuong(encryptionUtil.decrypt(dc.getSoNhaDuong()));
-                // Quận huyện (DB Level) đã được @Formula tự giải mã
+                // Quận huyện (DB Level) đã được @Formula tự giải mã vào tenQuanHuyen
             } catch (Exception e) {
                 dc.setSoNhaDuong("[Lỗi hiển thị]");
             }
         }
     }
 
-    // --- CÁC HÀM READ (Cần giải mã) ---
-
     public List<DiaChi> getDiaChiByCurrentUser(Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
         List<DiaChi> list = diaChiRepository.findByKhachHangSoHuu_Id(kh.getId());
-        list.forEach(this::decryptDiaChi); // Giải mã để hiển thị lên web
+        list.forEach(this::decryptDiaChi); 
         return list;
     }
 
@@ -51,25 +46,22 @@ public class DiaChiService {
     
     public DiaChi findByIdAndCheckOwnership(Integer idDiaChi, Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
-        DiaChi diaChi = findById(idDiaChi); // Hàm này đã gọi decrypt rồi
+        DiaChi diaChi = findById(idDiaChi); 
         if (!diaChi.getKhachHangSoHuu().getId().equals(kh.getId())) {
             throw new SecurityException("Bạn không có quyền thao tác trên địa chỉ này.");
         }
         return diaChi;
     }
     
-    // --- CÁC HÀM WRITE (Cần mã hóa) ---
-    
     @Transactional
     public void themDiaChiMoi(DiaChi diaChi, Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
         diaChi.setKhachHangSoHuu(kh); 
         
-        // 1. Mã hóa App (Số nhà đường)
+        // 1. Mã hóa App (Số nhà)
         diaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChi.getSoNhaDuong()));
         
-        // 2. Mã hóa DB (Quận huyện)
-        // Để nguyên, Trigger trg_encrypt_quanhuyen_diachi sẽ lo.
+        // 2. Quận huyện: Set vào tenQuanHuyen -> Model chuyển thành quanHuyenRaw -> DB Trigger mã hóa
         
         if (diaChi.isLaMacDinh()) {
             unsetDefaultOtherAddresses(authentication, null); 
@@ -80,10 +72,6 @@ public class DiaChiService {
     
     @Transactional
     public void capNhatDiaChi(DiaChi diaChiForm, Authentication authentication) {
-        // Lấy địa chỉ cũ từ DB (đang ở dạng mã hóa trong DB)
-        // Lưu ý: Không dùng findByIdAndCheckOwnership ở đây vì nó sẽ giải mã -> gây lỗi Hibernate update ngược
-        // Ta query trực tiếp và kiểm tra quyền thủ công
-        
         DiaChi existingDiaChi = diaChiRepository.findById(diaChiForm.getIdDiaChi())
                  .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy địa chỉ."));
         
@@ -92,12 +80,10 @@ public class DiaChiService {
              throw new SecurityException("Không có quyền.");
         }
         
-        // Cập nhật thông tin mới
-        // 1. Mã hóa App: Số nhà đường
         existingDiaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChiForm.getSoNhaDuong()));
         
-        // 2. Mã hóa DB: Quận huyện (Gửi plaintext xuống)
-        existingDiaChi.setQuanHuyen(diaChiForm.getQuanHuyen());
+        // Cập nhật Quận Huyện
+        existingDiaChi.setTenQuanHuyen(diaChiForm.getTenQuanHuyen());
         
         existingDiaChi.setPhuongXa(diaChiForm.getPhuongXa());
         existingDiaChi.setTinhTp(diaChiForm.getTinhTp());
@@ -106,7 +92,6 @@ public class DiaChiService {
             unsetDefaultOtherAddresses(authentication, existingDiaChi.getIdDiaChi());
             existingDiaChi.setLaMacDinh(true);
         } else if (!diaChiForm.isLaMacDinh() && existingDiaChi.isLaMacDinh()) {
-             // Logic kiểm tra số lượng địa chỉ mặc định
              long defaultCount = diaChiRepository.findByKhachHangSoHuu_Id(kh.getId())
                      .stream().filter(DiaChi::isLaMacDinh).count();
              if (defaultCount <= 1) { 
@@ -117,31 +102,22 @@ public class DiaChiService {
 
         diaChiRepository.save(existingDiaChi);
     }
-    
-    // --- CÁC HÀM KHÁC (Giữ nguyên) ---
 
     @Transactional
     public void xoaDiaChi(Integer idDiaChi, Authentication authentication) {
-        // Logic xóa cần cẩn thận, lấy list lên check phải giải mã hoặc check trên raw data
-        // Để đơn giản, ta cứ lấy lên check quyền rồi xóa
         DiaChi diaChi = findByIdAndCheckOwnership(idDiaChi, authentication);
-        
         if (diaChi.isLaMacDinh()) {
             List<DiaChi> list = getDiaChiByCurrentUser(authentication);
             if (list.size() <= 1) {
                 throw new IllegalStateException("Không thể xóa địa chỉ mặc định duy nhất.");
             }
-            // Tìm cái khác làm mặc định (Logic này hơi phức tạp khi đã mã hóa, tạm thời bỏ qua bước auto-assign)
         }
-        
         diaChiRepository.delete(diaChi);
     }
     
     @Transactional
     public void datLamMacDinh(Integer idDiaChi, Authentication authentication) {
         DiaChi diaChi = diaChiRepository.findById(idDiaChi).orElseThrow();
-        // Check quyền...
-        
         if (!diaChi.isLaMacDinh()) {
             unsetDefaultOtherAddresses(authentication, idDiaChi);
             diaChi.setLaMacDinh(true);

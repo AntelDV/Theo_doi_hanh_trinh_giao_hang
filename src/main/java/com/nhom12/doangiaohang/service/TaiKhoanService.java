@@ -38,7 +38,6 @@ public class TaiKhoanService {
     @Autowired private NhatKyVanHanhService nhatKyService;
     @Autowired private CustomUserHelper userHelper;
 
-    // --- READ ---
     public KhachHang getDecryptedKhachHang(Integer id) {
          KhachHang kh = khachHangRepository.findById(id).orElse(null);
          if (kh != null) {
@@ -62,7 +61,6 @@ public class TaiKhoanService {
          return nv;
      }
 
-    // --- WRITE ---
     @Transactional
     public void dangKyKhachHang(DangKyForm form) {
         if (taiKhoanRepository.findByTenDangNhap(form.getTenDangNhap()).isPresent()) {
@@ -74,6 +72,7 @@ public class TaiKhoanService {
         taiKhoan.setMatKhau(passwordEncoder.encode(form.getMatKhau()));
         taiKhoan.setTrangThai(true); 
         
+        // SINH KHÓA RSA MỚI (CHUẨN BASE64 CƠ BẢN)
         try {
             KeyPair keyPair = rsaUtil.generateKeyPair();
             taiKhoan.setPublicKey(rsaUtil.keyToString(keyPair.getPublic()));
@@ -155,11 +154,9 @@ public class TaiKhoanService {
         taiKhoan.setTrangThai(true);
         taiKhoanRepository.save(taiKhoan);
         
-        // --- GHI LOG  ---
         ghiLogHeThong("MO_KHOA_TAI_KHOAN", "TAI_KHOAN", idTaiKhoan, "Đã mở khóa tài khoản ID: " + idTaiKhoan);
     }
     
-    // --- HELPER LOG ---
     private void ghiLogHeThong(String hanhDong, String doiTuong, Integer idDoiTuong, String moTa) {
         try {
             TaiKhoan admin = userHelper.getTaiKhoanHienTai(
@@ -173,7 +170,6 @@ public class TaiKhoanService {
         }
     }
     
-    // --- OTHER ---
     @Transactional
     public void processForgotPassword(String username) {
         TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(username)

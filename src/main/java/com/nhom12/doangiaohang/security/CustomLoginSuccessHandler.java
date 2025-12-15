@@ -7,7 +7,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,72 +20,55 @@ import java.util.Collection;
 @Component
 public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
 
-    @Autowired
-    private TaiKhoanRepository taiKhoanRepository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired private TaiKhoanRepository taiKhoanRepository;
+    @PersistenceContext private EntityManager entityManager;
 
     @Override
     @Transactional 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
-        
         String username = authentication.getName();
-        TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(username).orElse(null);
         
-        if (tk != null) {
-            try {
-                // Set Context Oracle
+        try {
+            // 1. GỌI THỦ TỤC RESET SỐ LẦN SAI (DB Logic)
+            entityManager.createNativeQuery("BEGIN CSDL_NHOM12.SP_LOGIN_SUCCESS(:u); END;")
+                    .setParameter("u", username)
+                    .executeUpdate();
+
+            // 2. THIẾT LẬP CONTEXT VPD & OLS (Như cũ)
+            TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(username).orElse(null);
+            if (tk != null) {
                 String dbRole = "KHACHHANG"; 
                 if (tk.getVaiTro().getIdVaiTro() == 1) dbRole = "QUANLY";
                 else if (tk.getVaiTro().getIdVaiTro() == 2) dbRole = "SHIPPER";
 
-                String sqlCtx = "BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;";
-                entityManager.createNativeQuery(sqlCtx)
+                entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;")
                         .setParameter("uid", tk.getId())
                         .setParameter("uname", username)
                         .setParameter("urole", dbRole)
                         .executeUpdate();
 
-                //  Ghi nhận User Online vào bảng riêng 
-                HttpSession session = request.getSession();
-                String sessionId = session.getId();
-                String ip = request.getRemoteAddr();
-                
+                // 3. Ghi Session Online
                 String sqlOnline = "MERGE INTO THEO_DOI_ONLINE t USING DUAL ON (t.USERNAME = :u) " +
                                    "WHEN MATCHED THEN UPDATE SET SESSION_ID = :sid, THOI_GIAN_LOGIN = CURRENT_TIMESTAMP, IP_ADDRESS = :ip " +
                                    "WHEN NOT MATCHED THEN INSERT (SESSION_ID, USERNAME, HO_TEN, IP_ADDRESS) VALUES (:sid, :u, :name, :ip)";
-                
                 entityManager.createNativeQuery(sqlOnline)
-                        .setParameter("sid", sessionId)
+                        .setParameter("sid", request.getSession().getId())
                         .setParameter("u", username)
-                        .setParameter("name", username) 
-                        .setParameter("ip", ip)
+                        .setParameter("name", username)
+                        .setParameter("ip", request.getRemoteAddr())
                         .executeUpdate();
-
-                System.out.println(">> [LOGIN SUCCESS] User: " + username + " | Session: " + sessionId);
-
-            } catch (Exception e) {
-                System.err.println(">> [ERROR] Lỗi thiết lập Context/Online: " + e.getMessage());
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            System.err.println("Lỗi Login Handler: " + e.getMessage());
         }
 
-        // Chuyển hướng trang
+        // Redirect
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        for (GrantedAuthority grantedAuthority : authorities) {
-            String authorityName = grantedAuthority.getAuthority();
-            if (authorityName.equals("ROLE_QUANLY")) {
-                response.sendRedirect("/quan-ly/dashboard");
-                return;
-            } else if (authorityName.equals("ROLE_SHIPPER")) {
-                response.sendRedirect("/shipper/dashboard");
-                return;
-            } else if (authorityName.equals("ROLE_KHACHHANG")) {
-                response.sendRedirect("/khach-hang/dashboard");
-                return;
-            }
+        for (GrantedAuthority authority : authorities) {
+            if (authority.getAuthority().equals("ROLE_QUANLY")) { response.sendRedirect("/quan-ly/dashboard"); return; }
+            if (authority.getAuthority().equals("ROLE_SHIPPER")) { response.sendRedirect("/shipper/dashboard"); return; }
+            if (authority.getAuthority().equals("ROLE_KHACHHANG")) { response.sendRedirect("/khach-hang/dashboard"); return; }
         }
         response.sendRedirect("/");
     }

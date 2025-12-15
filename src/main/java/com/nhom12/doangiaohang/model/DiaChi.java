@@ -10,7 +10,6 @@ import org.hibernate.annotations.Formula;
 import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-
 @Data
 @Entity
 @Table(name = "DIA_CHI")
@@ -39,29 +38,37 @@ public class DiaChi {
 
     // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
     
-    /**
-     * Cột vật lý: QUAN_HUYEN (Kiểu RAW)
-     */
+    // 1. Cột vật lý (RAW): Dùng để lưu trữ (Write)
     @Column(name = "QUAN_HUYEN", nullable = false)
+    @JsonIgnore
     private byte[] quanHuyenRaw;
 
-    /**
-     * Trường ảo: Đọc dữ liệu đã giải mã từ DB lên.
-     */
+    // 2. Trường ảo (String): Dùng để hiển thị (Read)
+    // Đổi tên biến khác với tên cột để tránh xung đột mapping
     @Formula("UTL_I18N.RAW_TO_CHAR(encryption_pkg.decrypt_data(QUAN_HUYEN), 'AL32UTF8')")
-    private String quanHuyen;
+    private String tenQuanHuyen;
 
-    public void setQuanHuyen(String quanHuyen) {
-        this.quanHuyen = quanHuyen;
-        if (quanHuyen != null) {
-            this.quanHuyenRaw = quanHuyen.getBytes(StandardCharsets.UTF_8);
+    // Getter/Setter tùy chỉnh để map giữa String và RAW
+    public void setTenQuanHuyen(String tenQuanHuyen) {
+        this.tenQuanHuyen = tenQuanHuyen;
+        // Chuyển sang byte[] để Hibernate lưu xuống cột QUAN_HUYEN
+        if (tenQuanHuyen != null) {
+            this.quanHuyenRaw = tenQuanHuyen.getBytes(StandardCharsets.UTF_8);
         } else {
             this.quanHuyenRaw = null;
         }
     }
     
+    public String getTenQuanHuyen() {
+        return tenQuanHuyen;
+    }
+
+    // Getter giả để tương thích với code cũ nếu có gọi getQuanHuyen()
     public String getQuanHuyen() {
-        return quanHuyen;
+        return getTenQuanHuyen();
+    }
+    public void setQuanHuyen(String qh) {
+        setTenQuanHuyen(qh);
     }
 
     // ---------------------------------
@@ -73,8 +80,8 @@ public class DiaChi {
     @Column(name = "LA_MAC_DINH", columnDefinition = "NUMBER(1,0) DEFAULT 0")
     private boolean laMacDinh = false;
 
-    // Helper method
     public String getFullAddress() {
-        return soNhaDuong + (phuongXa != null && !phuongXa.isEmpty() ? ", " + phuongXa : "") + ", " + quanHuyen + ", " + tinhTp;
+        String qh = (tenQuanHuyen != null) ? tenQuanHuyen : "[Đang xử lý...]";
+        return soNhaDuong + (phuongXa != null && !phuongXa.isEmpty() ? ", " + phuongXa : "") + ", " + qh + ", " + tinhTp;
     }
 }
