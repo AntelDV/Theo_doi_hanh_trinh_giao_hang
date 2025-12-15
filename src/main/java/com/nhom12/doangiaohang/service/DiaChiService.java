@@ -20,11 +20,11 @@ public class DiaChiService {
     @Autowired private CustomUserHelper userHelper; 
     @Autowired private EncryptionUtil encryptionUtil;
     
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
 
     private void decryptDiaChi(DiaChi dc) {
         if (dc != null) {
+            entityManager.detach(dc);
             try {
                 dc.setSoNhaDuong(encryptionUtil.decrypt(dc.getSoNhaDuong()));
             } catch (Exception e) {
@@ -49,10 +49,11 @@ public class DiaChiService {
     
     public DiaChi findByIdAndCheckOwnership(Integer idDiaChi, Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
-        DiaChi diaChi = findById(idDiaChi); 
+        DiaChi diaChi = diaChiRepository.findById(idDiaChi).orElseThrow(); 
         if (!diaChi.getKhachHangSoHuu().getId().equals(kh.getId())) {
             throw new SecurityException("Bạn không có quyền thao tác trên địa chỉ này.");
         }
+        decryptDiaChi(diaChi); 
         return diaChi;
     }
     
@@ -67,7 +68,6 @@ public class DiaChiService {
         }
         
         DiaChi saved = diaChiRepository.save(diaChi);
-        
         diaChiRepository.flush();
         entityManager.refresh(saved); 
     }
@@ -104,16 +104,18 @@ public class DiaChiService {
         }
 
         DiaChi saved = diaChiRepository.save(existingDiaChi);
-        
         diaChiRepository.flush();
         entityManager.refresh(saved);
     }
 
     @Transactional
     public void xoaDiaChi(Integer idDiaChi, Authentication authentication) {
-        DiaChi diaChi = findByIdAndCheckOwnership(idDiaChi, authentication);
+        DiaChi diaChi = diaChiRepository.findById(idDiaChi).orElseThrow();
+        KhachHang kh = userHelper.getKhachHangHienTai(authentication);
+        if(!diaChi.getKhachHangSoHuu().getId().equals(kh.getId())) throw new SecurityException("No Auth");
+
         if (diaChi.isLaMacDinh()) {
-            List<DiaChi> list = getDiaChiByCurrentUser(authentication);
+            List<DiaChi> list = diaChiRepository.findByKhachHangSoHuu_Id(kh.getId());
             if (list.size() <= 1) {
                 throw new IllegalStateException("Không thể xóa địa chỉ mặc định duy nhất.");
             }

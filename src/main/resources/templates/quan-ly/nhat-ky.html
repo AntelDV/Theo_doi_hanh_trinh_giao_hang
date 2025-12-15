@@ -33,11 +33,13 @@
                                         
                                         <td>
                                             <span class="badge" 
-                                                  th:classappend="${log.nguon == 'WEB APP' ? 'badge-info' : 'badge-warning'}"
+                                                  th:classappend="${#strings.contains(log.styleClass, 'text-danger') ? 'badge-danger' : 'badge-info'}"
                                                   th:text="${log.hanhDong}"></span>
                                         </td>
                                         
-                                        <td class="small text-muted" th:text="${log.chiTiet}"></td>
+                                        <td class="small" 
+                                            th:classappend="${log.styleClass}"
+                                            th:text="${log.chiTiet}"></td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -5,11 +5,14 @@ import com.nhom12.doangiaohang.repository.*;
 import com.nhom12.doangiaohang.utils.EncryptionUtil;
 import com.nhom12.doangiaohang.utils.RSAUtil;
 import com.nhom12.doangiaohang.service.HybridEncryptionService.HybridResult;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.util.Date;
 import java.util.List;
@@ -29,6 +32,8 @@ public class DonHangService {
     @Autowired private EncryptionUtil encryptionUtil;
     @Autowired private RSAUtil rsaUtil;
     @Autowired private HybridEncryptionService hybridService; 
+    
+    @PersistenceContext private EntityManager entityManager;
 
     private String getMyPrivateKey(Authentication authentication) {
         TaiKhoan tk = userHelper.getTaiKhoanHienTai(authentication);
@@ -40,30 +45,51 @@ public class DonHangService {
 
     private void decryptDonHangPII(DonHang donHang) {
         if (donHang != null) {
+            Hibernate.initialize(donHang.getHanhTrinh());
+            Hibernate.initialize(donHang.getThanhToan());
+            Hibernate.initialize(donHang.getDiaChiLayHang());
+            
+            if (donHang.getHanhTrinh() != null) {
+                for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
+                    Hibernate.initialize(ht.getTrangThai());
+                    Hibernate.initialize(ht.getNhanVienThucHien()); 
+                }
+            }
+
+            entityManager.detach(donHang);
+            if (donHang.getDiaChiLayHang() != null) entityManager.detach(donHang.getDiaChiLayHang());
+            if (donHang.getThanhToan() != null) entityManager.detach(donHang.getThanhToan());
+
             try {
                 donHang.setTenNguoiNhan(encryptionUtil.decrypt(donHang.getTenNguoiNhan()));
                 donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(donHang.getDiaChiGiaoHang()));
+                
                 if (donHang.getDiaChiLayHang() != null) {
                     donHang.getDiaChiLayHang().setSoNhaDuong(encryptionUtil.decrypt(donHang.getDiaChiLayHang().getSoNhaDuong()));
                 }
+                
                 if (donHang.getHanhTrinh() != null) {
                     for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
+                        entityManager.detach(ht); 
+                        
                         if (ht.getNhanVienThucHien() != null) {
+                            entityManager.detach(ht.getNhanVienThucHien());
+                            
                             String tenMaHoa = ht.getNhanVienThucHien().getHoTen();
                             ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(tenMaHoa));
                         }
                     }
                 }
-            } catch (Exception e) { }
+            } catch (Exception e) { 
+                System.err.println("Lỗi giải mã đơn hàng: " + e.getMessage());
+            }
         }
     }
 
-    // Hàm phụ trợ tìm Admin động (Thay vì fix cứng ID=1)
     private TaiKhoan findSystemAdmin() {
         return taiKhoanRepository.findAll().stream()
-                .filter(t -> t.getVaiTro().getIdVaiTro() == 1) // 1 = Role Quản lý
-                .findFirst()
-                .orElse(null);
+                .filter(t -> t.getVaiTro().getIdVaiTro() == 1)
+                .findFirst().orElse(null);
     }
 
     @Transactional
@@ -85,7 +111,6 @@ public class DonHangService {
         donHang.setTenNguoiNhan(encryptionUtil.encrypt(tenGoc));
         donHang.setDiaChiGiaoHang(encryptionUtil.encrypt(diaChiGoc));
 
-        // MÃ HÓA LAI (SỬA LỖI: Tìm Admin động)
         if (donHang.getMoTaHangHoa() != null && !donHang.getMoTaHangHoa().trim().isEmpty()) {
             TaiKhoan admin = findSystemAdmin();
             if (admin != null && admin.getPublicKey() != null) {
@@ -149,9 +174,6 @@ public class DonHangService {
              }
         }
 
-        // ... (Logic chuyển trạng thái giữ nguyên) ...
-        // Để ngắn gọn, tôi lược bỏ phần kiểm tra trạng thái hợp lệ ở đây (bạn giữ nguyên code cũ phần này)
-
         TrangThaiDonHang trangThaiMoi = trangThaiDonHangRepository.findById(idTrangThaiMoi)
                 .orElseThrow(() -> new IllegalArgumentException("Trạng thái mới không hợp lệ"));
 
@@ -170,8 +192,6 @@ public class DonHangService {
         String ghiChuFinal = (ghiChu != null) ? ghiChu : "";
         ht.setGhiChuNhanVien(ghiChuFinal);
 
-        // MÃ HÓA LAI BÁO CÁO SỰ CỐ (SỬA LỖI: Tìm Admin động)
-        // Điều kiện: Trạng thái Thất bại (6) hoặc Hoàn kho (8) VÀ Ghi chú dài > 10 ký tự
         if ((idTrangThaiMoi == 6 || idTrangThaiMoi == 8) && ghiChuFinal.length() > 10) {
             TaiKhoan admin = findSystemAdmin();
             if (admin != null) {
@@ -219,7 +239,6 @@ public class DonHangService {
         DonHang dh = donHangRepository.findById(id).orElseThrow();
         decryptDonHangPII(dh); 
         
-        // GIẢI MÃ LAI (SỬA LỖI: Dùng Key của chính Admin đang đăng nhập)
         TaiKhoan currentAdmin = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
         String adminPrivKey = null;
         if (currentAdmin != null && currentAdmin.getPrivateKey() != null) {
@@ -253,7 +272,6 @@ public class DonHangService {
         return dh;
     }
     
-    // ... (Các hàm khác giữ nguyên: getDonHangCuaKhachHangHienTai, getDonHangByMaVanDon, phanCongShipper, huyDonHang...)
     public List<DonHang> getDonHangCuaKhachHangHienTai(Authentication auth) {
         KhachHang kh = userHelper.getKhachHangHienTai(auth);
         List<DonHang> list = donHangRepository.findByKhachHangGui_IdOrderByIdDonHangDesc(kh.getId());
@@ -270,7 +288,7 @@ public class DonHangService {
     public DonHang getDonHangByMaVanDon(String ma) {
         DonHang dh = donHangRepository.findByMaVanDon(ma)
                 .orElseThrow(() -> new IllegalArgumentException("Mã vận đơn không tồn tại"));
-        decryptDonHangPII(dh);
+        decryptDonHangPII(dh); 
         return dh;
     }
 
@@ -279,6 +297,7 @@ public class DonHangService {
         DonHang dh = donHangRepository.findById(idDon).orElseThrow();
         NhanVien ship = nhanVienRepository.findById(idShip).orElseThrow();
         
+        entityManager.detach(ship); 
         String tenShipperRo = ship.getHoTen(); 
         try {
             tenShipperRo = encryptionUtil.decrypt(ship.getHoTen());
