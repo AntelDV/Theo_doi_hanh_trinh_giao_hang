@@ -48,35 +48,39 @@ public class DonHangService {
             Hibernate.initialize(donHang.getHanhTrinh());
             Hibernate.initialize(donHang.getThanhToan());
             Hibernate.initialize(donHang.getDiaChiLayHang());
-            
-            if (donHang.getHanhTrinh() != null) {
-                for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
-                    Hibernate.initialize(ht.getTrangThai());
-                    Hibernate.initialize(ht.getNhanVienThucHien()); 
-                }
-            }
+            Hibernate.initialize(donHang.getKhachHangGui()); 
 
             entityManager.detach(donHang);
             if (donHang.getDiaChiLayHang() != null) entityManager.detach(donHang.getDiaChiLayHang());
             if (donHang.getThanhToan() != null) entityManager.detach(donHang.getThanhToan());
+            if (donHang.getKhachHangGui() != null) entityManager.detach(donHang.getKhachHangGui());
 
             try {
                 donHang.setTenNguoiNhan(encryptionUtil.decrypt(donHang.getTenNguoiNhan()));
                 donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(donHang.getDiaChiGiaoHang()));
                 
-                if (donHang.getDiaChiLayHang() != null) {
-                    donHang.getDiaChiLayHang().setSoNhaDuong(encryptionUtil.decrypt(donHang.getDiaChiLayHang().getSoNhaDuong()));
+                if (donHang.getKhachHangGui() != null) {
+                    try {
+                        String tenKH = donHang.getKhachHangGui().getHoTen();
+                        if (tenKH != null && tenKH.length() > 20) {
+                             donHang.getKhachHangGui().setHoTen(encryptionUtil.decrypt(tenKH));
+                        }
+                    } catch (Exception e) {  }
                 }
-                
+
                 if (donHang.getHanhTrinh() != null) {
                     for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
-                        entityManager.detach(ht); 
+                        Hibernate.initialize(ht.getNhanVienThucHien());
+                        entityManager.detach(ht);
                         
                         if (ht.getNhanVienThucHien() != null) {
                             entityManager.detach(ht.getNhanVienThucHien());
-                            
-                            String tenMaHoa = ht.getNhanVienThucHien().getHoTen();
-                            ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(tenMaHoa));
+                            try {
+                                String tenNV = ht.getNhanVienThucHien().getHoTen();
+                                if (tenNV != null && tenNV.length() > 20) {
+                                    ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(tenNV));
+                                }
+                            } catch (Exception e) {  }
                         }
                     }
                 }

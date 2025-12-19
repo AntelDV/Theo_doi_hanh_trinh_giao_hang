@@ -51,16 +51,15 @@ public class ThongBaoService {
             String labelName = (nguoiNhan.getVaiTro().getIdVaiTro() == 1) ? "CONF" : "PUB";
 
             String sql = "INSERT INTO THONG_BAO_MAT " +
-                         "(ID_THONG_BAO, ID_NGUOI_GUI, ID_NGUOI_NHAN, NOI_DUNG_MA_HOA, MA_KHOA_PHIEN, MA_KHOA_PHIEN_GUI, NGAY_TAO, OLS_LABEL) " +
-                         "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP, CHAR_TO_LABEL('OLS_THONGBAO_POL', :label))";
-
+                    "(ID_THONG_BAO, ID_NGUOI_GUI, ID_NGUOI_NHAN, NOI_DUNG_MA_HOA, MA_KHOA_PHIEN, MA_KHOA_PHIEN_GUI, NGAY_TAO) " +
+                    "VALUES (THONG_BAO_MAT_SEQ.NEXTVAL, :gui, :nhan, :noidung, :khoaNhan, :khoaGui, CURRENT_TIMESTAMP)";
+            
             entityManager.createNativeQuery(sql)
                     .setParameter("gui", nguoiGui.getId())
                     .setParameter("nhan", nguoiNhan.getId())
                     .setParameter("noidung", encryptedContent)
                     .setParameter("khoaNhan", encryptedKeyForReceiver)
                     .setParameter("khoaGui", encryptedKeyForSender)
-                    .setParameter("label", labelName) 
                     .executeUpdate();
             
             nhatKyService.logAction(nguoiGui, "GUI_THONG_BAO_MAT", "THONG_BAO_MAT", 0, "Đã gửi tin nhắn cho " + usernameNguoiNhan);
