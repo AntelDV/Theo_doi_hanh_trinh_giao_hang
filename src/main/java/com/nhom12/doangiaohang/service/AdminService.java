@@ -19,7 +19,6 @@ import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation; // Import quan trọng
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -50,13 +49,20 @@ public class AdminService {
     public List<SystemLogDTO> getUnifiedLogs() {
         List<SystemLogDTO> unifiedList = new ArrayList<>();
         String adminPrivateKey = null;
+        
         try {
             TaiKhoan me = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
-            if(me != null && me.getPrivateKey() != null) 
-                adminPrivateKey = encryptionUtil.decrypt(me.getPrivateKey());
-        } catch (Exception e) {}
+            if(me != null) {
+                if (me.getPrivateKey() == null) {
+                    System.err.println("CẢNH BÁO: Admin ID " + me.getId() + " không có Private Key trong DB. Không thể giải mã log!");
+                } else {
+                    adminPrivateKey = encryptionUtil.decrypt(me.getPrivateKey());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi lấy Key Admin: " + e.getMessage());
+        }
 
-        // APP LOGS
         List<NhatKyVanHanh> appLogs = nhatKyRepository.findAll(Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
         for (NhatKyVanHanh log : appLogs) {
             SystemLogDTO dto = new SystemLogDTO();
@@ -65,15 +71,23 @@ public class AdminService {
             dto.setHanhDong(log.getHanhDong());
             
             String chiTiet = log.getMoTaChiTiet();
+            
             if (chiTiet != null && chiTiet.length() > 50 && adminPrivateKey != null) {
-                try { chiTiet = rsaUtil.decrypt(chiTiet, adminPrivateKey); } catch (Exception e) { }
+                try { 
+                    String decrypted = rsaUtil.decrypt(chiTiet, adminPrivateKey);
+                    if (decrypted != null && !decrypted.equals(chiTiet)) {
+                        chiTiet = decrypted;
+                    }
+                } catch (Exception e) { 
+                    System.err.println("Lỗi giải mã Log ID " + log.getIdHoatDong() + ": " + e.getMessage());
+                }
             }
+            
             dto.setChiTiet(chiTiet);
             dto.setStyleClass("text-primary");
             unifiedList.add(dto);
         }
         
-        // DB AUDIT LOGS
         try {
             Query query = entityManager.createNativeQuery("SELECT THOI_GIAN, USER_DB, HANH_DONG, CHI_TIET FROM V_AUDIT_LOG_FULL FETCH FIRST 50 ROWS ONLY");
             List<Object[]> dbLogs = query.getResultList();
@@ -139,21 +153,16 @@ public class AdminService {
         } catch (Exception e) { return "{\"error\": \"" + e.getMessage() + "\"}"; }
     }
     
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Transactional
     public void restoreData(Integer minutes) {
         try {
-            // Tự quản lý Transaction
-            entityManager.getTransaction().begin();
             entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_FLASHBACK_DATA(:minutes); END;")
                     .setParameter("minutes", minutes)
                     .executeUpdate();
-            entityManager.getTransaction().commit();
             
-            // Xóa cache
             entityManager.clear(); 
             entityManager.getEntityManagerFactory().getCache().evictAll();
         } catch (Exception e) {
-            if (entityManager.getTransaction().isActive()) entityManager.getTransaction().rollback();
             throw new RuntimeException("Lỗi khôi phục (DB): " + e.getMessage());
         }
     }

@@ -7,6 +7,8 @@ import com.nhom12.doangiaohang.repository.KhachHangRepository;
 import com.nhom12.doangiaohang.repository.NhanVienRepository;
 import com.nhom12.doangiaohang.repository.TaiKhoanRepository;
 import com.nhom12.doangiaohang.utils.EncryptionUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ public class CustomUserHelper {
     @Autowired private KhachHangRepository khachHangRepository;
     @Autowired private NhanVienRepository nhanVienRepository;
     @Autowired private EncryptionUtil encryptionUtil;
+    
+    @PersistenceContext private EntityManager entityManager;
 
     public TaiKhoan getTaiKhoanHienTai(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
@@ -34,6 +38,8 @@ public class CustomUserHelper {
         KhachHang kh = khachHangRepository.findByTaiKhoan_Id(taiKhoan.getId())
              .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng."));
         
+        entityManager.detach(kh);
+
         try {
             kh.setHoTen(encryptionUtil.decrypt(kh.getHoTen()));
             kh.setEmail(encryptionUtil.decrypt(kh.getEmail())); 
@@ -49,7 +55,9 @@ public class CustomUserHelper {
          
         NhanVien nv = nhanVienRepository.findByTaiKhoan_Id(taiKhoan.getId())
               .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên."));
-              
+        
+        entityManager.detach(nv);
+
         try {
             nv.setHoTen(encryptionUtil.decrypt(nv.getHoTen()));
             nv.setSoDienThoai(encryptionUtil.decrypt(nv.getSoDienThoai()));

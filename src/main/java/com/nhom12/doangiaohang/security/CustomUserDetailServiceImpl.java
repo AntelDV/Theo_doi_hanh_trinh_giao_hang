@@ -27,7 +27,6 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String tenDangNhap) throws UsernameNotFoundException {
         
-        // GỌI THỦ TỤC DB ĐỂ KIỂM TRA TRẠNG THÁI KHÓA (Logic DB)
         try {
             StoredProcedureQuery query = entityManager.createStoredProcedureQuery("CSDL_NHOM12.SP_CHECK_LOGIN");
             query.registerStoredProcedureParameter("p_username", String.class, ParameterMode.IN);
@@ -41,16 +40,13 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
             if ("LOCKED".equals(result)) {
                 throw new UsernameNotFoundException("Tài khoản đã bị khóa do nhập sai nhiều lần.");
             }
-            // Nếu "FAIL" (Không tồn tại), ta vẫn để code dưới chạy để Spring xử lý 
         } catch (Exception e) {
             System.err.println("Lỗi gọi SP_CHECK_LOGIN: " + e.getMessage());
         }
 
-        // Tải thông tin user để Spring Security kiểm tra mật khẩu
         TaiKhoan taiKhoan = taiKhoanRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new UsernameNotFoundException("Sai thông tin đăng nhập."));
 
-        // Mapping Role
         String roleSecurity = "ROLE_USER"; 
         int roleId = taiKhoan.getVaiTro().getIdVaiTro();
         if (roleId == 1) roleSecurity = "ROLE_QUANLY";
@@ -60,6 +56,7 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
         Set<GrantedAuthority> authorities = new HashSet<>();
         authorities.add(new SimpleGrantedAuthority(roleSecurity)); 
 
-        return new User(taiKhoan.getTenDangNhap(), taiKhoan.getMatKhau(), authorities);
+        return new User(taiKhoan.getTenDangNhap(), taiKhoan.getMatKhau(), 
+                true, true, true, taiKhoan.isTrangThai(), authorities);
     }
 }
