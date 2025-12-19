@@ -1,102 +1,113 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{layout :: head(pageTitle='Giám sát & An ninh')}"></head>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Giám sát & Phục hồi</title>
+</head>
 <body>
-    <div class="app-wrapper">
-        <nav th:replace="~{layout :: sidebar}"></nav>
-        <div class="main-content">
-            <header th:replace="~{layout :: topbar}"></header>
-            <main class="page-content">
-                <h1 class="page-header"><i class="fas fa-shield-alt text-primary"></i> Trung tâm Giám sát</h1>
-                
-                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+<div layout:fragment="content">
+    
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </div>
 
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="card h-100">
-                            <div class="card-header bg-info text-white font-weight-bold">
-                                <i class="fas fa-users-cog mr-1"></i> Người dùng đang Online
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>User</th>
-                                                <th>IP</th>
-                                                <th>Login lúc</th>
-                                                <th>Hành động</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr th:if="${#lists.isEmpty(sessions)}">
-                                                <td colspan="4" class="text-center text-muted">Không có phiên làm việc nào.</td>
-                                            </tr>
-                                            <tr th:each="s : ${sessions}">
-                                                <td class="font-weight-bold text-primary" th:text="${s[1]}"></td>
-                                                <td th:text="${s[4]}"></td>
-                                                <td th:text="${#dates.format(s[3], 'HH:mm:ss dd/MM')}"></td>
-                                                <td>
-                                                    <form th:action="@{/quan-ly/giam-sat/kill}" method="post" style="display:inline;"
-                                                          onsubmit="return confirm('CẢNH BÁO: Đá người dùng này ra khỏi hệ thống?');">
-                                                        <input type="hidden" name="sessionId" th:value="${s[0]}">
-                                                        <button class="btn btn-sm btn-danger">
-                                                            <i class="fas fa-ban"></i> Kick
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-2 text-right">
-                                    <a th:href="@{/quan-ly/giam-sat}" class="btn btn-sm btn-secondary"><i class="fas fa-sync-alt"></i> Làm mới</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card mb-3 border-success">
-                            <div class="card-header bg-success text-white font-weight-bold">
-                                <i class="fas fa-save mr-1"></i> Sao lưu Dữ liệu
-                            </div>
-                            <div class="card-body text-center">
-                                <p class="text-muted small">Xuất toàn bộ dữ liệu đơn hàng ra file JSON để lưu trữ.</p>
-                                <a th:href="@{/quan-ly/giam-sat/backup-json}" target="_blank" class="btn btn-outline-success btn-block font-weight-bold">
-                                    <i class="fas fa-file-download"></i> Tải Backup JSON
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="card border-warning">
-                            <div class="card-header bg-warning text-dark font-weight-bold">
-                                <i class="fas fa-history mr-1"></i> Khôi phục 
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted small"></p>
-                                <form th:action="@{/quan-ly/giam-sat/restore}" method="post" 
-                                      onsubmit="return confirm('NGUY HIỂM: Dữ liệu sẽ quay về quá khứ. Các đơn hàng mới sẽ bị mất. Tiếp tục?');">
-                                    <div class="form-group">
-                                        <select name="minutes" class="form-control">
-                                            <option value="5">5 phút trước</option>
-                                            <option value="15">15 phút trước</option>
-                                            <option value="30">30 phút trước</option>
-                                            <option value="60">1 giờ trước</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-warning btn-block font-weight-bold">
-                                        <i class="fas fa-undo"></i> Thực hiện Khôi phục
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">SAO LƯU DỮ LIỆU </h6>
                 </div>
-            </main>
+                <div class="card-body text-center">
+                    <p>Tạo bản sao lưu toàn bộ Database .</p>
+                    <p>File .dmp sẽ được lưu tại thư mục Backup trên Server.</p>
+                    <form th:action="@{/quan-ly/sao-luu}" method="post">
+                        <button type="submit" class="btn btn-primary btn-lg btn-icon-split">
+                            <span class="icon text-white-50"><i class="fas fa-database"></i></span>
+                            <span class="text">Sao lưu ngay</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">PHỤC HỒI DỮ LIỆU</h6>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-danger">Cảnh báo: Dữ liệu sẽ quay ngược về quá khứ.</p>
+                    <form th:action="@{/quan-ly/phuc-hoi}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn phục hồi dữ liệu không? Hành động này không thể hoàn tác!');">
+                        <div class="form-group row justify-content-center">
+                            <div class="col-sm-6">
+                                <input type="number" name="soPhut" class="form-control" placeholder="Số phút (VD: 10, 30...)" required min="1">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-icon-split">
+                            <span class="icon text-white-50"><i class="fas fa-history"></i></span>
+                            <span class="text">Phục hồi ngay</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-    <script th:src="@{/js/main.js}"></script>
+
+    <div class="text-center mb-4">
+        <button class="btn btn-dark btn-lg" type="button" data-toggle="collapse" data-target="#auditLogSection" aria-expanded="false" aria-controls="auditLogSection">
+            <i class="fas fa-eye"></i> Hiện bảng giám sát 
+        </button>
+    </div>
+
+    <div class="collapse" id="auditLogSection">
+        <div class="card shadow mb-4 border-left-warning">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-warning">DỮ LIỆU GIÁM SÁT TỪ ORACLE (AUDIT & FGA)</h6>
+                <span class="badge badge-secondary">UNIFIED_AUDIT_TRAIL</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="dataTableAudit" width="100%" cellspacing="0">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>User DB</th>
+                            <th>Hành động</th>
+                            <th>Đối tượng</th>
+                            <th>Chi tiết lệnh SQL</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="log : ${auditLogs}">
+                            <td th:text="${#dates.format(log.thoiGian, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                            <td th:text="${log.userDb}" class="font-weight-bold"></td>
+                            <td>
+                                <span th:class="${log.hanhDong == 'DELETE' ? 'badge badge-danger' : 
+                                                (log.hanhDong == 'INSERT' ? 'badge badge-success' : 
+                                                (log.hanhDong == 'UPDATE' ? 'badge badge-primary' : 'badge badge-info'))}"
+                                      th:text="${log.hanhDong}"></span>
+                            </td>
+                            <td th:text="${log.doiTuong}"></td>
+                            <td class="small font-monospace text-muted" style="word-break: break-all;">
+                                <span th:text="${log.chiTiet}"></span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(auditLogs)}">
+                            <td colspan="5" class="text-center">Không có dữ liệu giám sát.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 </body>
 </html>
