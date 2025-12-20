@@ -25,9 +25,8 @@ public class AdminMonitorController {
 
     @GetMapping
     public String showMonitorPage(Model model) {
-        model.addAttribute("sessions", adminService.getActiveSessions()); 
         model.addAttribute("systemLogs", adminService.getUnifiedLogs());
-        
+        model.addAttribute("sessions", adminService.getActiveSessions());
         return "quan-ly/giam-sat";
     }
 
@@ -36,7 +35,7 @@ public class AdminMonitorController {
                            RedirectAttributes redirectAttributes) {
         try {
             adminService.killSession(sessionId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã ngắt kết nối phiên làm việc: " + sessionId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ngắt kết nối người dùng thành công.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể ngắt kết nối: " + e.getMessage());
         }
@@ -50,7 +49,7 @@ public class AdminMonitorController {
             adminService.restoreData(minutes);
             redirectAttributes.addFlashAttribute("successMessage", "Đã khôi phục dữ liệu về " + minutes + " phút trước.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Khôi phục thất bại: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Khôi phục thất bại (Quá hạn hoặc lỗi DB): " + e.getMessage());
         }
         return "redirect:/quan-ly/giam-sat";
     }
@@ -59,6 +58,7 @@ public class AdminMonitorController {
     public ResponseEntity<ByteArrayResource> downloadBackup() {
         try {
             adminService.backupData(); 
+            
             String jsonData = adminService.exportDataToJson();
             ByteArrayResource resource = new ByteArrayResource(jsonData.getBytes(StandardCharsets.UTF_8));
 
@@ -68,18 +68,10 @@ public class AdminMonitorController {
                     .contentLength(resource.contentLength())
                     .body(resource);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            String errorMsg = "Lỗi Backup: " + e.getMessage();
+            return ResponseEntity.internalServerError()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=error_log.txt")
+                    .body(new ByteArrayResource(errorMsg.getBytes(StandardCharsets.UTF_8)));
         }
-    }
-    
-    @PostMapping("/backup-db")
-    public String triggerDbBackup(RedirectAttributes redirectAttributes) {
-        try {
-            adminService.backupData();
-            redirectAttributes.addFlashAttribute("successMessage", "Đã yêu cầu Oracle sao lưu (Data Pump). Kiểm tra thư mục server.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi sao lưu DB: " + e.getMessage());
-        }
-        return "redirect:/quan-ly/giam-sat";
     }
 }

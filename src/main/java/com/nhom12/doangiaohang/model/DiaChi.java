@@ -6,8 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.Formula;
-import java.nio.charset.StandardCharsets;
+import org.hibernate.annotations.ColumnTransformer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
@@ -28,7 +27,6 @@ public class DiaChi {
     @JsonIgnore
     private KhachHang khachHangSoHuu;
 
-    // --- MÃ HÓA MỨC ỨNG DỤNG  ---
     @NotBlank(message = "Số nhà, đường không được để trống")
     @Column(name = "SO_NHA_DUONG", nullable = false)
     private String soNhaDuong;
@@ -36,39 +34,13 @@ public class DiaChi {
     @Column(name = "PHUONG_XA")
     private String phuongXa;
 
-    // --- MÃ HÓA MỨC CSDL (TRIGGER) ---
     
-    // Java chỉ ghi vào cột này, không bao giờ đọc trực tiếp để hiển thị
-    @Column(name = "QUAN_HUYEN", nullable = false)
-    @JsonIgnore
-    private byte[] quanHuyenRaw;
-
-    // Trigger đã mã hóa trong DB, Formula này sẽ giải mã khi SELECT lên
-    @Formula("UTL_I18N.RAW_TO_CHAR(encryption_pkg.decrypt_data(QUAN_HUYEN), 'AL32UTF8')")
-    private String tenQuanHuyen;
-
-    // Setter nhận String từ Form -> Chuyển thành byte[] để lưu xuống DB
-    public void setTenQuanHuyen(String tenQuanHuyen) {
-        this.tenQuanHuyen = tenQuanHuyen;
-        if (tenQuanHuyen != null) {
-            this.quanHuyenRaw = tenQuanHuyen.getBytes(StandardCharsets.UTF_8);
-        } else {
-            this.quanHuyenRaw = null;
-        }
-    }
-    
-    public String getTenQuanHuyen() {
-        return tenQuanHuyen;
-    }
-
-    public String getQuanHuyen() {
-        return getTenQuanHuyen();
-    }
-    
-    public void setQuanHuyen(String qh) {
-        setTenQuanHuyen(qh);
-    }
-
+    @Column(name = "QUAN_HUYEN", nullable = false, columnDefinition = "RAW(2000)")
+    @ColumnTransformer(
+        read = "UTL_I18N.RAW_TO_CHAR(CSDL_NHOM12.encryption_pkg.decrypt_data(QUAN_HUYEN), 'AL32UTF8')",
+        write = "UTL_I18N.STRING_TO_RAW(?, 'AL32UTF8')" 
+    )
+    private String quanHuyen;
 
     @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     @Column(name = "TINH_TP", nullable = false)
@@ -78,7 +50,6 @@ public class DiaChi {
     private boolean laMacDinh = false;
 
     public String getFullAddress() {
-        String qh = (tenQuanHuyen != null) ? tenQuanHuyen : "Đang cập nhật...";
-        return soNhaDuong + (phuongXa != null && !phuongXa.isEmpty() ? ", " + phuongXa : "") + ", " + qh + ", " + tinhTp;
+        return soNhaDuong + (phuongXa != null && !phuongXa.isEmpty() ? ", " + phuongXa : "") + ", " + quanHuyen + ", " + tinhTp;
     }
 }

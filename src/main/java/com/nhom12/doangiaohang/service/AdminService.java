@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class AdminService {
         try {
             auditLogRepository.flushAuditLogs();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Lỗi Flush Audit: " + e.getMessage());
         }
 
         try {
@@ -83,18 +82,16 @@ public class AdminService {
                 adminPrivateKey = encryptionUtil.decrypt(me.getPrivateKey());
             }
         } catch (Exception e) {
-            e.printStackTrace();
         }
 
         List<NhatKyVanHanh> appLogs = nhatKyRepository.findAll(Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
         for (NhatKyVanHanh log : appLogs) {
             SystemLogDTO dto = new SystemLogDTO();
             dto.setThoiGian(log.getThoiGianThucHien());
-            dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown");
+            dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown App User");
             dto.setHanhDong(log.getHanhDong());
 
             String chiTiet = log.getMoTaChiTiet();
-
             if (chiTiet != null && chiTiet.length() > 50 && adminPrivateKey != null) {
                 try {
                     String decrypted = rsaUtil.decrypt(chiTiet, adminPrivateKey);
@@ -102,12 +99,10 @@ public class AdminService {
                         chiTiet = decrypted;
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
-
             dto.setChiTiet(chiTiet);
-            dto.setStyleClass("text-primary");
+            dto.setStyleClass("text-primary"); 
             unifiedList.add(dto);
         }
 
@@ -116,16 +111,24 @@ public class AdminService {
             for (AuditLog log : dbLogs) {
                 SystemLogDTO dto = new SystemLogDTO();
                 dto.setThoiGian(log.getThoiGian());
-                dto.setUser(log.getUserDb());
+                
+                if ("CSDL_NHOM12".equalsIgnoreCase(log.getUserDb())) {
+                    dto.setUser("SYSTEM (DB)");
+                } else {
+                    dto.setUser("DB User: " + log.getUserDb());
+                }
+
                 dto.setHanhDong(log.getHanhDong());
                 dto.setChiTiet(log.getChiTiet() + " [Object: " + log.getDoiTuong() + "]");
                 
                 String style = "text-info";
                 if (log.getHanhDong() != null) {
-                    if (log.getHanhDong().contains("DELETE") || log.getHanhDong().contains("DROP")) {
+                    if (log.getHanhDong().contains("DELETE") || log.getHanhDong().contains("DROP") || log.getHanhDong().contains("FGA")) {
                         style = "text-danger font-weight-bold";
                     } else if (log.getHanhDong().contains("UPDATE") || log.getHanhDong().contains("ALTER")) {
                         style = "text-warning";
+                    } else if (log.getHanhDong().contains("SELECT")) {
+                        style = "text-secondary"; 
                     }
                 }
                 dto.setStyleClass(style);
@@ -161,15 +164,32 @@ public class AdminService {
                 .executeUpdate();
 
         List<Object> principals = sessionRegistry.getAllPrincipals();
+        String kickedUser = "Unknown";
+        
         for (Object principal : principals) {
             if (principal instanceof User) {
                 List<SessionInformation> sessions = sessionRegistry.getAllSessions(principal, false);
                 for (SessionInformation sessionInfo : sessions) {
                     if (sessionInfo.getSessionId().equals(sessionId)) {
+                        kickedUser = ((User) principal).getUsername();
                         sessionInfo.expireNow();
                     }
                 }
             }
+        }
+
+        try {
+            TaiKhoan admin = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
+            NhatKyVanHanh log = new NhatKyVanHanh();
+            log.setTaiKhoanThucHien(admin); 
+            log.setHanhDong("KICK_USER");
+            log.setDoiTuongBiAnhHuong("SESSION");
+            log.setMoTaChiTiet("Đã ngắt kết nối phiên làm việc của user: " + kickedUser + " (Session: " + sessionId + ")");
+            log.setThoiGianThucHien(new Date());
+            log.setDiaChiIp("ADMIN_CONSOLE");
+            nhatKyRepository.save(log);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -181,7 +201,7 @@ public class AdminService {
             entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PR_BACKUP_DATABASE(:uid); END;")
                     .setParameter("uid", adminId).executeUpdate();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("Lỗi gọi thủ tục Backup Oracle: " + e.getMessage());
         }
     }
 
@@ -205,7 +225,7 @@ public class AdminService {
             entityManager.clear();
             entityManager.getEntityManagerFactory().getCache().evictAll();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("Lỗi Flashback: " + e.getMessage());
         }
     }
 }

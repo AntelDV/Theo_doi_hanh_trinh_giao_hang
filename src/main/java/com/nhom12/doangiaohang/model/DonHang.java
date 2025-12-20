@@ -4,14 +4,11 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.Formula;
-import java.nio.charset.StandardCharsets;
+import org.hibernate.annotations.ColumnTransformer;
 import java.util.Date;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-
 
 @Data
 @Entity
@@ -44,24 +41,12 @@ public class DonHang {
     @Column(name = "DIA_CHI_GIAO_HANG", nullable = false, length = 2000)
     private String diaChiGiaoHang;
 
-    @Column(name = "SDT_NGUOI_NHAN", nullable = false)
-    private byte[] sdtNguoiNhanRaw;
-
-    @Formula("UTL_RAW.CAST_TO_VARCHAR2(encryption_pkg.decrypt_data(SDT_NGUOI_NHAN))")
+    @Column(name = "SDT_NGUOI_NHAN", nullable = false, columnDefinition = "RAW(2000)")
+    @ColumnTransformer(
+        read = "UTL_I18N.RAW_TO_CHAR(CSDL_NHOM12.encryption_pkg.decrypt_data(SDT_NGUOI_NHAN), 'AL32UTF8')",
+        write = "UTL_I18N.STRING_TO_RAW(?, 'AL32UTF8')"
+    )
     private String sdtNguoiNhan;
-
-    public void setSdtNguoiNhan(String sdt) {
-        this.sdtNguoiNhan = sdt;
-        if (sdt != null) {
-            this.sdtNguoiNhanRaw = sdt.getBytes(StandardCharsets.UTF_8);
-        } else {
-            this.sdtNguoiNhanRaw = null;
-        }
-    }
-    
-    public String getSdtNguoiNhan() {
-        return sdtNguoiNhan;
-    }
 
     @Column(name = "GHI_CHU_KHACH_HANG", length = 500)
     private String ghiChuKhachHang;

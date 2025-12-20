@@ -21,7 +21,6 @@ public class DiaChiService {
     @Autowired private EncryptionUtil encryptionUtil;
     
     @PersistenceContext private EntityManager entityManager;
-
     private void decryptDiaChi(DiaChi dc) {
         if (dc != null) {
             entityManager.detach(dc);
@@ -63,6 +62,8 @@ public class DiaChiService {
         diaChi.setKhachHangSoHuu(kh); 
         
         diaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChi.getSoNhaDuong()));
+        
+        
         if (diaChi.isLaMacDinh()) {
             unsetDefaultOtherAddresses(authentication, null); 
         }
@@ -84,8 +85,8 @@ public class DiaChiService {
         
         existingDiaChi.setSoNhaDuong(encryptionUtil.encrypt(diaChiForm.getSoNhaDuong()));
         
-        if (diaChiForm.getTenQuanHuyen() != null && !diaChiForm.getTenQuanHuyen().equals(existingDiaChi.getTenQuanHuyen())) {
-            existingDiaChi.setTenQuanHuyen(diaChiForm.getTenQuanHuyen());
+        if (diaChiForm.getQuanHuyen() != null && !diaChiForm.getQuanHuyen().equals(existingDiaChi.getQuanHuyen())) {
+            existingDiaChi.setQuanHuyen(diaChiForm.getQuanHuyen());
         }
         
         existingDiaChi.setPhuongXa(diaChiForm.getPhuongXa());
