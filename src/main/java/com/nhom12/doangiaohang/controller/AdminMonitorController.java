@@ -25,7 +25,9 @@ public class AdminMonitorController {
 
     @GetMapping
     public String showMonitorPage(Model model) {
-        model.addAttribute("sessions", adminService.getActiveSessions());
+        model.addAttribute("sessions", adminService.getActiveSessions()); 
+        model.addAttribute("systemLogs", adminService.getUnifiedLogs());
+        
         return "quan-ly/giam-sat";
     }
 
@@ -34,7 +36,7 @@ public class AdminMonitorController {
                            RedirectAttributes redirectAttributes) {
         try {
             adminService.killSession(sessionId);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã ngắt kết nối người dùng thành công.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ngắt kết nối phiên làm việc: " + sessionId);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể ngắt kết nối: " + e.getMessage());
         }
@@ -48,7 +50,7 @@ public class AdminMonitorController {
             adminService.restoreData(minutes);
             redirectAttributes.addFlashAttribute("successMessage", "Đã khôi phục dữ liệu về " + minutes + " phút trước.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Khôi phục thất bại (Quá hạn hoặc lỗi DB): " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Khôi phục thất bại: " + e.getMessage());
         }
         return "redirect:/quan-ly/giam-sat";
     }
@@ -56,10 +58,7 @@ public class AdminMonitorController {
     @GetMapping("/backup-json")
     public ResponseEntity<ByteArrayResource> downloadBackup() {
         try {
-            // Trigger thủ tục ghi log backup trong DB để có dấu vết kiểm toán
             adminService.backupData(); 
-            
-            // Lấy dữ liệu JSON thực tế từ Service
             String jsonData = adminService.exportDataToJson();
             ByteArrayResource resource = new ByteArrayResource(jsonData.getBytes(StandardCharsets.UTF_8));
 
@@ -71,5 +70,16 @@ public class AdminMonitorController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+    
+    @PostMapping("/backup-db")
+    public String triggerDbBackup(RedirectAttributes redirectAttributes) {
+        try {
+            adminService.backupData();
+            redirectAttributes.addFlashAttribute("successMessage", "Đã yêu cầu Oracle sao lưu (Data Pump). Kiểm tra thư mục server.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi sao lưu DB: " + e.getMessage());
+        }
+        return "redirect:/quan-ly/giam-sat";
     }
 }
