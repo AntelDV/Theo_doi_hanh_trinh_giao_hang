@@ -10,7 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import jakarta.persistence.EntityManager;
 import java.util.List;
 
 @Controller
@@ -19,7 +19,8 @@ public class ShipperController {
 
     @Autowired private DonHangService donHangService;
     @Autowired private TrangThaiDonHangRepository trangThaiDonHangRepository; 
-
+    @Autowired private EntityManager entityManager;
+    
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         List<DonHang> list = donHangService.getDonHangCuaShipperHienTai(authentication);
@@ -34,7 +35,6 @@ public class ShipperController {
         model.addAttribute("countCanLay", canLay);
         model.addAttribute("countCanGiao", canGiao);
         model.addAttribute("codDangGiu", codDangGiu);
-        
         model.addAttribute("donHangGap", list.size() > 5 ? list.subList(0, 5) : list);
 
         return "shipper/dashboard";
@@ -42,6 +42,8 @@ public class ShipperController {
 
     @GetMapping("/don-hang")
     public String donHangCanXuLy(Authentication authentication, Model model) {
+    	
+    	entityManager.clear();
         List<DonHang> donHangList = donHangService.getDonHangCuaShipperHienTai(authentication);
         
         // Danh sách trạng thái Shipper được chọn:

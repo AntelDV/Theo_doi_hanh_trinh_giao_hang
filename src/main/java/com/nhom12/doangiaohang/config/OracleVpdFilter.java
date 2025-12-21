@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager; 
+import org.springframework.transaction.TransactionDefinition;    
+import org.springframework.transaction.support.TransactionTemplate; 
 
 import java.io.IOException;
 
@@ -17,30 +19,35 @@ import java.io.IOException;
 public class OracleVpdFilter implements Filter {
 
     @Autowired private TaiKhoanRepository taiKhoanRepository;
-    @PersistenceContext private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;    
+    @Autowired private PlatformTransactionManager transactionManager;
 
     @Override
-    @Transactional
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean contextSet = false;
+
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             String username = auth.getName();
             TaiKhoan tk = taiKhoanRepository.findByTenDangNhap(username).orElse(null);
             
             if (tk != null) {
-                // Logic Mapping Role
                 String dbRole = "KHACHHANG";
                 if (tk.getVaiTro().getIdVaiTro() == 1) dbRole = "QUANLY";
                 else if (tk.getVaiTro().getIdVaiTro() == 2) dbRole = "SHIPPER";
 
-                // Set Context xuống Oracle
-                entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;")
-                        .setParameter("uid", tk.getId())
-                        .setParameter("uname", username)
-                        .setParameter("urole", dbRole)
-                        .executeUpdate();
+                String finalDbRole = dbRole; 
+                transactionTemplate.executeWithoutResult(status -> {
+                    entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PKG_SECURITY.SET_APP_USER(:uid, :uname, :urole); END;")
+                            .setParameter("uid", tk.getId())
+                            .setParameter("uname", username)
+                            .setParameter("urole", finalDbRole)
+                            .executeUpdate();
+                });
+                
                 contextSet = true;
             }
         }
@@ -48,9 +55,10 @@ public class OracleVpdFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } finally {
-            // Luôn dọn dẹp Context sau mỗi Request để tránh rò rỉ dữ liệu sang user khác
             if (contextSet) {
-                entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PKG_SECURITY.CLEAR_CONTEXT; END;").executeUpdate();
+                transactionTemplate.executeWithoutResult(status -> {
+                    entityManager.createNativeQuery("BEGIN CSDL_NHOM12.PKG_SECURITY.CLEAR_CONTEXT; END;").executeUpdate();
+                });
             }
         }
     }

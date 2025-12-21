@@ -1,10 +1,10 @@
 package com.nhom12.doangiaohang.controller;
 
 import com.nhom12.doangiaohang.dto.NhanVienDangKyForm;
-import com.nhom12.doangiaohang.model.AuditLog; // Import model mới
+import com.nhom12.doangiaohang.model.AuditLog; 
 import com.nhom12.doangiaohang.model.DonHang;
 import com.nhom12.doangiaohang.model.NhanVien;
-import com.nhom12.doangiaohang.service.*; // Import services
+import com.nhom12.doangiaohang.service.*; 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -13,6 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.nhom12.doangiaohang.model.NhatKyVanHanh; 
+import com.nhom12.doangiaohang.repository.NhatKyVanHanhRepository; 
+import org.springframework.data.domain.Sort; 
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +30,8 @@ public class QuanLyController {
     @Autowired private TaiKhoanService taiKhoanService;
     @Autowired private AdminService adminService;    
     @Autowired private AuditLogService auditLogService; 
-
+    @Autowired private NhatKyVanHanhRepository nhatKyRepository;
+    
     // --- DASHBOARD ---
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -168,9 +172,20 @@ public class QuanLyController {
     // --- NHẬT KÝ VẬN HÀNH ---
     @GetMapping("/nhat-ky")
     public String quanLyNhatKy(Model model) {
-        List<AuditLog> logs = auditLogService.getAllAuditLogs();
+        List<NhatKyVanHanh> appLogs = nhatKyRepository.findAll(Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
+        List<AdminService.SystemLogDTO> logDTOs = appLogs.stream().map(log -> {
+            AdminService.SystemLogDTO dto = new AdminService.SystemLogDTO();
+            dto.setThoiGian(log.getThoiGianThucHien());
+            dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown User");
+            dto.setHanhDong(log.getHanhDong());
+            dto.setChiTiet(log.getMoTaChiTiet());
+            dto.setStyleClass("text-primary"); 
+            return dto;
+        }).collect(Collectors.toList());
         
-        model.addAttribute("systemLogs", logs); 
+        model.addAttribute("systemLogs", logDTOs); 
         return "quan-ly/nhat-ky"; 
     }
+    
+    
 }
