@@ -6,10 +6,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import java.util.Date;
+import java.time.LocalDateTime; 
 
 @Entity
-@Immutable
+@Immutable 
 @Table(name = "V_AUDIT_LOG_FULL")
 public class AuditLog {
 
@@ -18,7 +18,7 @@ public class AuditLog {
     private Long id;
 
     @Column(name = "THOI_GIAN")
-    private Date thoiGian;
+    private LocalDateTime thoiGian;
 
     @Column(name = "USER_DB")
     private String userDb;
@@ -32,6 +32,9 @@ public class AuditLog {
     @Column(name = "CHI_TIET")
     private String chiTiet;
 
+    @Column(name = "LOAI_LOG") 
+    private String loaiLog;
+
     public Long getId() {
         return id;
     }
@@ -40,11 +43,11 @@ public class AuditLog {
         this.id = id;
     }
 
-    public Date getThoiGian() {
+    public LocalDateTime getThoiGian() {
         return thoiGian;
     }
 
-    public void setThoiGian(Date thoiGian) {
+    public void setThoiGian(LocalDateTime thoiGian) {
         this.thoiGian = thoiGian;
     }
 
@@ -78,5 +81,13 @@ public class AuditLog {
 
     public void setChiTiet(String chiTiet) {
         this.chiTiet = chiTiet;
+    }
+
+    public String getLoaiLog() {
+        return loaiLog;
+    }
+
+    public void setLoaiLog(String loaiLog) {
+        this.loaiLog = loaiLog;
     }
 }

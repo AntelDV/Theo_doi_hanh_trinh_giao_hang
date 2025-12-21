@@ -1,12 +1,10 @@
 package com.nhom12.doangiaohang.controller;
 
 import com.nhom12.doangiaohang.dto.NhanVienDangKyForm;
+import com.nhom12.doangiaohang.model.AuditLog; // Import model mới
 import com.nhom12.doangiaohang.model.DonHang;
 import com.nhom12.doangiaohang.model.NhanVien;
-import com.nhom12.doangiaohang.service.AdminService;
-import com.nhom12.doangiaohang.service.DonHangService;
-import com.nhom12.doangiaohang.service.NhanVienService;
-import com.nhom12.doangiaohang.service.TaiKhoanService;
+import com.nhom12.doangiaohang.service.*; // Import services
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -27,7 +25,8 @@ public class QuanLyController {
     @Autowired private DonHangService donHangService;
     @Autowired private NhanVienService nhanVienService;
     @Autowired private TaiKhoanService taiKhoanService;
-    @Autowired private AdminService adminService;
+    @Autowired private AdminService adminService;    
+    @Autowired private AuditLogService auditLogService; 
 
     // --- DASHBOARD ---
     @GetMapping("/dashboard")
@@ -47,7 +46,6 @@ public class QuanLyController {
         model.addAttribute("totalShippers", totalShippers);
         model.addAttribute("waitingOrders", waitingOrders);
 
-        // Biểu đồ
         Map<String, Long> statusCounts = all.stream()
             .filter(d -> d.getTrangThaiHienTai() != null)
             .collect(Collectors.groupingBy(d -> d.getTrangThaiHienTai().getTenTrangThai(), Collectors.counting()));
@@ -167,10 +165,11 @@ public class QuanLyController {
          return "redirect:/quan-ly/nhan-vien"; 
     }
     
-    // --- NHẬT KÝ VẬN HÀNH  ---
+    // --- NHẬT KÝ VẬN HÀNH ---
     @GetMapping("/nhat-ky")
     public String quanLyNhatKy(Model model) {
-        List<AdminService.SystemLogDTO> logs = adminService.getUnifiedLogs();
+        List<AuditLog> logs = auditLogService.getAllAuditLogs();
+        
         model.addAttribute("systemLogs", logs); 
         return "quan-ly/nhat-ky"; 
     }
