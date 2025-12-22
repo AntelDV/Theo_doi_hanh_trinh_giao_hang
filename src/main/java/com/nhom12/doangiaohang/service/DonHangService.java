@@ -14,9 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class DonHangService {
@@ -35,12 +37,33 @@ public class DonHangService {
     
     @PersistenceContext private EntityManager entityManager;
 
+    private static final Pattern HEX_PATTERN = Pattern.compile("^[0-9A-Fa-f]+$");
+
     private String getMyPrivateKey(Authentication authentication) {
         TaiKhoan tk = userHelper.getTaiKhoanHienTai(authentication);
         if (tk == null || tk.getPrivateKey() == null) {
-            throw new RuntimeException("Tài khoản chưa có Key RSA.");
+            throw new RuntimeException("Error No Private Key");
         }
         return encryptionUtil.decrypt(tk.getPrivateKey());
+    }
+
+    private String normalizeEncryptedString(String input) {
+        if (input == null) return null;
+        String clean = input.trim().replaceAll("\\s+", "");
+        
+        if (clean.length() % 2 == 0 && HEX_PATTERN.matcher(clean).matches()) {
+            try {
+                byte[] bytes = new byte[clean.length() / 2];
+                for (int i = 0; i < clean.length(); i += 2) {
+                    bytes[i / 2] = (byte) ((Character.digit(clean.charAt(i), 16) << 4)
+                                         + Character.digit(clean.charAt(i+1), 16));
+                }
+                return Base64.getEncoder().encodeToString(bytes);
+            } catch (Exception e) {
+                return clean;
+            }
+        }
+        return clean;
     }
 
     private void decryptDonHangPII(DonHang donHang) {
@@ -56,15 +79,33 @@ public class DonHangService {
             if (donHang.getKhachHangGui() != null) entityManager.detach(donHang.getKhachHangGui());
 
             try {
-                donHang.setTenNguoiNhan(encryptionUtil.decrypt(donHang.getTenNguoiNhan()));
-                donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(donHang.getDiaChiGiaoHang()));
+                if (donHang.getTenNguoiNhan() != null) {
+                    try { 
+                        donHang.setTenNguoiNhan(encryptionUtil.decrypt(normalizeEncryptedString(donHang.getTenNguoiNhan()))); 
+                    } catch (Exception e) {}
+                }
+                if (donHang.getDiaChiGiaoHang() != null) {
+                    try { 
+                        donHang.setDiaChiGiaoHang(encryptionUtil.decrypt(normalizeEncryptedString(donHang.getDiaChiGiaoHang()))); 
+                    } catch (Exception e) {}
+                }
                 
-                if (donHang.getKhachHangGui() != null) {
+                if (donHang.getDiaChiLayHang() != null && donHang.getDiaChiLayHang().getQuanHuyen() != null) {
                     try {
-                        String tenKH = donHang.getKhachHangGui().getHoTen();
-                        if (tenKH != null && tenKH.length() > 20) {
-                             donHang.getKhachHangGui().setHoTen(encryptionUtil.decrypt(tenKH));
+                        String rawQuan = donHang.getDiaChiLayHang().getQuanHuyen();
+                        String normalized = normalizeEncryptedString(rawQuan);
+                        String decryptedQuan = encryptionUtil.decrypt(normalized);
+                        
+                        if (!decryptedQuan.equals(normalized) && !decryptedQuan.equals(rawQuan)) {
+                            donHang.getDiaChiLayHang().setQuanHuyen(decryptedQuan);
                         }
+                    } catch (Exception e) { }
+                }
+
+                if (donHang.getKhachHangGui() != null && donHang.getKhachHangGui().getHoTen() != null) {
+                    try {
+                         String normalized = normalizeEncryptedString(donHang.getKhachHangGui().getHoTen());
+                         donHang.getKhachHangGui().setHoTen(encryptionUtil.decrypt(normalized));
                     } catch (Exception e) {  }
                 }
 
@@ -72,20 +113,17 @@ public class DonHangService {
                     for (HanhTrinhDonHang ht : donHang.getHanhTrinh()) {
                         Hibernate.initialize(ht.getNhanVienThucHien());
                         entityManager.detach(ht);
-                        
-                        if (ht.getNhanVienThucHien() != null) {
+                        if (ht.getNhanVienThucHien() != null && ht.getNhanVienThucHien().getHoTen() != null) {
                             entityManager.detach(ht.getNhanVienThucHien());
                             try {
-                                String tenNV = ht.getNhanVienThucHien().getHoTen();
-                                if (tenNV != null && tenNV.length() > 20) {
-                                    ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(tenNV));
-                                }
+                                String normalized = normalizeEncryptedString(ht.getNhanVienThucHien().getHoTen());
+                                ht.getNhanVienThucHien().setHoTen(encryptionUtil.decrypt(normalized));
                             } catch (Exception e) {  }
                         }
                     }
                 }
             } catch (Exception e) { 
-                System.err.println("Lỗi giải mã đơn hàng: " + e.getMessage());
+                System.err.println(e.getMessage());
             }
         }
     }
@@ -102,7 +140,7 @@ public class DonHangService {
         donHang.setKhachHangGui(khachHangGui);
         
         DiaChi diaChiLay = diaChiRepository.findById(idDiaChiLayHang)
-                .orElseThrow(() -> new IllegalArgumentException("Địa chỉ lấy hàng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Address ID"));
         donHang.setDiaChiLayHang(diaChiLay);
         
         donHang.setMaVanDon("DH" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -132,7 +170,7 @@ public class DonHangService {
             String signature = rsaUtil.sign(dataToSign, getMyPrivateKey(authentication));
             donHang.setChKyKhachHang(signature);
         } catch (Exception e) { 
-            throw new RuntimeException("Lỗi ký số: " + e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
         if (donHang.getThanhToan() == null) { 
@@ -166,7 +204,7 @@ public class DonHangService {
     public void capNhatTrangThai(Integer idDonHang, Integer idTrangThaiMoi, String ghiChu, boolean daThanhToanCod, Authentication authentication) {
         NhanVien shipper = userHelper.getNhanVienHienTai(authentication);
         DonHang donHang = donHangRepository.findById(idDonHang)
-                .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
         
         TrangThaiDonHang ttHienTai = donHang.getTrangThaiHienTai();
         int idHienTai = ttHienTai.getIdTrangThai();
@@ -174,15 +212,15 @@ public class DonHangService {
         if (idHienTai != 1 && idHienTai != 7) { 
              NhanVien shipperDangGiu = donHang.getShipperHienTai();
              if (shipperDangGiu != null && !shipperDangGiu.getId().equals(shipper.getId())) {
-                 throw new SecurityException("BÁO ĐỘNG: Bạn không có quyền can thiệp vào đơn hàng của Shipper khác!");
+                 throw new SecurityException("Access Denied");
              }
         }
 
         TrangThaiDonHang trangThaiMoi = trangThaiDonHangRepository.findById(idTrangThaiMoi)
-                .orElseThrow(() -> new IllegalArgumentException("Trạng thái mới không hợp lệ"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Status"));
 
         if (idTrangThaiMoi == 5 && donHang.getThanhToan().getTongTienCod() > 0) {
-             if (!daThanhToanCod) throw new IllegalStateException("Bạn chưa xác nhận đã thu đủ tiền COD.");
+             if (!daThanhToanCod) throw new IllegalStateException("COD not collected");
              donHang.getThanhToan().setDaThanhToanCod(true);
              thanhToanRepository.save(donHang.getThanhToan());
         }
@@ -196,13 +234,13 @@ public class DonHangService {
         String ghiChuFinal = (ghiChu != null) ? ghiChu : "";
         ht.setGhiChuNhanVien(ghiChuFinal);
 
-        if ((idTrangThaiMoi == 6 || idTrangThaiMoi == 8) && ghiChuFinal.length() > 10) {
+        if ((idTrangThaiMoi == 6 || idTrangThaiMoi == 8) && ghiChuFinal.length() > 5) {
             TaiKhoan admin = findSystemAdmin();
             if (admin != null) {
                 HybridResult res = hybridService.encrypt(ghiChuFinal, admin.getPublicKey());
                 ht.setChiTietSuCo(res.encryptedData);
                 ht.setMaKhoaSuCo(res.encryptedSessionKey);
-                ht.setGhiChuNhanVien("Đã gửi báo cáo mật (Chỉ Admin xem được).");
+                ht.setGhiChuNhanVien("Report sent securely.");
             }
         }
 
@@ -211,7 +249,7 @@ public class DonHangService {
             String signature = rsaUtil.sign(dataToSign, getMyPrivateKey(authentication));
             ht.setChKySo(signature);
         } catch (Exception e) {
-             System.err.println("Lỗi ký số Shipper: " + e.getMessage());
+             System.err.println(e.getMessage());
         }
 
         hanhTrinhDonHangRepository.save(ht);
@@ -220,7 +258,7 @@ public class DonHangService {
              HanhTrinhDonHang htAuto = new HanhTrinhDonHang();
              htAuto.setDonHang(donHang);
              htAuto.setTrangThai(trangThaiDonHangRepository.findById(7).orElseThrow());
-             htAuto.setGhiChuNhanVien("Hệ thống: Chuyển về chờ xử lý.");
+             htAuto.setGhiChuNhanVien("System: Returned to queue.");
              htAuto.setThoiGianCapNhat(new Date(System.currentTimeMillis() + 1000));
              hanhTrinhDonHangRepository.save(htAuto);
         }
@@ -257,7 +295,7 @@ public class DonHangService {
                     String moTaDecrypted = hybridService.decrypt(dh.getMoTaHangHoa(), dh.getMaKhoaHangHoa(), adminPrivKey);
                     dh.setMoTaHangHoa(moTaDecrypted);
                 } catch (Exception e) {
-                    dh.setMoTaHangHoa("[Không thể giải mã]");
+                    dh.setMoTaHangHoa("[Decryption Failed]");
                 }
             }
             if (dh.getHanhTrinh() != null) {
@@ -267,7 +305,7 @@ public class DonHangService {
                             String suCoDecrypted = hybridService.decrypt(ht.getChiTietSuCo(), ht.getMaKhoaSuCo(), adminPrivKey);
                             ht.setChiTietSuCo(suCoDecrypted);
                         } catch (Exception e) {
-                            ht.setChiTietSuCo("[Không thể giải mã]");
+                            ht.setChiTietSuCo("[Decryption Failed]");
                         }
                     }
                 }
@@ -291,7 +329,7 @@ public class DonHangService {
     
     public DonHang getDonHangByMaVanDon(String ma) {
         DonHang dh = donHangRepository.findByMaVanDon(ma)
-                .orElseThrow(() -> new IllegalArgumentException("Mã vận đơn không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
         decryptDonHangPII(dh); 
         return dh;
     }
@@ -312,7 +350,7 @@ public class DonHangService {
         ht.setNhanVienThucHien(ship);
         ht.setTrangThai(trangThaiDonHangRepository.findById(1).orElseThrow()); 
         
-        ht.setGhiChuNhanVien("Quản lý đã phân công cho Shipper: " + tenShipperRo);
+        ht.setGhiChuNhanVien("Admin assigned to Shipper: " + tenShipperRo);
         ht.setThoiGianCapNhat(new Date());
         
         hanhTrinhDonHangRepository.save(ht);
@@ -323,7 +361,7 @@ public class DonHangService {
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(dh); 
         ht.setTrangThai(trangThaiDonHangRepository.findById(9).orElseThrow()); 
-        ht.setGhiChuNhanVien("Admin xác nhận đã nhận lại hàng về kho.");
+        ht.setGhiChuNhanVien("Admin confirmed return to warehouse.");
         ht.setThoiGianCapNhat(new Date());
         hanhTrinhDonHangRepository.save(ht);
     }
@@ -332,21 +370,21 @@ public class DonHangService {
     public void huyDonHang(Integer idDonHang, Authentication authentication) {
         KhachHang kh = userHelper.getKhachHangHienTai(authentication);
         DonHang donHang = donHangRepository.findById(idDonHang)
-                .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại."));
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
         if (!donHang.getKhachHangGui().getId().equals(kh.getId())) {
-            throw new SecurityException("Bạn không có quyền hủy đơn hàng của người khác.");
+            throw new SecurityException("Access Denied");
         }
 
         if (donHang.getTrangThaiHienTai().getIdTrangThai() != 1) {
-            throw new IllegalStateException("Đơn hàng đã được tiếp nhận hoặc đang xử lý, không thể hủy.");
+            throw new IllegalStateException("Cannot cancel processed order");
         }
 
         HanhTrinhDonHang ht = new HanhTrinhDonHang();
         ht.setDonHang(donHang);
         ht.setTrangThai(trangThaiDonHangRepository.findById(10)
-                .orElseThrow(() -> new IllegalArgumentException("Lỗi hệ thống: Chưa cấu hình trạng thái Hủy (ID 10)"))); 
-        ht.setGhiChuNhanVien("Khách hàng chủ động hủy đơn.");
+                .orElseThrow(() -> new IllegalArgumentException("System Error"))); 
+        ht.setGhiChuNhanVien("Customer cancelled order.");
         ht.setThoiGianCapNhat(new Date());
 
         try {
@@ -354,7 +392,7 @@ public class DonHangService {
             String signature = rsaUtil.sign(dataToSign, getMyPrivateKey(authentication));
             ht.setChKySo(signature);
         } catch (Exception e) {
-            System.err.println("Lỗi ký số khi hủy đơn: " + e.getMessage());
+            System.err.println(e.getMessage());
         }
 
         hanhTrinhDonHangRepository.save(ht);

@@ -24,15 +24,12 @@ public class ThongBaoController {
     @GetMapping
     public String xemThongBao(Model model, Authentication authentication) {
         try {
-            // Tin đến
             List<ThongBaoMat> listDen = thongBaoService.getThongBaoCuaToi(authentication);
             model.addAttribute("danhSachThongBao", listDen);
             
-            //  Tin đi 
             List<ThongBaoMat> listDi = thongBaoService.getThongBaoDaGui(authentication);
             model.addAttribute("danhSachDaGui", listDi);
 
-            // Danh sách người nhận
             List<TaiKhoan> listNguoiNhan = thongBaoService.getDanhSachNguoiNhan(authentication);
             model.addAttribute("listNguoiNhan", listNguoiNhan);
             
