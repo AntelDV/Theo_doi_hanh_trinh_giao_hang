@@ -23,6 +23,7 @@ public class ShipperController {
     
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
+    	entityManager.clear();
         List<DonHang> list = donHangService.getDonHangCuaShipperHienTai(authentication);
         
         long canLay = list.stream().filter(d -> d.getTrangThaiHienTai().getIdTrangThai() == 1 || d.getTrangThaiHienTai().getIdTrangThai() == 2).count();

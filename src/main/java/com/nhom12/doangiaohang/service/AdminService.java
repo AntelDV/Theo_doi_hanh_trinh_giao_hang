@@ -70,40 +70,46 @@ public class AdminService {
     public List<SystemLogDTO> getUnifiedLogs() {
         List<SystemLogDTO> unifiedList = new ArrayList<>();
         String adminPrivateKey = null;
+
         try { auditLogRepository.flushAuditLogs(); } catch (Exception e) {}
         try {
             TaiKhoan me = userHelper.getTaiKhoanHienTai(SecurityContextHolder.getContext().getAuthentication());
             if (me != null && me.getPrivateKey() != null) {
                 adminPrivateKey = encryptionUtil.decrypt(me.getPrivateKey());
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.println("Lỗi lấy Private Key Admin: " + e.getMessage());
+        }
 
         entityManager.clear(); 
-        
         List<NhatKyVanHanh> appLogs = nhatKyRepository.findAll(Sort.by(Sort.Direction.DESC, "thoiGianThucHien"));
-        
+
         for (NhatKyVanHanh log : appLogs) {
             SystemLogDTO dto = new SystemLogDTO();
             dto.setThoiGian(log.getThoiGianThucHien());
-            dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown App User");
+            dto.setUser(log.getTaiKhoanThucHien() != null ? log.getTaiKhoanThucHien().getTenDangNhap() : "Unknown");
             dto.setHanhDong(log.getHanhDong());
+            dto.setStyleClass("text-primary");
 
             String chiTiet = log.getMoTaChiTiet();
+
             if (chiTiet != null && adminPrivateKey != null) {
-                boolean isEncryptedAction = "CAP_NHAT_HANH_TRINH_RSA".equals(log.getHanhDong()) 
-                                         || "THONG_BAO_MAT".equals(log.getHanhDong());
+                boolean isRsaLog = "CAP_NHAT_HANH_TRINH_RSA".equals(log.getHanhDong()) 
+                                || "THONG_BAO_MAT".equals(log.getHanhDong());
                 
-                if (isEncryptedAction || (chiTiet.length() > 50 && !chiTiet.contains(" "))) {
+                if (isRsaLog || chiTiet.length() > 50) {
                     try {
-                        String decrypted = rsaUtil.decrypt(chiTiet, adminPrivateKey);
-                        if (decrypted != null) chiTiet = decrypted;
+                        String decrypted = rsaUtil.decrypt(chiTiet, adminPrivateKey);                        
+                        if (decrypted != null && !decrypted.isEmpty()) {
+                            chiTiet = decrypted + " (Đã giải mã)";
+                        }
                     } catch (Exception e) {
+                        
                     }
                 }
             }
-            
+
             dto.setChiTiet(chiTiet);
-            dto.setStyleClass("text-primary");
             unifiedList.add(dto);
         }
 
@@ -112,26 +118,18 @@ public class AdminService {
             for (AuditLog log : dbLogs) {
                 SystemLogDTO dto = new SystemLogDTO();
                 if (log.getThoiGian() != null) dto.setThoiGian(java.sql.Timestamp.valueOf(log.getThoiGian()));
-                
-                String dbUser = log.getUserDb();
-                if ("CSDL_NHOM12".equalsIgnoreCase(dbUser)) dto.setUser("SYSTEM (Core)");
-                else dto.setUser("DB User: " + dbUser);
-
+                dto.setUser(log.getUserDb().equals("CSDL_NHOM12") ? "SYSTEM (DB)" : log.getUserDb());
                 dto.setHanhDong(log.getHanhDong());
                 dto.setChiTiet(log.getChiTiet() + " [Object: " + log.getDoiTuong() + "]");
                 
                 String style = "text-info";
-                if (log.getHanhDong() != null) {
-                    if (log.getHanhDong().contains("DELETE") || log.getHanhDong().contains("DROP")) {
-                        style = "text-danger font-weight-bold";
-                    } else if (log.getHanhDong().contains("UPDATE") || log.getHanhDong().contains("ALTER")) {
-                        style = "text-warning";
-                    }
+                if (log.getHanhDong() != null && (log.getHanhDong().contains("DELETE") || log.getHanhDong().contains("DROP"))) {
+                    style = "text-danger font-weight-bold";
                 }
                 dto.setStyleClass(style);
                 unifiedList.add(dto);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {}
 
         unifiedList.sort((o1, o2) -> {
             if (o1.getThoiGian() == null) return 1;
@@ -141,7 +139,7 @@ public class AdminService {
 
         return unifiedList;
     }
-
+    
     @SuppressWarnings("unchecked")
     public List<Object[]> getActiveSessions() {
         try {
